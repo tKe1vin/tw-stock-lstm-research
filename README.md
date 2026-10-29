@@ -49,7 +49,7 @@ GitHub Actions（台北時間 17:37，週一至週五）
    git branch -M main
    git add .
    git commit -m "Initial separate LSTM 444 and 555 automation"
-   git remote add origin https://github.com/你的帳號/tw-stock-lstm-research.git
+   git remote add origin https://github.com/tKe1vin/tw-stock-lstm-research.git
    git push -u origin main
    ```
 
