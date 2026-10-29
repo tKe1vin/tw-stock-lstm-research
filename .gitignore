@@ -1,0 +1,19 @@
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+.env
+*.pyc
+*.tmp
+logs/
+# Large per-run model artifacts, PNG charts, and ZIP snapshots are uploaded as Actions artifacts.
+outputs/444/runs/
+outputs/555/runs/
+outputs/555/latest.json
+outputs/555/latest_replay.json
+*.keras
+*.joblib
+*.zip
+# Data files below ARE persisted in git to keep day-to-day source state:
+# data/news_scored_cache.csv, data/news_update_state.json,
+# data/prices/historical_prices.csv, outputs/*/recommendation_history/

@@ -1,0 +1,59 @@
+"""Shared orchestration utilities. No LSTM implementation is imported here."""
+from __future__ import annotations
+import hashlib
+import json
+import os
+from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+TICKERS = ['2330.TW','2317.TW','2603.TW','2002.TW','2891.TW']
+MARKET = '^TWII'
+TZ = ZoneInfo('Asia/Taipei')
+
+
+def sessions(start, end):
+    import exchange_calendars as xcals
+    a, b = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
+    cal = xcals.get_calendar('XTAI', start=a-pd.Timedelta(days=7), end=b+pd.Timedelta(days=7))
+    days = pd.DatetimeIndex(cal.sessions_in_range(a, b))
+    return days.tz_localize(None).normalize() if days.tz is not None else days.normalize()
+
+
+def current_completed_session(now=None):
+    now = now or datetime.now(TZ)
+    if now.tzinfo is None:
+        raise ValueError('clock must contain timezone')
+    now = now.astimezone(TZ)
+    upper = pd.Timestamp(now.date()) if (now.hour,now.minute) >= (15,0) else pd.Timestamp(now.date())-pd.Timedelta(days=1)
+    found = sessions(upper-pd.Timedelta(days=60),upper)
+    if len(found)==0:
+        raise ValueError('找不到最近的已完成交易日')
+    return found[-1]
+
+
+def atomic_json(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True,exist_ok=True)
+    tmp = path.with_suffix(path.suffix+'.tmp')
+    tmp.write_text(json.dumps(value,ensure_ascii=False,indent=2,default=str),encoding='utf-8')
+    tmp.replace(path)
+
+
+def sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def read_json(path):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
+
+
+def check_date_in_calendar(value):
+    day = pd.Timestamp(value).normalize()
+    if day not in sessions(day-pd.Timedelta(days=7),day):
+        raise ValueError(f'指定日期不是 XTAI 交易日：{day.date()}')
+    if day > current_completed_session():
+        raise ValueError(f'尚未收盤：{day.date()}')
+    return day

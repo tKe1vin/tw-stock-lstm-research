@@ -1,0 +1,92 @@
+name: Daily 444 vs 555 research pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force rerun if already completed today'
+        type: boolean
+        default: false
+  schedule:
+    # UTC 09:37 = Asia/Taipei 17:37, Monday-Friday; local exchange calendar is rechecked.
+    - cron: '37 9 * * 1-5'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-lstm-main
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      TZ: Asia/Taipei
+      PYTHONUNBUFFERED: '1'
+      LSTM_SAVE_MODELS: '0'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TF_CPP_MIN_LOG_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Cache downloaded Chinese sentiment model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: huggingface-erlangshen-roberta-110m-sentiment-v1
+      - name: Install CPU PyTorch and LSTM packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements.txt
+      - name: Quick unit checks
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/
+      - name: Run 444 and 555 independently, compare and journal
+        shell: bash
+        run: |
+          mkdir -p logs
+          set -o pipefail
+          if [[ '${{ inputs.force }}' == 'true' ]]; then
+            python -m scripts.pipeline --force 2>&1 | tee logs/pipeline.log
+          else
+            python -m scripts.pipeline 2>&1 | tee logs/pipeline.log
+          fi
+      - name: Commit compact daily data and journals
+        if: success()
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A data/ reports/ outputs/444/recommendation_history/ outputs/555/recommendation_history/
+          if git diff --cached --quiet; then
+            echo 'No changed daily data'; exit 0
+          fi
+          git commit -m "research: daily 444/555 results $(date +%F)"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
+      - name: Write explicit failure marker
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p logs
+          echo "Pipeline failed at run ${{ github.run_id }}. Check logs/pipeline.log and the preceding failed step; no successful daily result was published." > logs/FAILURE.txt
+      - name: Upload independent full-run files and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-lstm-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            logs/
+            outputs/444/runs/
+            outputs/555/runs/
+            reports/daily/
