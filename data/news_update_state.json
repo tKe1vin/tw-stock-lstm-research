@@ -1,6 +1,6 @@
 {
   "seed_end_date": "2026-10-27",
-  "last_complete_scan_day": "2026-10-29",
-  "articles_cache": 10,
+  "last_complete_scan_day": "2026-10-30",
+  "articles_cache": 14,
   "note": "earlier historical sentiment seeds not recalculated; new rows scored by Erlangshen sentiment"
 }
