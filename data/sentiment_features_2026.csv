@@ -7049,3 +7049,8 @@
 2026-10-30,2330.TW,0.7545999999999999,2.0,2026-10-29T20:00:03+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
 2026-10-30,2603.TW,0.0,0.0,,verified_no_matching_article,neutral_no_news
 2026-10-30,2891.TW,0.0,0.0,,verified_no_matching_article,neutral_no_news
+2026-11-02,2002.TW,0.0,0.0,,verified_no_matching_article,neutral_no_news
+2026-11-02,2317.TW,0.9875333333333334,6.0,2026-11-01T14:30:50+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
+2026-11-02,2330.TW,0.4058,1.0,2026-11-01T16:43:18+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
+2026-11-02,2603.TW,0.0,0.0,,verified_no_matching_article,neutral_no_news
+2026-11-02,2891.TW,0.0,0.0,,verified_no_matching_article,neutral_no_news

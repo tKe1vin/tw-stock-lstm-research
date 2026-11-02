@@ -1,2 +1,2 @@
 ﻿Strategy_ID,Run_ID,Strategy,ROI_Pct,Sharpe,MDD_Pct,Test_Days,Test_Start,Test_End,Direction_Accuracy_Pct,As_Of_Date,Protocol_Version
-555_multivariate_dynamic,20261031T001456975224,555 multivariate + dynamic risk (net),12.700704375248106,1.6715606108870418,-6.253900133882661,150,2026-03-23,2026-10-30,49.333333333333336,2026-10-30,lstm-evaluation-v1
+555_multivariate_dynamic,20261103T034722620154,555 multivariate + dynamic risk (net),13.077477493993861,1.8291519143092352,-5.392646268533962,150,2026-03-24,2026-11-02,50.0,2026-11-02,lstm-evaluation-v1
