@@ -1,0 +1,12 @@
+{
+  "as_of_date": "2026-11-03",
+  "comparison_status": "matched_test_dates_and_price_panel",
+  "train_start_444": "2014-01-16",
+  "train_start_555": "2021-01-18",
+  "warning": "Training start dates/models/strategy mechanics may differ. This is a descriptive out-of-sample comparison, not causal proof of sentiment contribution.",
+  "trade_win_rate": "undefined: neither notebook tracks completed trade round-trips",
+  "direction_accuracy": "direction match, NOT actual trade win rate",
+  "profitable_net_day": "fraction of positive portfolio net NAV daily returns, NOT trade win rate",
+  "historical_sentiment": "original uploaded feature history is not fully provenance-audited",
+  "future_forecast": "not used in historical ROI, Sharpe, or MDD"
+}
