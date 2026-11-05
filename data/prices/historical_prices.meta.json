@@ -1,56 +1,56 @@
 {
-  "as_of_date": "2026-11-04",
+  "as_of_date": "2026-11-05",
   "source": "yfinance unadjusted Close",
-  "records": 18752,
-  "common_dates": 3122,
+  "records": 18758,
+  "common_dates": 3123,
   "protected_sessions_count": 400,
   "price_quality_audit": {
     "2330.TW": {
-      "valid_rows": 3126,
+      "valid_rows": 3127,
       "dropped_old_invalid_close": 5,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     },
     "2317.TW": {
-      "valid_rows": 3126,
+      "valid_rows": 3127,
       "dropped_old_invalid_close": 5,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     },
     "2603.TW": {
-      "valid_rows": 3126,
+      "valid_rows": 3127,
       "dropped_old_invalid_close": 5,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     },
     "2002.TW": {
-      "valid_rows": 3126,
+      "valid_rows": 3127,
       "dropped_old_invalid_close": 5,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     },
     "2891.TW": {
-      "valid_rows": 3126,
+      "valid_rows": 3127,
       "dropped_old_invalid_close": 5,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     },
     "^TWII": {
-      "valid_rows": 3122,
+      "valid_rows": 3123,
       "dropped_old_invalid_close": 9,
       "deduplicated_identical_dates": 0,
       "removed_confirmed_closure_rows": 1,
-      "last_date": "2026-11-04",
+      "last_date": "2026-11-05",
       "yahoo_repair_enabled": true
     }
   },
