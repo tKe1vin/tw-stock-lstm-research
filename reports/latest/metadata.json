@@ -1,8 +1,14 @@
 {
+  "report_schema": "four-systems-v1",
   "as_of_date": "2026-11-05",
-  "completed_at": "2026-11-06T01:40:41.735384+08:00",
-  "444_source": "outputs/444/runs/20261106T013843692131",
-  "555_source": "outputs/555/runs/20261106T013956557045",
-  "status": "complete",
-  "note": "No brokerage orders were executed."
+  "status": "partial",
+  "last_successful_as_of_date": null,
+  "comparison_status": "waiting_for_both_current_notebooks",
+  "model_currentness": {
+    "444": false,
+    "555": false,
+    "555_v2": false,
+    "v211": false
+  },
+  "note": "Read four_systems.json before treating any older result file as current."
 }

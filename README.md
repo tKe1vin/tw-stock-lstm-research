@@ -1,109 +1,87 @@
-# 台灣五檔股票 444 / 555 每日自動化（研究用途）
+# 台股 444／555／555 V2／V2.11 每日研究自動化
 
-本專案保留 **兩份各自獨立**的 Notebook：`444` 是單變量收盤價 LSTM 與固定股數等權重回測；`555` 是六特徵多變量 LSTM、新聞情緒與風險配置。**不將 444 / 555 合成一支模型程式**。每日由外層腳本執行和驗收，最後第三方比較器才讀取結果。
+本版本整合原正式版的新聞與 GitHub 自動化，以及 Complete 套件的凍結候選與研究帳本。四個系統各自保存輸出；新聞與行情只更新一次。
 
-> **目前狀態**：已完成離線程式串接與測試，**尚未在 GitHub Actions 真實完成 TensorFlow 訓練或取得線上行情／新聞**。必須實際執行 GitHub 工作流程後才可確認模型結果與時效性。原始情緒資料僅到 2026-10-27。
+| 系統 | 工作 | 每日輸出 |
+| --- | --- | --- |
+| 444 | 原始單變量 LSTM，獨立重新訓練；固定持股參考 | `outputs/444/日期/` |
+| 555 | 原始六特徵 LSTM、新聞情緒及動態風控，獨立重新訓練 | `outputs/555/日期/` |
+| 555 V2 | 使用已凍結的 rolling_selected 權重預測五日報酬，不重訓 | `outputs/555_v2/日期/` |
+| V2.11 | 同一凍結模型的不可覆寫訊號、次日收盤模擬成交、成熟標籤 | `experiments/results/v2/v211/` |
 
-## 一、每日自動流程
+## GitHub 每日執行
 
-```text
-GitHub Actions（台北時間 17:37，週一至週五）
-  ├─ 查 XTAI 交易日曆／資料截止日（台北 15:00 後）
-  ├─ prices.py：一次下載 5 檔 + ^TWII 原始收盤價，儲存共用 CSV
-  ├─ news_update.py：鉅亨網新聞增量爬取／13:30 切分／假日順延
-  │    └─ 中文情緒分類模型與逐篇新聞去重，更新舊有情緒 CSV
-  ├─ 444_baseline.ipynb：單獨訓練／歷史回測／下一交易日預測
-  │    └─ 444 專屬結果、保存預測與工作日誌
-  ├─ 555_multivariate.ipynb：單獨訓練／歷史回測／動態配置
-  │    └─ 555 專屬結果、保存預測與工作日誌
-  ├─ compare.py：只比較相同測試日期 + 同一份價格快照的結果
-  ├─ journal.py：個別檢討之前「真正存下來」的建議（不補做）
-  └─ GitHub：提交輕量報表/每日情緒/預測歷史；大檔上傳 Actions artifact
+工作流程：[Daily four-system LSTM research](../../actions/workflows/daily-lstm.yml)。使用 Ubuntu CPU、Python 3.12。
+
+- 週一至週五台北 **17:37** 執行，**21:37** 再試一次。GitHub 排程可能延遲。
+- 以 XTAI 日曆檢查交易日；當日尚未收盤或休市時跳過，不把上個交易日冒充今天。
+- 先共用更新市場與新聞，再依序處理 **V2.11 → 555 V2 → 444 → 555**，讓研究訊號先保存。
+- 同交易日已成功的模型預設不重訓；V2.11 仍處理成交和已成熟標籤。`force` 僅強制重跑模型輸出，不能改寫已發布訊號。
+- 其中一步失敗仍保留其他合法結果。精簡市場狀態、新聞快取、訊號、預測歷史與報表提交 Git，完整執行檔與日誌上傳 Actions artifacts，保留 30 天。
+- 資料等待或程式失敗會在 Actions 如實顯示失敗，摘要區分 `waiting` 與 `failed`。
+
+第一次部署或修改程式也會觸發檢查；資料與報表的自動提交不會循環觸發。需要手動補跑時，到 Actions 選取工作流程，再按 **Run workflow**。必須允許 GitHub Actions 執行，且 workflow 的 `contents: write` 不被帳號或組織政策禁止。
+
+## 結果在哪裡
+
+- [`reports/latest/summary.md`](reports/latest/summary.md)：四系統狀態與當日結果摘要。
+- [`reports/latest/four_systems.json`](reports/latest/four_systems.json)：各系統日期與完整性。
+- `reports/daily/YYYY-MM-DD/`：每日摘要、444／555 的同協議比較。
+- `reports/journals/444.md`、`555.md`：個別研究日誌，只核對當時真正保存的預測。
+- `outputs/{444,555}/recommendation_history/`：跨日保存的一日預測。
+- `experiments/results/v2/v211/daily/`：原始不可覆寫研究訊號。
+- Actions 每次執行的 artifacts：完整 Notebook runs、圖及日誌。
+
+摘要會明確標示當日尚未完成的系統；過去成功結果保留原日期，不會被標成今天。444／555 的 `lstm-evaluation-v1` 與 V2 的下一交易日收盤帳本分開解讀，不將四者 ROI 混排。
+
+## 共用資料與新聞
+
+唯一每日市場來源為 `experiments/results/v2/v211/market/`，當日驗證通過後複製到 `data/snapshots/交易日/`，供 444／555 使用；V2 模型與帳本讀同一來源。更新市場的子程序結束後才啟動模型，釋放 NLP 記憶體。
+
+新聞沿用正式版的 **鉅亨網台股類別＋Erlangshen 中文情緒分類模型**：逐篇去重，分數為 P(positive)−P(negative)，同股票同訊號日取平均。13:30 後的新聞歸到下一個 XTAI 交易日。抓取涵蓋前一交易日至當日的完整日曆區間，包含週末與長假，成功後記錄 `news_scan_coverage.json`。
+
+只有查詢完整且沒有符合股票的文章時才記為零分／`verified_no_matching_article`；來源失敗保持等待，不沿用昨日情緒。這不代表全市場沒有新聞。保留原有股票篩選及情緒模型，沒有混入歷史 SnowNLP 原型或重算舊分數。
+
+保留 GitHub 正式資料截至 2026-11-05 的版本，以及相容的逐篇新聞快取。共用市場沿用 V2.11 已修補的歷史交易日（例如 2025-08-01），因此新版每日 555 的有效訓練日期可能比舊正式來源多，不能承諾數值完全不變；原 11/04 重播輸入另外封存。`data/prices/historical_prices.csv`、`data/sentiment_features_2026.csv` 作為匯入基準，不由新版每日流程改寫；每日新增資料在上述 canonical 市場帳本。
+
+## 權重與原始訊號
+
+凍結權重 SHA-256：`53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144`。
+
+2026-11-05 原始研究訊號 SHA-256：`37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659`。它來自 Complete 套件所保存的開發者紀錄，記載發布時間為 2026-11-05 23:23:09 +08:00；不把本次 GitHub 上傳時間當成原發布時間。
+
+預設 `research/v211/config/ledger.yaml` 使用 `imported_research`，在此儲存庫接續該封存帳本。`new_independent` 使用獨立訊號帳本、共用凍結權重與經前綴驗證的市場鏡像，不匯入 11/05 訊號。請只指定一個儲存庫／runner 作為研究帳本寫入端，不合併多台電腦各自發布的帳本。
+
+## 本機操作與驗證
+
+```bash
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install 'torch==2.15.0' --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements-ci.txt
+python -m pytest -q
+python -m scripts.verify_models
+python -m scripts.run_all_daily --mode check
+python -m scripts.run_all_daily --mode full
 ```
 
-| 檔案／目錄 | 功能 |
-|---|---|
-| `.github/workflows/daily-lstm.yml` | 每日排程、測試、執行、保存與失敗紀錄 |
-| `notebooks/444_baseline.ipynb` | 你提供的 444，僅將路徑和日期參數化 |
-| `notebooks/555_multivariate.ipynb` | 你提供的 555，僅將模型保存開關參數化 |
-| `notebooks/original_...` | 原始新聞爬蟲、新聞分析、555 附加日誌，保留做追溯，不在主流程重複執行 |
-| `scripts/prices.py` | 共用股價資料，避免 444、555 各抓到不同版本 |
-| `scripts/news_update.py` | 新聞增量與去重；補齊新的每個 XTAI 訊號日 |
-| `scripts/execute_nb.py` | **分開**執行兩個 Notebook；只略過 444 的重複繪圖/30 天情境 |
-| `scripts/baseline_adapter.py` | 444 標準化輸出、下一日預測、真正的歷史建議存檔 |
-| `scripts/compare.py` | 統一 ROI、Sharpe、MDD、方向準確率等指標並稽核 |
-| `scripts/journal.py` | 每日兩份日誌；先前預測對答案 |
-| `reports/latest/` | 供未來前端讀取的最新標準化 CSV 與 JSON |
-| `reports/daily/YYYY-MM-DD/` | 每日摘要、比較結果與股票誤差表 |
-| `reports/journals/{444,555}.md` | 兩份每日累積日誌 |
-| `outputs/*/recommendation_history/` | 每次真正產生的預測，跨日檢討不能回頭改寫 |
+`check` 為唯讀：不下載、不訓練、不寫預測或帳本。結束碼 0 表示就緒，2 表示資料尚未到齊，1 表示錯誤。`full --skip-download` 僅使用已存在的完整快照。舊指令 `python -m scripts.pipeline` 也轉到四系統入口。
 
-## 二、放進 GitHub（一步一步）
+可重現的 2026-11-04 歷史輸入另放在 `data/examples/reproducible/`，雜湊與 Complete 套件一致：
 
-1. 到 [GitHub 新增 repository](https://github.com/new)，建立例如 `tw-stock-lstm-research`。建議先選 **Private**，避免意外公開研究工作與原始資料。**不要勾選自動建立 README**，減少初次推送衝突。
-2. 下載並解壓本專案 ZIP，將整個 `stock_lstm_automation` 資料夾用 Cursor 或 VS Code 開啟。請勿只上傳 `.ipynb`，因為 `.github/workflows/`、`scripts/` 和 `data/` 都是必需的。
-3. 在 Cursor 終端機輸入以下指令，將 `你的帳號` 和 repo 名稱替換為自己的。若已安裝 GitHub Desktop，也可以選擇 `Add existing repository` 然後 Publish repository。
-
-   ```bash
-   git init
-   git branch -M main
-   git add .
-   git commit -m "Initial separate LSTM 444 and 555 automation"
-   git remote add origin https://github.com/tKe1vin/tw-stock-lstm-research.git
-   git push -u origin main
-   ```
-
-4. 確認 GitHub 上可以看到 `.github/workflows/daily-lstm.yml`。在 repo 的 **Actions** 頁面選 `Daily 444 vs 555 research pipeline`，按 **Run workflow** 手動測試。此操作會真的安裝 CPU 版 PyTorch、TensorFlow 並訓練兩組模型；若 GitHub 未授權 Actions，先在 Settings → Actions → General 開啟。
-5. 在 **Settings → Actions → General → Workflow permissions**，允許工作流程能寫入 repository。YAML 內已設定 `permissions: contents: write`；若組織政策禁止寫入，會在最後 `git push` 階段失敗。
-6. 工作成功後，在 `reports/latest/comparison.md` 看 **444／555／大盤** 的實測指標；在 `reports/journals/444.md` 和 `reports/journals/555.md` 看各自日誌；在 `reports/daily/日期/` 看當天報表。在該次 Actions → Artifacts 可以取得完整執行輸出（保存 14 天）。
-7. 之後每週一到週五台北 **17:37** 自動觸發；若碰到休市，系統看 XTAI 日曆，並且同一個成功交易日不重訓兩次。GitHub 排程**可能延遲或偶爾不觸發**，不是 SLA。若需要補跑，回到 Actions 手動 Run workflow，選 `force=true`（強制重跑）或在原始預測沒完成時直接正常重跑。
-
-> 手動補跑時若上游新聞 API、Hugging Face 或 yfinance 暫時離線，資料取得步驟會停止並標示失敗；**不會為了讓流程顯示成功而套用過期價格**。可稍後再次按 Run workflow，排查在 Actions 的 `logs/pipeline.log`。
-
-## 三、本機測試（Windows / Cursor）
-
-推薦 Python **3.11**（與 Actions 一致）。在 Cursor 終端機、專案根目錄：
-
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -r requirements-dev.txt
-python -m pytest -q tests
-python -m scripts.pipeline --check
-python -m scripts.pipeline
+```bash
+python -m scripts.run_model --model 444 --mode full --fixture reproducible
+python -m scripts.run_model --model 555 --mode full --fixture reproducible
 ```
 
-你現有的 Python 3.12.10 可先使用，但要先確認 TensorFlow、PyTorch 和所有套件在該環境成功安裝；若安裝相依套件衝突，改用專案建議的 Python 3.11 虛擬環境，不必刪掉本機原有 Python。
+歷史重播與正式跨日預測歷史分開，不回填研究訊號。`tests/legacy_delivery/` 保留交付當下的舊快照測試，預設不執行；目前 CI 使用固定時間與隔離資料的測試。
 
-`python -m scripts.pipeline --check` 只檢查情緒資料和股價檔，不訓練模型。`--no-fetch` 可用於已有完整當天價格／情緒的離線重現；**不能對沒有股價或情緒的日期假裝跑完**。
+## 研究結果的限制
 
-## 四、指標、實驗公平性
+444 的固定持股 ROI 不代表 LSTM 擇時獲利。555 採已揭露的理想化同日收盤成交假設。V2 的探索性歷史結果尚未優於可比固定等權；最新凍結權重的成效須看後續訊號，不能挪用滾動研究的報酬。
 
-- **ROI (%)**：結算後 NAV / 初始本金 − 1；兩版各自反映其回測策略（444 固定持有，555 每日動態配置），已計入其 Notebook 設定的交易成本。
-- **Sharpe**：交易日 252 天年化，無風險利率預設 0，從同一組日淨值計算。
-- **MDD (%)**：最大回撤，負值表示跌幅（例如 −20%）。
-- **方向準確率 (%)**：LSTM 對隔日漲跌／平盤方向的預測正確率；**不是逐筆交易勝率**。
-- **正報酬日比例 (%)**：稅費後投組每日淨值上漲日佔比；**也不是完成一買一賣的交易勝率**。
-- **逐筆交易勝率**：444 沒有建立進出場交易策略，555 現在也沒有完整往返成交明細，因此不憑空填一個勝率，輸出保持 `NaN`。若組長要真正的「交易勝率」，兩份程式須先制定交易規則和完成交易紀錄。
-- **五檔股票 MAE / RMSE / 方向準確率**：在 `reports/latest/per_stock_comparison.csv` 直接比較。
-- **一致性稽核**：使用 `evaluation_protocol.json` 比對資料截止日、實測日期 SHA-256、價格矩陣 SHA-256、本金、交易成本、視窗長度等；有差異就**拒絕輸出比較**。
+歷史情緒大部分缺乏完整新聞來源與當時可取得時間；新資料的稽核欄位不能追溯證明舊分數。股價使用未調整 Close，未另計股利現金流；價格基礎績效不等於含息總報酬。V2.11 至少 60 個成熟訊號日只是人工審視門檻，程式不會自動更換正式 555。
 
-### 必須向教授說明的限制
+完整歷史探索的中間預測大檔保留在原始 ZIP；GitHub 保留研究報告、程式、必要市場狀態與凍結權重。
 
-1. **訓練資料不完全相同**：444 保留 2014 年起的原始單變量訓練來源；555 的新聞情緒特徵起於 2021 年，且有指標暖機期。因此這是相同測試期間與股價的**描述性比較**，不是能單憑結果證明「加新聞就一定較佳」的嚴格特徵消融實驗。若要做因果／消融聲稱，還要統一訓練樣本日期並在同一模型架構下做有無新聞的控制實驗。
-2. **舊情緒模型來源混雜**：歷史情緒 CSV 來自你們先前的流程，舊筆資料未確認是否全用同一 NLP 模型量化。新資料採 `IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment`（中文正負情緒分類，並非專門訓練於台股金融新聞的 FinBERT）；**新舊分數可能有系統性差異**。建議最終論文統一重算 2021–2026 全部新聞的情緒，建立完整發布時間與來源稽核，再重跑 555。
-3. **新聞源覆蓋**：本流程只向鉅亨網台股新聞類別抓取，`verified_no_matching_article` 僅表示該來源查詢成功且沒有符合條件的新聞，**不是證明全市場沒有新聞**。來源 API 可能改版或有授權、速率限制；遇失敗應修爬蟲而非補造資料。
-4. **13:30 截止不等於可成交**：用 13:30 當天收盤價形成訊號並假設可以在同一收盤價交易，屬理想化 close-to-close 模擬；真實策略會有執行延遲、滑價、無法在收盤後成交的問題。要做可交易策略須兩版一致改成下一可成交時點。
-5. **資源與 GitHub 限制**：十餘個 TensorFlow 模型 + NLP 分類器在 GitHub 免費 CPU runner 執行可能耗時或超出計算資源／儲存額度。已設 330 分鐘工作時間限制，若資源不夠建議自架 Runner／GPU 工作站。**Actions 的每日排程並不保證準時**。
-6. **長期資料留存**：輕量的每日快照、預測、歷史情緒和比較報表會提交 Git；大容量模型檔預設不儲存，完整 runs 放 Actions Artifacts 只保存 14 天，重要版本請另備份並考慮 GitHub Releases／雲端物件儲存。若日後要從模型權重直接延續訓練，應增加模型檔儲存方案。
-
-## 五、每日開發與資料重現約定
-
-- `notebooks/` 是模型原始碼；`scripts/` 是外部串接和報告，彼此獨立。
-- `data/sentiment_features_2026.csv` 是唯一正式新增情緒來源；`lstm_multivariate_features_2026.csv` 為舊稱，**不再維持兩份可能互相覆蓋的真實來源**。555 透過 `LSTM_FEATURE_CSV` 直接讀取唯一檔案。
-- `data/prices/historical_prices.csv` 一次下載，兩個模型都讀同一 CSV，避免獨立抓股價時產生資料版本差異。
-- 如果兩版模型檔要存成 `.keras`，可在本機設定 `LSTM_SAVE_MODELS=1`；預設 GitHub 不保存以免爆 repo。請勿直接用 git 提交巨大 ZIP、`.keras`、`.joblib`。
-- 每次每日預測都依實際執行時間保存。**不會用今天重訓的模型補寫昨天原本不存在的預測**。
-- 沒有提供外部交易券商憑證，也沒有下單 API；全程都只做研究與模擬比較。
+沒有券商下單介面。`notebooks/original_*` 保留來源追溯，不在每日流程重複執行。

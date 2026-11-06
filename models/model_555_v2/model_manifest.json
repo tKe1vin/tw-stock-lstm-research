@@ -1,0 +1,23 @@
+{
+  "model_id": "555_v2",
+  "model_version": "rolling_selected_fold16_window756_carried",
+  "official_555_replacement": false,
+  "window": 756,
+  "layers": 2,
+  "units": 50,
+  "learning_rate": 0.001,
+  "features": [
+    "Close",
+    "MA20",
+    "RSI_14",
+    "MACD_Hist",
+    "Market_Vol_20d",
+    "Daily_Sentiment"
+  ],
+  "weight_file": "models/model_555_v2/weights/weights.npz",
+  "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "scaler_state": "models/model_555_v2/scaler/model_card.json",
+  "execution": "next_session_close",
+  "rebalance_every_sessions": 5,
+  "risk_off_gross_cap": 0.5
+}

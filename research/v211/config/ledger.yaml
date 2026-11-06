@@ -1,0 +1,8 @@
+ledger_mode: imported_research
+scheduler_task_name: TwStockLstmCompleteDaily
+shared_weights: experiments/results/v2/v211/weights/weights.npz
+developer_signal: research/v211/signal_registry/developer_original/2026-11-05.csv
+notes:
+  imported_research continues this package copy of the 2026-11-05 signal and does not publish that date again.
+  new_independent creates research/v211/independent_ledger and does not import that signal into the new book.
+  Neither mode registers TwStockLstmV211Daily.

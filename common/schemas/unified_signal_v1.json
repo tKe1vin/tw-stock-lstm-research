@@ -1,0 +1,34 @@
+{
+  "predicted_return_pct_unit": "percent_points",
+  "percent_points_meaning": "0.677330 means +0.677330 percent",
+  "target_weight_unit": "fraction_of_capital",
+  "not_applicable": "不適用",
+  "do_not_compare_roi_across_models": true,
+  "columns": [
+    "model_id",
+    "model_version",
+    "signal_date",
+    "run_date",
+    "generated_at",
+    "data_asof",
+    "stock_id",
+    "stock_name",
+    "predicted_return_pct",
+    "prediction_horizon_days",
+    "rank",
+    "target_weight",
+    "cash_weight",
+    "risk_status",
+    "intended_execution_date",
+    "execution_price",
+    "execution_status",
+    "model_hash",
+    "data_hash"
+  ],
+  "date_fields": {
+    "signal_date": "訊號日",
+    "run_date": "執行日",
+    "data_asof": "資料截止日",
+    "intended_execution_date": "預定成交日"
+  }
+}

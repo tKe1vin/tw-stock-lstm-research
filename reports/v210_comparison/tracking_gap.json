@@ -1,0 +1,21 @@
+{
+  "live_directory": "experiments\\results\\v2\\v210\\daily",
+  "existing_live_csv": [],
+  "trustworthy_2026_11_05_prediction": false,
+  "reason": "目錄沒有帶寫入時間的 V2.10 預測，不能把今晚補寫的檔案說成盤中已經發布。",
+  "can_start_now": [
+    "凍結規則、成本、成交假設與 V2.9C 比較表",
+    "拒絕覆寫的每日檔案格式"
+  ],
+  "missing_before_a_live_prediction": [
+    "rolling_selected 的模型權重沒有保存",
+    "價格檔最後一天是 2026-11-04，沒有 2026-11-05 收盤",
+    "情緒檔最後一天是 2026-11-04，沒有當日可用特徵快照",
+    "沒有下一交易日的實際成交價可回填"
+  ],
+  "historical_check_2026_03_26_to_2026_11_04": {
+    "allowed_as": "historical_reconstruction_not_live",
+    "usable_as_upgrade_sample": false,
+    "reason": "這段已被正式 444、555 與先前研究看過，而且成交協議不同，不能事後標成 2026-11-05 之前的即時預測。"
+  }
+}

@@ -66,7 +66,7 @@ def finalize(ns):
     pred=pd.DataFrame(rows)
     pred.to_csv(out/'next_day_recommendation.csv',index=False,encoding='utf-8-sig')
     # Save a daily immutable recommendation; never retrospectively create one.
-    hist=ROOT/'outputs/444/recommendation_history';hist.mkdir(parents=True,exist_ok=True)
+    hist=Path(__import__('os').environ.get('LSTM_RECOMMENDATION_HISTORY_DIR', str(ROOT/'outputs/444/recommendation_history')));hist.mkdir(parents=True,exist_ok=True)
     file=hist/(run_id+'.csv')
     if file.exists():raise FileExistsError(file)
     pred.to_csv(file,index=False,encoding='utf-8-sig')

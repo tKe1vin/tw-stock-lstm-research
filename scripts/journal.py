@@ -11,7 +11,7 @@ def _format_pct(value):
     return '—' if pd.isna(value) else f'{float(value):+.2f}%'
 
 
-def past_444(as_of):
+def past_444(as_of, price_path=None):
     history=ROOT/'outputs/444/recommendation_history'
     old=[]
     for path in history.glob('*.csv'):
@@ -21,13 +21,16 @@ def past_444(as_of):
     all_rows=pd.concat(old,ignore_index=True)
     all_rows['Target_Date']=pd.to_datetime(all_rows.Target_Date)
     all_rows['Created_At']=pd.to_datetime(all_rows.Created_At,utc=True)
-    available=all_rows.loc[all_rows.Target_Date<=pd.Timestamp(as_of)].copy()
+    target_open=all_rows.Target_Date.dt.normalize().dt.tz_localize('Asia/Taipei')+pd.Timedelta(hours=9)
+    # Historical fixture replays may save a recommendation after its target day.
+    # Overnight forecasts are valid when saved before the target session's open.
+    available=all_rows.loc[(all_rows.Target_Date<=pd.Timestamp(as_of))&(all_rows.Created_At<target_open)].copy()
     if available.empty:return '前次建議尚未到達實現日，暫不評分。'
     available=available.sort_values('Created_At').drop_duplicates(['Target_Date','Ticker'],keep='last')
     latest=available.Target_Date.max()
     part=available.loc[available.Target_Date==latest]
     if len(part)!=5 or set(part.Ticker)!=set(TICKERS):return '前次預測缺少五檔股票，不計算組合方向。'
-    prices=pd.read_csv(ROOT/'data/prices/historical_prices.csv')
+    prices=pd.read_csv(Path(price_path) if price_path is not None else ROOT/'data/prices/historical_prices.csv')
     prices['Date']=pd.to_datetime(prices.Date)
     panel=prices.pivot(index='Date',columns='ticker',values='Close')
     signal=pd.Timestamp(part.Signal_Date.iloc[0]);target=pd.Timestamp(latest)
@@ -55,7 +58,7 @@ def past_555(run_dir):
             '此為推薦權重的理論毛回報，並非交易帳戶淨收益。')
 
 
-def write_journals(asof, bdir, ndir, cdir):
+def write_journals(asof, bdir, ndir, cdir, price_path=None):
     asof=str(pd.Timestamp(asof).date())
     day_dir=ROOT/'reports/daily'/asof;day_dir.mkdir(parents=True,exist_ok=True)
     for kind,run_dir in [('444',bdir),('555',ndir)]:
@@ -63,7 +66,7 @@ def write_journals(asof, bdir, ndir, cdir):
         rec=pd.read_csv(Path(run_dir)/'next_day_recommendation.csv')
         if rec.empty or set(rec.Ticker)!=set(TICKERS):
             raise ValueError(f'{kind} 未產出完整五檔建議，不記錄為成功日')
-        review=past_444(asof) if kind=='444' else past_555(run_dir)
+        review=past_444(asof,price_path=price_path) if kind=='444' else past_555(run_dir)
         report=[f'## {asof} — {kind} 每日研究日誌',
             f'- 執行編號：`{metrics.Run_ID}`',
             f'- 測試區間：{metrics.Test_Start} ~ {metrics.Test_End}（{int(metrics.Test_Days)} 個交易日）',

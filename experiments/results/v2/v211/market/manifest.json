@@ -1,0 +1,14 @@
+{
+  "price_origin": "outputs\\555\\runs\\20261104T185517400806\\historical_prices.csv",
+  "sentiment_origin": "experiments\\data\\sentiment_experimental.csv",
+  "price_origin_sha256_at_seed": "0edd0203fb460004918f9f29e9edf87d1a91c0f1f1191a85fca817efdc5bf6c6",
+  "sentiment_origin_sha256_at_seed": "e67367325eeea467599803cc8c47bd6167c6a459e8462b5530df90d2421a6bf6",
+  "official_price_sha256_at_seed": "2a0289bc002e8d7cb9129165e7dd4bd7ce7fb8d864a7843758ea81f9378f7a38",
+  "official_sentiment_sha256_at_seed": "6ed5c9e639e7ff57736dbdcaef1b32e34e8d626b795b71d74003ac048b6caa1f",
+  "price_seed_sha256": "0edd0203fb460004918f9f29e9edf87d1a91c0f1f1191a85fca817efdc5bf6c6",
+  "sentiment_seed_sha256": "e67367325eeea467599803cc8c47bd6167c6a459e8462b5530df90d2421a6bf6",
+  "price_seed_through": "2026-11-04",
+  "sentiment_seed_through": "2026-11-04",
+  "seeded_at": "2026-11-05T23:23:09.317895+08:00",
+  "note": "Rows on or before the seed dates are never replaced."
+}

@@ -1,0 +1,140 @@
+{
+  "candidate": "rolling_selected",
+  "means_research_choice_not_index_alpha": true,
+  "official_555_replacement": false,
+  "weights_saved": false,
+  "weights_path": null,
+  "weights_reason": "walk-forward 結束後沒有保存 .keras。這次不重新訓練。",
+  "architecture": {
+    "layers": 2,
+    "units": 50,
+    "dropout": 0.2,
+    "dense": 1,
+    "loss": "mse",
+    "optimizer": "adam",
+    "learning_rate": 0.001,
+    "epochs": 50,
+    "patience": 5,
+    "batch_size": 32,
+    "seed": 42,
+    "time_step": 10,
+    "features": [
+      "Close",
+      "MA20",
+      "RSI_14",
+      "MACD_Hist",
+      "Market_Vol_20d",
+      "Daily_Sentiment"
+    ],
+    "windows": [
+      252,
+      504,
+      756
+    ],
+    "window_rule": "各折只看驗證橫斷面 Spearman，平手留較長視窗",
+    "scaler": "MinMaxScaler fit on that fold's training rows only"
+  },
+  "data_cutoff": "2026-03-25",
+  "coverage": {
+    "tickers": [
+      "2002.TW",
+      "2317.TW",
+      "2330.TW",
+      "2603.TW",
+      "2891.TW"
+    ],
+    "validation_start": "2022-02-15",
+    "validation_end": "2026-01-21",
+    "test_signal_start": "2022-05-24",
+    "test_signal_end": "2026-03-17",
+    "execution_start": "2022-02-16",
+    "test_execution_start": "2022-05-25",
+    "label_end": "2026-03-25",
+    "rows": 9425,
+    "same_test_calendar_as_rolling_252": true
+  },
+  "window_counts": {
+    "252": 11,
+    "504": 2,
+    "756": 3
+  },
+  "trading": {
+    "execution": "next_session_close",
+    "same_close_execution": false,
+    "rebalance_every_sessions": 5,
+    "capital": 100000.0,
+    "broker_fee": 0.001425,
+    "sell_tax": 0.003,
+    "base_weight": 0.2,
+    "up_weight": 0.25,
+    "down_weight": 0.15,
+    "floor": 0.05,
+    "cap": 0.3,
+    "risk_off_gross_cap": 0.5,
+    "tau": "per-ticker median absolute validation prediction"
+  },
+  "adoption": {
+    "models": [
+      "rolling_selected",
+      "lstm1_50",
+      "lstm1_32",
+      "retrain_5",
+      "retrain_1"
+    ],
+    "control": "mse_b",
+    "min_wins": 9,
+    "positive_rate_band": [
+      0.2,
+      0.8
+    ],
+    "either_rank_or_direction": true,
+    "tie_break": [
+      "validation balanced accuracy",
+      "validation spearman",
+      "tie order"
+    ],
+    "test_roi_is_an_input": false,
+    "passed_by": "direction gate, then highest validation balanced accuracy"
+  },
+  "future_gates": {
+    "sample_start": "2026-11-05",
+    "minimum_matured_signal_days": 60,
+    "tickers": [
+      "2330.TW",
+      "2317.TW",
+      "2603.TW",
+      "2002.TW",
+      "2891.TW"
+    ],
+    "cross_section_spearman_block_bootstrap_lower_10pct_above": 0.0,
+    "direction_must_beat": [
+      "always_long",
+      "mse_b"
+    ],
+    "balanced_accuracy_above": 0.5,
+    "positive_rate_band": [
+      0.2,
+      0.8
+    ],
+    "net_roi_must_beat_matched_equal_weight": true,
+    "index_gap_is_reported_not_sufficient": true,
+    "max_drawdown_not_worse_than_equal_by_pct_points": 5.0,
+    "positive_spearman_share_of_20day_blocks_at_least": 0.5,
+    "team_decision_required": true,
+    "code_may_set_official_replacement": false
+  },
+  "git_head": "65957f3de97befb8396658d2fcc2b3e8ee3cd104",
+  "file_sha256": {
+    "experiments\\results\\v2\\v29c\\summary.json": "68644a8fe8e01a6e3b2170ac0702b374ee79e3c2fff6b0c60a8fc30ddbc9953b",
+    "experiments\\results\\v2\\v29c\\prediction_quality.csv": "516e582979a47a2ec02cfddae4bfe0d3aa9ea1673c6c5ca5e31c7df33e6ba0aa",
+    "experiments\\results\\v2\\v29c\\fold_quality.csv": "4e5fe2f702fa4e81ddab85588819baa6d8737f2c6997081df1df114ab5df27ca",
+    "experiments\\results\\v2\\v29c\\strategy_metrics.csv": "88340858af61448cb29e6ebdcff28016190772e6cfc4c853bcc5ae0302eff6ef",
+    "experiments\\results\\v2\\v29c\\window_choices.csv": "d93d72291fce71a66e1d0306f3606e24b5bee48a28f67876962a24f1386082ff",
+    "experiments\\results\\v2\\v29b\\fixed_predictions.csv": "3ce06bd37ea3be5ca67fff1513884a7c3e26b2717b5a3db65b51b74ae104f28a",
+    "experiments\\results\\v2\\v29b\\schedule_predictions.csv": "073734cf74acabce1b8b511bac7bcfd732dced6bb33b1c0557a9786e1665cbfd",
+    "data\\prices\\historical_prices.csv": "2a0289bc002e8d7cb9129165e7dd4bd7ce7fb8d864a7843758ea81f9378f7a38",
+    "data\\sentiment_features_2026.csv": "6ed5c9e639e7ff57736dbdcaef1b32e34e8d626b795b71d74003ac048b6caa1f",
+    "experiments\\v2\\v28_rules.py": "3be8fb88a69e017ac100ed0caffd292276c9cdde0d39355796dae0c16918de7d",
+    "experiments\\v2\\books.py": "ff0452834c9e7bc56f80b6f5bfab79efa9b0197f30ef8c8876fd4822249a881d"
+  }
+}
