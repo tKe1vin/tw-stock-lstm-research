@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "error": null,
+  "data_updated_through_latest_completed_session": false,
+  "data": {
+    "prices_through": "2026-11-05",
+    "price_names_on_last_day": [
+      "2002.TW",
+      "2317.TW",
+      "2330.TW",
+      "2603.TW",
+      "2891.TW",
+      "^TWII"
+    ],
+    "official_sentiment_through": "2026-11-04",
+    "official_sentiment_missing_since_october": 0,
+    "last_day_features_complete": true,
+    "incomplete_tickers": [],
+    "frozen_window": 756,
+    "frozen_window_source": "v29c window_choices fold 16 validation Spearman 0.3067",
+    "weights_present_before_run": true,
+    "context_source": "v211_market",
+    "tracker_downloads_data": false
+  },
+  "model_version": "rolling_selected_fold16_window756_carried",
+  "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "weights_reused": true,
+  "signal": {
+    "publish": false,
+    "reason": "would_backfill_an_earlier_session",
+    "completed_session": "2026-11-05"
+  },
+  "signal_published": false,
+  "rebalance_today": false,
+  "rebalance": {
+    "rebalance_today": false,
+    "reason": "waiting_for_first_fill",
+    "first_execution": "2026-11-06",
+    "today": "2026-11-06"
+  },
+  "labels_matured_today": [],
+  "scorable_signal_days": 0,
+  "immature_predictions": 5,
+  "scoring": {
+    "matured_signal_days": 0,
+    "pending_predictions": 5,
+    "matured_today": [],
+    "pending_labels": [
+      {
+        "signal": "2026-11-05",
+        "label_end": "2026-11-13"
+      }
+    ],
+    "next_label_end": "2026-11-13",
+    "metrics": null
+  },
+  "book": {
+    "status": "waiting_for_next_close",
+    "first_fill_completed": false,
+    "signals": 1,
+    "rebalance_is_every": 5,
+    "prediction_is": "daily",
+    "fill_price": "next_session_close"
+  },
+  "first_fill_completed": false,
+  "next_label_date": "2026-11-13",
+  "review": {
+    "minimum_matured_signal_days": 60,
+    "matured_signal_days": 0,
+    "ready_for_first_review": false,
+    "recommend_replace_official_555": false,
+    "reason": "60 個重疊的五日標籤只是最低觀察數。程式不能更換正式 555。"
+  },
+  "fetch": {
+    "ready_to_predict": true,
+    "completed_session": "2026-11-05",
+    "clock": "2026-11-06T00:53:20.414348+08:00",
+    "prices_ready": true,
+    "sentiment_ready": true,
+    "price_source": "yfinance unadjusted Close",
+    "sentiment_source": "cnyes tw_stock + IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment",
+    "calendar": "exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES",
+    "used_previous_day_sentiment": false,
+    "v211_module_downloads": false,
+    "error": null,
+    "appended_price_dates": [],
+    "appended_sentiment_dates": [],
+    "prices_through": "2026-11-05",
+    "price_sha256": "49fa501d2ee2b3c1bbc02d85f8013ff101ea3711d80dae799f8823df3e48ade4",
+    "sentiment_through": "2026-11-05",
+    "sentiment_sha256": "72d1dc913a7280c2aed18b84d83035c0607e122b72c42688472e12e09e80e1be",
+    "gate": "ready",
+    "fetched_at": "2026-11-05T23:23:09.114628+08:00",
+    "official_price_changed_since_seed": false,
+    "official_sentiment_changed_since_seed": false
+  },
+  "risk_cap": 0.5,
+  "official_555_replacement": false,
+  "tracker_downloads_data": false
+}

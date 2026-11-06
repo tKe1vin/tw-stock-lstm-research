@@ -1,0 +1,14 @@
+{
+  "id": "reproducible",
+  "as_of": "2026-11-04",
+  "prices": "data/examples/reproducible/prices.csv",
+  "sentiment": "data/examples/reproducible/sentiment.csv",
+  "prices_sha256": "2a0289bc002e8d7cb9129165e7dd4bd7ce7fb8d864a7843758ea81f9378f7a38",
+  "sentiment_sha256": "6ed5c9e639e7ff57736dbdcaef1b32e34e8d626b795b71d74003ac048b6caa1f",
+  "price_source": "bundled yfinance unadjusted Close through 2026-11-04",
+  "sentiment_source": "bundled official sentiment through 2026-11-04",
+  "writes_back_to_inputs": false,
+  "epochs": 50,
+  "patience": 5,
+  "note": "This fixture is the read-only bundled official snapshot. Training writes only under outputs/444/reproducible-2026-11-04 and outputs/555/reproducible-2026-11-04. It is a historical replay, not today's live recommendation, and it does not touch the V2.11 signal."
+}

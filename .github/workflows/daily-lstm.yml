@@ -1,15 +1,29 @@
-name: Daily 444 vs 555 research pipeline
+name: Daily 444, 555 and frozen V2 research
 
 on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Force rerun if already completed today'
+        description: 'Retrain completed 444/555 runs; published V2.11 signals remain immutable'
         type: boolean
         default: false
   schedule:
-    # UTC 09:37 = Asia/Taipei 17:37, Monday-Friday; local exchange calendar is rechecked.
+    # UTC 09:37 / 13:37 = Taipei 17:37 / 21:37. The second run retries missing data.
+    # The application rechecks the XTAI calendar and today's completed close.
     - cron: '37 9 * * 1-5'
+    - cron: '37 13 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/daily-lstm.yml'
+      - 'scripts/**'
+      - 'notebooks/**'
+      - 'experiments/**/*.py'
+      - 'models/**'
+      - 'common/**'
+      - 'requirements*.txt'
+      - 'pytest.ini'
+      - 'tests/**'
 
 permissions:
   contents: write
@@ -19,74 +33,105 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  pipeline:
+  daily:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 330
     env:
       TZ: Asia/Taipei
       PYTHONUNBUFFERED: '1'
       LSTM_SAVE_MODELS: '0'
+      MPLBACKEND: Agg
+      USE_TF: '0'
       HF_HUB_DISABLE_TELEMETRY: '1'
       TF_CPP_MIN_LOG_LEVEL: '2'
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+      TF_NUM_INTEROP_THREADS: '2'
+      TF_NUM_INTRAOP_THREADS: '2'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-ci.txt
       - name: Cache downloaded Chinese sentiment model
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub
           key: huggingface-erlangshen-roberta-110m-sentiment-v1
-      - name: Install CPU PyTorch and LSTM packages
+      - name: Install CPU dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r requirements.txt
-      - name: Quick unit checks
-        run: |
-          python -m pip install pytest
-          python -m pytest -q tests/
-      - name: Run 444 and 555 independently, compare and journal
+          python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements-ci.txt
+      - name: Run isolated unit checks
+        run: python -m pytest -q
+      - name: Verify frozen model hashes and TensorFlow loading
+        run: python -m scripts.verify_models
+      - name: Update shared sources and run the four systems
+        id: daily
+        timeout-minutes: 270
+        env:
+          FORCE_RERUN: ${{ inputs.force || false }}
         shell: bash
         run: |
           mkdir -p logs
-          set -o pipefail
-          if [[ '${{ inputs.force }}' == 'true' ]]; then
-            python -m scripts.pipeline --force 2>&1 | tee logs/pipeline.log
-          else
-            python -m scripts.pipeline 2>&1 | tee logs/pipeline.log
+          args=(--mode full)
+          if [[ "$FORCE_RERUN" == 'true' ]]; then
+            args+=(--force)
           fi
-      - name: Commit compact daily data and journals
-        if: success()
-        shell: bash
+          set +e
+          set -o pipefail
+          python -m scripts.run_all_daily "${args[@]}" 2>&1 | tee logs/pipeline.log
+          result="${PIPESTATUS[0]}"
+          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          # Persist valid partial results first. The final step reports waiting/failure.
+          exit 0
+      - name: Persist validated state, including partial progress
+        id: persist
+        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A data/ reports/ outputs/444/recommendation_history/ outputs/555/recommendation_history/
-          if git diff --cached --quiet; then
-            echo 'No changed daily data'; exit 0
-          fi
-          git commit -m "research: daily 444/555 results $(date +%F)"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
-      - name: Write explicit failure marker
-        if: failure()
-        shell: bash
-        run: |
-          mkdir -p logs
-          echo "Pipeline failed at run ${{ github.run_id }}. Check logs/pipeline.log and the preceding failed step; no successful daily result was published." > logs/FAILURE.txt
-      - name: Upload independent full-run files and logs
+          python -m scripts.persist_daily_state --commit --push
+      - name: Upload complete outputs and logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: daily-lstm-${{ github.run_id }}
-          retention-days: 14
+          name: daily-lstm-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 30
           if-no-files-found: warn
           path: |
             logs/
-            outputs/444/runs/
-            outputs/555/runs/
+            outputs/
             reports/daily/
+            data/snapshots/
+            experiments/results/v2/v211/status.json
+      - name: Report complete, waiting or failed
+        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
+        env:
+          PIPELINE_EXIT: ${{ steps.daily.outputs.exit_code }}
+          PERSIST_OUTCOME: ${{ steps.persist.outcome }}
+        shell: bash
+        run: |
+          {
+            echo '### Daily research run'
+            echo "Pipeline exit code: ${PIPELINE_EXIT:-unavailable} (0 complete; 2 waiting; 1 failed)."
+            echo "State persistence: $PERSIST_OUTCOME."
+            echo 'Full outputs and logs are attached as the daily-lstm artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$PERSIST_OUTCOME" != 'success' ]]; then
+            echo 'State persistence failed; inspect the persistence step before retrying.'
+            exit 1
+          fi
+          case "$PIPELINE_EXIT" in
+            0) exit 0 ;;
+            2) echo 'Waiting: completed-session prices or news are not ready. The next scheduled run will retry.'; exit 2 ;;
+            *) echo 'Pipeline failed or timed out. Valid partial state was preserved when possible.'; exit 1 ;;
+          esac

@@ -1,0 +1,10 @@
+{
+  "2026-11-05.csv": {
+    "created_at": "2026-11-05T23:23:09.114628+08:00",
+    "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "signal_date": "2026-11-05",
+    "planned_execution": "2026-11-06",
+    "rows": 5,
+    "file_sha256": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659"
+  }
+}

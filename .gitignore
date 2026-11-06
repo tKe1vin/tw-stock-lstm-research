@@ -5,15 +5,54 @@ __pycache__/
 .env
 *.pyc
 *.tmp
-logs/
-# Large per-run model artifacts, PNG charts, and ZIP snapshots are uploaded as Actions artifacts.
-outputs/444/runs/
-outputs/555/runs/
-outputs/555/latest.json
-outputs/555/latest_replay.json
 *.keras
 *.joblib
 *.zip
-# Data files below ARE persisted in git to keep day-to-day source state:
-# data/news_scored_cache.csv, data/news_update_state.json,
-# data/prices/historical_prices.csv, outputs/*/recommendation_history/
+logs/
+
+# Full snapshots, training histories and charts belong in Actions artifacts.
+data/snapshots/
+outputs/**/runs/
+outputs/444/*/
+!outputs/444/recommendation_history/
+outputs/555/*/
+!outputs/555/recommendation_history/
+outputs/555_v2/*/
+outputs/v211/*/
+outputs/daily_summary/*/
+
+# Persist only compact, date-scoped exports in the generated output directories.
+!outputs/444/????-??-??/
+!outputs/555/????-??-??/
+!outputs/555_v2/????-??-??/
+!outputs/v211/????-??-??/
+!outputs/daily_summary/????-??-??/
+outputs/*/????-??-??/*
+!outputs/*/????-??-??/status.json
+!outputs/*/????-??-??/unified_signal.csv
+!outputs/*/????-??-??/unified_signal.metadata.json
+!outputs/*/????-??-??/prediction.csv
+!outputs/*/????-??-??/dates.json
+!outputs/daily_summary/????-??-??/summary.json
+!outputs/444/????-??-??/native/
+!outputs/555/????-??-??/native/
+outputs/*/????-??-??/native/*
+!outputs/444/????-??-??/native/*.csv
+!outputs/444/????-??-??/native/evaluation_protocol.json
+!outputs/555/????-??-??/native/*.csv
+!outputs/555/????-??-??/native/evaluation_protocol.json
+outputs/555/latest.json
+outputs/555/latest_replay.json
+
+# Temporary Yahoo staging and detailed logs are not study state.
+experiments/results/v2/v211/logs/
+experiments/results/v2/v211/market/yahoo_staging*
+research/v211/independent_ledger/logs/
+research/v211/independent_ledger/market/yahoo_staging*
+
+# Canonical prices/sentiment/news cache, immutable signals and compact reports
+# remain tracked. scripts.persist_daily_state applies a second explicit allowlist.
+# Large historical exploration intermediates remain in the supplied archive.
+experiments/results/signal_models/predictions.csv
+experiments/results/walk_forward_predictions.csv
+experiments/results/v2/v210/
