@@ -1,0 +1,17 @@
+# 四套系統每日狀態
+
+資料截止交易日：**2026-11-06**；執行日：2026-11-06。
+整體狀態：**complete**。
+
+| 系統 | 本次狀態 | 當日結果 |
+| --- | --- | --- |
+| 444 | success | [查看結果](../../latest/444/next_day_recommendation.csv) |
+| 555 | success | [查看結果](../../latest/555/next_day_recommendation.csv) |
+| 555_v2 | success | [查看結果](../../../outputs/555_v2/2026-11-06/unified_signal.csv) |
+| v211 | success | [查看結果](../../../experiments/results/v2/v211/daily/2026-11-06.csv) |
+
+444 與 555 的績效只在相同測試日期、價格快照及評估規格下比較。
+555 V2 是凍結候選的預測輸出；V2.11 使用同一模型保存研究訊號、成交與成熟標籤。
+四套系統的 ROI 不合併排名；未完成的當日結果不以舊結果代替。
+
+[查看 444／555 同協議比較](comparison.md)

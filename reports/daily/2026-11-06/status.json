@@ -1,0 +1,81 @@
+{
+  "report_schema": "four-systems-v1",
+  "as_of_date": "2026-11-06",
+  "run_date": "2026-11-06",
+  "started": "2026-11-06T23:04:02.865561+08:00",
+  "finished": null,
+  "status": "complete",
+  "last_successful_as_of_date": "2026-11-06",
+  "models": {
+    "444": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-06",
+      "reason": "already_completed_for_this_session",
+      "current_output": "reports/latest/444/next_day_recommendation.csv"
+    },
+    "555": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-06",
+      "reason": "already_completed_for_this_session",
+      "current_output": "reports/latest/555/next_day_recommendation.csv"
+    },
+    "555_v2": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-06",
+      "reason": "prediction_written_not_a_research_signal",
+      "current_output": "outputs/555_v2/2026-11-06/unified_signal.csv"
+    },
+    "v211": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-06",
+      "reason": null,
+      "current_output": "experiments/results/v2/v211/daily/2026-11-06.csv"
+    }
+  },
+  "comparison_status": "matched_test_dates_and_price_panel",
+  "market": {
+    "ready_to_predict": true,
+    "completed_session": "2026-11-06",
+    "clock": "2026-11-06T23:04:04.455620+08:00",
+    "prices_ready": true,
+    "sentiment_ready": true,
+    "price_source": "yfinance unadjusted Close",
+    "sentiment_source": "cnyes tw_stock + IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment",
+    "calendar": "exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES",
+    "used_previous_day_sentiment": false,
+    "v211_module_downloads": false,
+    "error": null,
+    "price_error": null,
+    "sentiment_error": null,
+    "appended_price_dates": [],
+    "appended_sentiment_dates": [],
+    "prices_through": "2026-11-06",
+    "price_sha256": "3f04727cd9d87bba9508783981b126fb3047176db41002539dc0118eb1f0b122",
+    "sentiment_through": "2026-11-06",
+    "sentiment_sha256": "5dab333642ebac8def5dd8671825d446371154661e1a9ff75709447054d629da",
+    "gate": "ready",
+    "fetched_at": "2026-11-06T22:55:57.952680+08:00",
+    "official_price_changed_since_seed": true,
+    "official_sentiment_changed_since_seed": true,
+    "snapshot_dir": "data/snapshots/2026-11-06",
+    "used_previous_day_as_today": false,
+    "read_only": false,
+    "shared_source": "v211_market",
+    "snapshot_prices_ready": true,
+    "snapshot_prices_sha256": "3f04727cd9d87bba9508783981b126fb3047176db41002539dc0118eb1f0b122",
+    "snapshot_sentiment_ready": true,
+    "snapshot_sentiment_sha256": "5dab333642ebac8def5dd8671825d446371154661e1a9ff75709447054d629da",
+    "status": "success",
+    "exit_code": 0,
+    "log": "logs/orchestrator/20261106T230403126684_market.log"
+  },
+  "performance_protocols_combined": false
+}

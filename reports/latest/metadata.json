@@ -1,14 +1,14 @@
 {
   "report_schema": "four-systems-v1",
-  "as_of_date": "2026-11-05",
-  "status": "partial",
-  "last_successful_as_of_date": null,
-  "comparison_status": "waiting_for_both_current_notebooks",
+  "as_of_date": "2026-11-06",
+  "status": "complete",
+  "last_successful_as_of_date": "2026-11-06",
+  "comparison_status": "matched_test_dates_and_price_panel",
   "model_currentness": {
-    "444": false,
-    "555": false,
-    "555_v2": false,
-    "v211": false
+    "444": true,
+    "555": true,
+    "555_v2": true,
+    "v211": true
   },
   "note": "Read four_systems.json before treating any older result file as current."
 }
