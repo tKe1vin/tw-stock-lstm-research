@@ -19,7 +19,7 @@ COMPACT_FILES = (
 )
 REQUIRED_COMPARISON_FILES = (
     "strategy_metrics.csv", "evaluation_protocol.json", "next_day_recommendation.csv",
-    "model_metrics.csv", "backtest_nav.csv", "market_metrics.csv",
+    "model_metrics.csv", "backtest_nav.csv",
 )
 
 
@@ -41,13 +41,16 @@ def _inside_root(value: str) -> Path:
 
 def _native(model: str, payload: dict, day: str) -> Path:
     """Prefer durable compact native files when full runs lived in an artifact."""
+    # 444 exports the benchmark NAV; compare() takes benchmark Sharpe/MDD from
+    # 555 only after verifying that the two benchmark NAV series agree.
+    required = REQUIRED_COMPARISON_FILES + (("market_metrics.csv",) if model == "555" else ())
     choices = [payload.get("daily_native_dir"), payload.get("native_output_dir")]
     choices.append(f"reports/latest/{model}")
     for value in choices:
         if not value:
             continue
         folder = _inside_root(str(value))
-        if not all((folder / name).is_file() for name in REQUIRED_COMPARISON_FILES):
+        if not all((folder / name).is_file() for name in required):
             continue
         protocol = _read(folder / "evaluation_protocol.json")
         if str(protocol.get("as_of_date", ""))[:10] != day:

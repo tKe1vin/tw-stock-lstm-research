@@ -55,7 +55,10 @@ def notebook(root, model, price_hash="same", day=DAY):
            "Market_Index": [100000, 101000, 102000],
            "Portfolio_Net" if model == "444" else "NAV": [100000, 101000, 101000]}
     pd.DataFrame(nav).to_csv(native / "backtest_nav.csv", index=False)
-    pd.DataFrame([{"Sharpe": .5, "MDD_Pct": -2}]).to_csv(native / "market_metrics.csv", index=False)
+    # Match the actual notebook contracts: 444 exports Market_Index NAV but no
+    # market_metrics.csv; the comparison uses that file from 555 only.
+    if model == "555":
+        pd.DataFrame([{"Sharpe": .5, "MDD_Pct": -2}]).to_csv(native / "market_metrics.csv", index=False)
     pd.DataFrame([{
         "Ticker": ticker, "Price_MAE": 1., "Price_RMSE": 2., "Return_MAE_pp": .5,
         "Return_RMSE_pp": .7, "Direction_Accuracy_Pct": 55.,
@@ -119,8 +122,9 @@ def test_partial_four_system_report_retains_verified_prior_success(root):
 
 
 def test_current_notebooks_compare_separately_from_frozen_research(root):
-    notebook(root, "444")
+    baseline = notebook(root, "444")
     notebook(root, "555")
+    assert not (baseline / "market_metrics.csv").exists()
     v2 = root / "outputs/555_v2" / DAY / "prediction.csv"
     v2.parent.mkdir(parents=True)
     pd.DataFrame([{"Ticker": ticker, "Signal_Date": DAY} for ticker in TICKERS]).to_csv(v2, index=False)
@@ -142,6 +146,15 @@ def test_current_notebooks_compare_separately_from_frozen_research(root):
     assert set(comparison.Strategy_ID) == {"444", "555", "^TWII benchmark"}
     assert (root / "reports/journals/444.md").exists()
     assert "../.." in (root / "reports/latest/summary.md").read_text()
+
+
+def test_555_still_requires_exported_benchmark_metrics(root):
+    notebook(root, "444")
+    multivariate = notebook(root, "555")
+    (multivariate / "market_metrics.csv").unlink()
+    run = summary({"444": "success", "555": "success", "555_v2": "waiting", "v211": "waiting"})
+    with pytest.raises(ValueError, match="555 reported success without complete outputs"):
+        daily_reports.build_reports(run, DAY)
 
 
 def test_mismatched_price_protocol_raises_instead_of_publishing_complete(root):
