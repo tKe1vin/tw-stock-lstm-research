@@ -1,0 +1,7 @@
+﻿Target_Date,Run_ID,Predicted_Gross_Return_Pct,Actual_Gross_Return_Pct,Gross_Direction_Correct,Has_Exposure,Cash_Weight,Status
+2026-10-30,20261030T023124705094,0.12075463775545354,-0.9342797500058975,False,True,0.0,"Hypothetical recommendation, gross; not an account PnL"
+2026-11-02,20261031T001456975224,0.12201736681163305,-0.11350277220605329,False,True,0.10000000000000009,"Hypothetical recommendation, gross; not an account PnL"
+2026-11-03,20261103T034722620154,0.09780441146964824,-1.6298100067045869,False,True,1.1102230246251565e-16,"Hypothetical recommendation, gross; not an account PnL"
+2026-11-04,20261104T012003615713,0.050832610746676235,-0.5769418533273096,False,True,0.5000000000000002,"Hypothetical recommendation, gross; not an account PnL"
+2026-11-05,20261105T012950402306,0.03917185270693151,-0.5048467786513611,False,True,0.5,"Hypothetical recommendation, gross; not an account PnL"
+2026-11-06,20261106T013956557045,0.042318080260883996,-1.9980637648510338,False,True,0.5,"Hypothetical recommendation, gross; not an account PnL"

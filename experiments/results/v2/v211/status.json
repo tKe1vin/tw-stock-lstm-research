@@ -1,9 +1,9 @@
 {
   "ok": true,
   "error": null,
-  "data_updated_through_latest_completed_session": false,
+  "data_updated_through_latest_completed_session": true,
   "data": {
-    "prices_through": "2026-11-05",
+    "prices_through": "2026-11-06",
     "price_names_on_last_day": [
       "2002.TW",
       "2317.TW",
@@ -12,7 +12,7 @@
       "2891.TW",
       "^TWII"
     ],
-    "official_sentiment_through": "2026-11-04",
+    "official_sentiment_through": "2026-11-05",
     "official_sentiment_missing_since_october": 0,
     "last_day_features_complete": true,
     "incomplete_tickers": [],
@@ -26,43 +26,55 @@
   "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
   "weights_reused": true,
   "signal": {
-    "publish": false,
-    "reason": "would_backfill_an_earlier_session",
-    "completed_session": "2026-11-05"
+    "publish": true,
+    "reason": "today_close_is_stored",
+    "completed_session": "2026-11-06",
+    "path": "experiments/results/v2/v211/daily/2026-11-06.csv",
+    "created_at": "2026-11-06T22:56:20.508919+08:00",
+    "reread_rows": 5,
+    "planned_execution": "2026-11-09"
   },
-  "signal_published": false,
-  "rebalance_today": false,
+  "signal_published": true,
+  "rebalance_today": true,
   "rebalance": {
-    "rebalance_today": false,
-    "reason": "waiting_for_first_fill",
+    "rebalance_today": true,
+    "reason": "every_5_sessions_from_first_fill",
     "first_execution": "2026-11-06",
     "today": "2026-11-06"
   },
   "labels_matured_today": [],
   "scorable_signal_days": 0,
-  "immature_predictions": 5,
+  "immature_predictions": 10,
   "scoring": {
     "matured_signal_days": 0,
-    "pending_predictions": 5,
+    "pending_predictions": 10,
     "matured_today": [],
     "pending_labels": [
       {
         "signal": "2026-11-05",
         "label_end": "2026-11-13"
+      },
+      {
+        "signal": "2026-11-06",
+        "label_end": "2026-11-16"
       }
     ],
     "next_label_end": "2026-11-13",
     "metrics": null
   },
   "book": {
-    "status": "waiting_for_next_close",
-    "first_fill_completed": false,
-    "signals": 1,
+    "status": "updated",
+    "first_fill_completed": true,
+    "signals": 2,
     "rebalance_is_every": 5,
     "prediction_is": "daily",
-    "fill_price": "next_session_close"
+    "fill_price": "next_session_close",
+    "sessions": 1,
+    "open_nav": 99928.80072948025,
+    "cash_weight": 0.5000000000000001,
+    "entry_cost": 71.19927051975466
   },
-  "first_fill_completed": false,
+  "first_fill_completed": true,
   "next_label_date": "2026-11-13",
   "review": {
     "minimum_matured_signal_days": 60,
@@ -73,8 +85,8 @@
   },
   "fetch": {
     "ready_to_predict": true,
-    "completed_session": "2026-11-05",
-    "clock": "2026-11-06T00:53:20.414348+08:00",
+    "completed_session": "2026-11-06",
+    "clock": "2026-11-06T22:56:20.508919+08:00",
     "prices_ready": true,
     "sentiment_ready": true,
     "price_source": "yfinance unadjusted Close",
@@ -82,17 +94,9 @@
     "calendar": "exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES",
     "used_previous_day_sentiment": false,
     "v211_module_downloads": false,
-    "error": null,
-    "appended_price_dates": [],
-    "appended_sentiment_dates": [],
-    "prices_through": "2026-11-05",
-    "price_sha256": "49fa501d2ee2b3c1bbc02d85f8013ff101ea3711d80dae799f8823df3e48ade4",
-    "sentiment_through": "2026-11-05",
-    "sentiment_sha256": "72d1dc913a7280c2aed18b84d83035c0607e122b72c42688472e12e09e80e1be",
     "gate": "ready",
-    "fetched_at": "2026-11-05T23:23:09.114628+08:00",
-    "official_price_changed_since_seed": false,
-    "official_sentiment_changed_since_seed": false
+    "error": null,
+    "skipped_download": true
   },
   "risk_cap": 0.5,
   "official_555_replacement": false,

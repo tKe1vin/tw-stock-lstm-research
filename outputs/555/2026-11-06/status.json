@@ -1,0 +1,16 @@
+{
+  "model": "555",
+  "mode": "full",
+  "status": "success",
+  "training_executed": true,
+  "forecast_produced": true,
+  "completed_session": "2026-11-06",
+  "run_date": "2026-11-06",
+  "fixture": "live_snapshot",
+  "price_reason": "ready",
+  "sentiment_reason": "ready",
+  "execution_assumption": "lstm-evaluation-v1; not the 555 V2 next-close research book",
+  "native_output_dir": "outputs/555/2026-11-06/runs/20261106T225729124755",
+  "daily_native_dir": "outputs/555/2026-11-06/native",
+  "unified_csv": "outputs/555/2026-11-06/unified_signal.csv"
+}

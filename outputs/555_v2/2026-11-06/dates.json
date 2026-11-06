@@ -1,0 +1,10 @@
+{
+  "signal_date": "2026-11-06",
+  "run_date": "2026-11-06",
+  "data_asof": "2026-11-06",
+  "intended_execution_date": "2026-11-09",
+  "signal_date_meaning": "訊號日：已完成交易日，特徵與收盤只到這一天",
+  "run_date_meaning": "執行日：程式寫出這份檔案的台北日曆日",
+  "data_asof_meaning": "資料截止日：允許進入模型的最後資料日，等於訊號日",
+  "intended_execution_date_meaning": "預定成交日：下一個交易日收盤，這份預測尚未成交"
+}
