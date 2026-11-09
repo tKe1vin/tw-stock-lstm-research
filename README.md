@@ -73,3 +73,5 @@ python -m scripts.research_extension --mode forecast --output-dir reports/resear
 配對研究的原始預測、價格、情緒、協議及建議以內容雜湊永久壓縮保存於 `data/research_snapshots/`，可逐位元重算投資組合 CSV；這不等於宣稱神經網路重新訓練必然逐位元一致。原始模型訓練檔、權重與日誌在 Actions artifacts 保留 **90 天**。延伸模型另保存本次訓練權重、Scaler、輸入、原始／修正來源及重現驗證。
 
 ZIP 是舊交付版本。部分 v28 中間預測仍缺，不能宣稱舊歷史比較已完整重現；原研究價格已能以雜湊相同的 `data/examples/reproducible/prices.csv` 解析。`tests/legacy_delivery/` 保留舊快照測試，預設 CI 不執行。
+
+若先前555匯出失敗，`python -m scripts.repair_saved_555 --as-of 資料日 --mode check` 僅查驗保存核心與當時快照；`--mode repair` 僅接受失敗且沒有已發布建議的匯出，明標歷史重播並保留原失敗，不回填前瞻訊號或成交。

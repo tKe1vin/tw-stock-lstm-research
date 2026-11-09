@@ -1,0 +1,4 @@
+﻿Strategy_ID,ROI_Pct,Sharpe,MDD_Pct,Test_Days,As_Of_Date,Direction_Accuracy_Pct,Trade_Win_Rate_Pct,Protocol,Return_Basis
+444,23.99427244958932,1.7677439834645463,-13.56875655548716,150,2026-11-09,,,paired-444-core-allocation-v1,net_research_portfolio_fractional_shares
+555,-3.3628482650421176,-0.5295954894145523,-6.925581837198847,150,2026-11-09,,,paired-444-core-allocation-v1,net_research_portfolio_fractional_shares
+^TWII benchmark,31.32967261580981,1.6163796079804351,-20.313914076151363,150,2026-11-09,,,paired-444-core-allocation-v1,theoretical_price_index_no_costs_no_dividends

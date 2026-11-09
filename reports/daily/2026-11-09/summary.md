@@ -1,12 +1,14 @@
+**研究輸出補正：**555 使用先前保存的444預測與當時快照重播，沒有新增前瞻研究樣本、V2.11訊號或成交。首次失敗與補正時間保留於 [修復紀錄](paired/repair/record.json)。
+
 # 四套系統每日狀態
 
 資料截止交易日：**2026-11-09**；執行日：2026-11-09。
-整體狀態：**partial**。
+整體狀態：**complete**。
 
 | 系統 | 本次狀態 | 當日結果 |
 | --- | --- | --- |
 | 444 | success | [查看結果](../../latest/444/next_day_recommendation.csv) |
-| 555 | failed | 尚未完成 |
+| 555 | success | [查看結果](../../latest/555/next_day_recommendation.csv) |
 | 555_v2 | success | [查看結果](../../../outputs/555_v2/2026-11-09/unified_signal.csv) |
 | v211 | success | [查看結果](../../../experiments/results/v2/v211/daily/2026-11-09.csv) |
 
@@ -16,6 +18,4 @@
 
 **主研究：[444 共同核心＋555 動態權重／新聞／風控消融](paired/comparison.md)**。原六特徵 555 比較為延伸診斷。
 
-當日 444／555 比較尚未完成。
-
-最近四套系統均完成的資料日：2026-11-06。
+[查看 444／555 共同核心、次日收盤比較](comparison.md)

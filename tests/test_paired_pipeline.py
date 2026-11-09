@@ -89,3 +89,28 @@ def test_555_waits_for_current_444_and_legacy_remains_explicit(tmp_path, monkeyp
     assert run_model.run_paired_555("full") == 2
     monkeypatch.setattr(run_model, "run_notebook", lambda *a, **k: 17)
     assert run_model.run("555", "full", legacy_555=True) == 17
+
+
+def test_failed_export_repair_is_an_explicit_replay_and_preserves_failure(tmp_path):
+    from scripts.paired_delivery import build_paired_report
+    from scripts.repair_saved_555 import inspect_saved_session, repair_saved_session
+
+    day, baseline = setup_sources(tmp_path)
+    market = tmp_path / "experiments/results/v2/v211/market"
+    build_paired_report(baseline, market / "prices.csv", market / "sentiment.csv",
+                       tmp_path / "reports/daily" / str(day.date()) / "paired", root=tmp_path)
+    out = tmp_path / "outputs/555" / str(day.date())
+    out.mkdir(parents=True)
+    failed = b'{"status":"failed","reason":"old export contract"}\n'
+    (out / "status.json").write_bytes(failed)
+    before = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    assert inspect_saved_session(day, root=tmp_path)["read_only"]
+    assert {p: p.read_bytes() for p in before} == before
+    repaired = repair_saved_session(day, root=tmp_path, now=datetime(2026, 11, 10, 1, tzinfo=TZ))
+    assert repaired["run_mode"] == "historical_replay"
+    assert not repaired["signal_published"]
+    assert not (tmp_path / "experiments/results/v2/v211/daily").exists()
+    assert not (tmp_path / "outputs/555/paired_recommendation_history").exists()
+    audit = tmp_path / "reports/daily" / str(day.date()) / "paired/repair"
+    assert (audit / "original_failed_status.json").read_bytes() == failed
+    assert pd.read_csv(out / "native/next_day_recommendation.csv").Run_Mode.eq("historical_replay").all()

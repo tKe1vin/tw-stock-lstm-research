@@ -3,9 +3,9 @@
   "as_of_date": "2026-11-09",
   "run_date": "2026-11-09",
   "started": "2026-11-09T23:39:21.158701+08:00",
-  "finished": null,
-  "status": "partial",
-  "last_successful_as_of_date": "2026-11-06",
+  "finished": "2026-11-10T01:07:13.348204+08:00",
+  "status": "complete",
+  "last_successful_as_of_date": "2026-11-09",
   "models": {
     "444": {
       "status": "success",
@@ -16,12 +16,13 @@
       "current_output": "reports/latest/444/next_day_recommendation.csv"
     },
     "555": {
-      "status": "failed",
-      "exit_code": 1,
-      "current": false,
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
       "observed_as_of_date": "2026-11-09",
-      "reason": "ValueError: Saved 444 model outputs do not match the paired stocks",
-      "current_output": null
+      "reason": "repaired_saved_research_export_not_a_forward_signal",
+      "current_output": "reports/latest/555/next_day_recommendation.csv",
+      "run_mode": "historical_replay"
     },
     "555_v2": {
       "status": "success",
@@ -40,7 +41,7 @@
       "current_output": "experiments/results/v2/v211/daily/2026-11-09.csv"
     }
   },
-  "comparison_status": "waiting_for_both_current_notebooks",
+  "comparison_status": "paired_444_core_next_close",
   "market": {
     "ready_to_predict": true,
     "completed_session": "2026-11-09",
@@ -113,5 +114,20 @@
     "report": "reports/daily/2026-11-09/paired/comparison.md",
     "recommendation": "reports/daily/2026-11-09/paired/555_next_day_recommendation.csv",
     "news_increment_roi_pp": -1.8723064939308975
-  }
+  },
+  "research_export_repair": {
+    "as_of_date": "2026-11-09",
+    "repaired_at": "2026-11-10T01:07:11.867563+08:00",
+    "run_mode": "historical_replay",
+    "original_failure_preserved": true,
+    "training_executed": false,
+    "live_signal_published": false,
+    "source_sha256": {
+      "evaluation_protocol.json": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
+      "test_predictions.csv": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
+      "model_metrics.csv": "7dc35ce996cab6a928e16586adaabb5fab024fbe608f4d75fa42e9eb09bbec51"
+    },
+    "original_run_summary_changed": false
+  },
+  "original_workflow_status": "failed; retained in Actions and original saved summary"
 }

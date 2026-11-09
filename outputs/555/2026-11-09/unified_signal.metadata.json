@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-11-09T17:07:12.982237+00:00",
+  "predicted_return_pct_unit": "percent_points",
+  "percent_points_meaning": "0.677330 means +0.677330 percent, not 67.7330 percent.",
+  "target_weight_unit": "fraction_of_capital",
+  "cash_weight_unit": "fraction_of_capital",
+  "not_applicable_token": "不適用",
+  "comparison_allowed": false,
+  "model_id": "555",
+  "core_model": "444",
+  "run_mode": "historical_replay",
+  "research_sample": false,
+  "signal_published": false,
+  "original_failed_status": "reports/daily/2026-11-09/paired/repair/original_failed_status.json",
+  "source_sha256": {
+    "evaluation_protocol.json": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
+    "test_predictions.csv": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
+    "model_metrics.csv": "7dc35ce996cab6a928e16586adaabb5fab024fbe608f4d75fa42e9eb09bbec51"
+  },
+  "schema_version": "unified-signal-v2"
+}

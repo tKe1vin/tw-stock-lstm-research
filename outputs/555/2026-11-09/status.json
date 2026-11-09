@@ -1,10 +1,30 @@
 {
   "model": "555",
-  "mode": "full",
-  "status": "failed",
-  "exit_code": 1,
-  "reason": "ValueError: Saved 444 model outputs do not match the paired stocks",
-  "forecast_produced": false,
+  "status": "success",
   "completed_session": "2026-11-09",
-  "run_date": "2026-11-09"
+  "run_date": "2026-11-10",
+  "core_model": "444",
+  "research_protocol": "paired-444-core-allocation-v1",
+  "run_mode": "historical_replay",
+  "training_executed": false,
+  "forecast_produced": true,
+  "signal_published": false,
+  "reason": "repaired_saved_research_export_not_a_forward_signal",
+  "daily_native_dir": "outputs/555/2026-11-09/native",
+  "native_output_dir": "outputs/555/2026-11-09/native",
+  "unified_csv": "outputs/555/2026-11-09/unified_signal.csv",
+  "repair": {
+    "as_of_date": "2026-11-09",
+    "repaired_at": "2026-11-10T01:07:11.867563+08:00",
+    "run_mode": "historical_replay",
+    "original_failure_preserved": true,
+    "training_executed": false,
+    "live_signal_published": false,
+    "source_sha256": {
+      "evaluation_protocol.json": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
+      "test_predictions.csv": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
+      "model_metrics.csv": "7dc35ce996cab6a928e16586adaabb5fab024fbe608f4d75fa42e9eb09bbec51"
+    },
+    "original_run_summary_changed": false
+  }
 }

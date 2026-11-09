@@ -1,2 +1,2 @@
-﻿Strategy_ID,Run_ID,Strategy,ROI_Pct,Sharpe,MDD_Pct,Test_Days,Test_Start,Test_End,Direction_Accuracy_Pct,As_Of_Date,Protocol_Version
-555_multivariate_dynamic,20261106T225729124755,555 multivariate + dynamic risk (net),4.695549585002157,0.7473738690725518,-6.737615749983339,150,2026-03-30,2026-11-06,48.0,2026-11-06,lstm-evaluation-v1
+﻿Strategy_ID,Strategy,Run_ID,As_Of_Date,Protocol_Version,ROI_Pct,Sharpe,MDD_Pct,Direction_Accuracy_Pct,Test_Days,Test_Start,Test_End,Core_Model,Total_Transaction_Cost,Direction_Definition,Result_Status
+555_shared_444_core_dynamic_news_risk,dynamic_news_risk555,20261110T010711867563,2026-11-09,paired-444-core-allocation-v1,-3.3628482650421176,-0.52959548941455226,-6.9255818371988465,46.666666666666664,150,2026-03-31,2026-11-09,444,8922.5969912382698,same saved 444 next-day model-label accuracy; not trade win rate,exploratory

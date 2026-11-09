@@ -48,3 +48,7 @@
 ## 正式 444 與 555
 
 Notebook 輸出的 `Signal_Date` 是資料截止日，`Target_Date` 是 Notebook 自己的目標日。協議名稱是 `lstm-evaluation-v1`。這些欄位會原樣進入統一 CSV，不改單位。
+
+## 統一 CSV v2
+
+新輸出 metadata 的 schema_version 為 unified-signal-v2；欄位見 common/schemas/unified_signal_v2.json。保留所有舊欄位名稱，新增 forecast_entry_date、scheduled_rebalance_date、trade_eligible。舊 v1 檔案與其 schema 保留不改；讀取時依欄名，不以固定欄位位置猜意義。execution_status=historical_replay_no_order 的補正輸出不列入前瞻訊號或成交。

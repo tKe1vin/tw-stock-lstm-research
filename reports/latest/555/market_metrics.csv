@@ -1,2 +1,2 @@
-﻿Strategy,ROI_Pct,Sharpe,MDD_Pct,Test_Days,Test_Start,Test_End
-TWII theoretical price index,19.89892911530653,1.1366659189952004,-20.313914076151352,150,2026-03-30,2026-11-06
+﻿Strategy_ID,ROI_Pct,Sharpe,MDD_Pct,Total_Transaction_Cost,Return_Basis,As_Of_Date
+market_price_reference,31.329672615809812,1.6163796079804351,-20.313914076151363,0,theoretical_price_index_no_costs_no_dividends,2026-11-09

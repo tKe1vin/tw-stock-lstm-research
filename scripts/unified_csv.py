@@ -51,6 +51,7 @@ def write_table(path: Path, rows: list[dict], metadata: dict) -> None:
     frame = pd.DataFrame(rows, columns=COLUMNS)
     frame.to_csv(path, index=False, encoding="utf-8-sig")
     meta = {
+        "schema_version": "unified-signal-v2",
         "generated_at": datetime.now().astimezone().isoformat(),
         "predicted_return_pct_unit": "percent_points",
         "percent_points_meaning": "0.677330 means +0.677330 percent, not 67.7330 percent.",
