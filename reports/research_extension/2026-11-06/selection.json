@@ -1,0 +1,13 @@
+{
+  "selected": "sentiment_risk_lstm",
+  "selection_metric": "validation_mean_cross_section_spearman",
+  "validation_scores": {
+    "price_lstm": 0.30999999999999994,
+    "sentiment_risk_lstm": 0.35999999999999993
+  },
+  "minimum_improvement": 0.02,
+  "test_used_for_selection": false,
+  "selection_rule": "Select sentiment_risk_lstm only when its validation score exceeds price_lstm by more than the registered margin; ties retain control.",
+  "selected_at": "2026-11-09T15:20:12.135879+08:00",
+  "test_predictions_computed": false
+}

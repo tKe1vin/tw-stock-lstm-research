@@ -82,6 +82,7 @@ def publish_comparison_contract(paired_dir, baseline_dir, comparison_dir, *, roo
     comparison_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(comparisons).to_csv(comparison_dir / "strategy_comparison.csv", index=False, encoding="utf-8-sig")
     core_metrics = pd.read_csv(baseline_dir / "model_metrics.csv")
+    core_metrics = core_metrics[core_metrics.Ticker.isin(protocol["tickers"])].copy()
     per_stock = core_metrics.merge(core_metrics, on="Ticker", suffixes=("_444", "_555"), validate="one_to_one")
     per_stock["Shared_Core_Model"] = "444"
     per_stock.to_csv(comparison_dir / "per_stock_comparison.csv", index=False, encoding="utf-8-sig")

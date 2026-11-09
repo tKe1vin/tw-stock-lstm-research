@@ -103,6 +103,11 @@ def export_paired_native(result, recommendation, baseline_dir, destination, as_o
         raise ValueError("Paired stock and cash weights do not conserve capital")
     predictions = pd.read_csv(source_paths["test_predictions.csv"])
     model_metrics = pd.read_csv(source_paths["model_metrics.csv"])
+    # 444 also fits/exports ^TWII as a diagnostic model. Keep the original
+    # files intact, but use exactly the registered five stocks in this overlay.
+    excluded_source_tickers = sorted((set(predictions.Ticker) | set(model_metrics.Ticker)) - tickers)
+    predictions = predictions.loc[predictions.Ticker.isin(tickers)].copy()
+    model_metrics = model_metrics.loc[model_metrics.Ticker.isin(tickers)].copy()
     if (set(predictions.Ticker) != tickers or set(model_metrics.Ticker) != tickers
             or model_metrics.Ticker.duplicated().any()):
         raise ValueError("Saved 444 model outputs do not match the paired stocks")
@@ -152,6 +157,7 @@ def export_paired_native(result, recommendation, baseline_dir, destination, as_o
     output_protocol = {
         **baseline, **protocol, "as_of_date": day, "strategy_id": metric["Strategy_ID"],
         "core_model": "444", "core_source_sha256": source_sha256,
+        "excluded_nonportfolio_source_tickers": excluded_source_tickers,
         "test_target_dates": protocol["shared_target_dates"], "test_days": int(selected.Observations),
         "test_target_dates_sha256": hashlib.sha256("\n".join(protocol["shared_target_dates"]).encode()).hexdigest(),
         "execution_assumption": "signal-day known allocation; next-session close fill; first pre-fill return excluded",

@@ -1,0 +1,344 @@
+"""Bounded, validation-selected LSTM extension; historical results are exploratory.
+
+Default check mode does not train, import TensorFlow, download, or create files.
+Train mode writes only a new output directory. Existing production frozen weights
+and published signals are never read as destinations or replaced.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.metadata
+import json
+import os
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
+from experiments.risk_experiment import (
+    FEATURES, MARKET, TICKERS, build_frames, load_panel, load_sentiment,
+)
+from scripts.common import ROOT, TZ
+
+CONFIG_PATH = ROOT / "research/extension/config.json"
+MARKET_DIR = ROOT / "experiments/results/v2/v211/market"
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load_config(path=CONFIG_PATH):
+    config = json.loads(Path(path).read_text(encoding="utf-8"))
+    if config["label_gap"] != 6 or config["hold_sessions"] != 5:
+        raise ValueError("The executable five-session target requires entry i+1 and exit i+6")
+    if config.get("allow_test_selection") or config.get("allow_official_model_replacement"):
+        raise ValueError("Test selection and automatic production replacement are prohibited")
+    if config["candidate_order"] != ["price_lstm", "sentiment_risk_lstm"]:
+        raise ValueError("This protocol registers exactly two candidates")
+    if config["candidates"]["price_lstm"] != ["Close"] or config["candidates"]["sentiment_risk_lstm"] != FEATURES:
+        raise ValueError("Candidate feature order differs from the registered design")
+    return config
+
+
+def split_positions(positions, config):
+    """Use the same dated samples for both candidates and purge label overlap."""
+    positions = np.asarray(positions, dtype=int)
+    if len(positions) == 0 or np.any(np.diff(positions) <= 0):
+        raise ValueError("Signal positions must be nonempty and strictly increasing")
+    test_len, val_len = config["test_samples"], config["validation_samples"]
+    gap = config["label_gap"]
+    if len(positions) < test_len:
+        raise ValueError("Insufficient mature test signals")
+    test = positions[-test_len:]
+    valid = positions[positions + gap < test[0]]
+    if len(valid) < val_len:
+        raise ValueError("Insufficient purged validation signals")
+    val = valid[-val_len:]
+    train = positions[positions + gap < val[0]][-config["train_samples"]:]
+    if len(train) < config["min_train_samples"]:
+        raise ValueError("Insufficient purged training signals")
+    if train[-1] + gap >= val[0] or val[-1] + gap >= test[0]:
+        raise AssertionError("A label crosses the next split boundary")
+    return {"train": train, "validation": val, "test": test}
+
+
+def prepare_data(price_path, sentiment_path, as_of, config):
+    panel = load_panel(price_path)
+    as_of = pd.Timestamp(as_of).normalize()
+    panel = panel.loc[panel.index <= as_of]
+    if panel.empty or panel.index[-1] != as_of:
+        raise ValueError("The requested as-of close is not available")
+    sentiment = load_sentiment(sentiment_path, panel.index)
+    frames, risk = build_frames(panel, sentiment)
+    five = (panel[TICKERS].shift(-6) / panel[TICKERS].shift(-1) - 1) * 100
+    step = config["time_step"]
+    good = np.ones(len(panel), bool)
+    for ticker in TICKERS:
+        finite = np.isfinite(frames[ticker][FEATURES].to_numpy(float)).all(axis=1)
+        # The price-only control shares the multivariate candidate's coverage.
+        windows = pd.Series(finite).rolling(step, min_periods=step).sum().eq(step).to_numpy()
+        good &= windows
+    good &= np.isfinite(five.to_numpy(float)).all(axis=1)
+    positions = np.flatnonzero(good)
+    split = split_positions(positions, config)
+    return {"panel": panel, "sentiment": sentiment, "frames": frames, "risk": risk,
+            "target": five, "split": split, "as_of": as_of}
+
+
+def scaled_windows(frame, features, split, step):
+    """The scaler sees only rows contained in training input windows."""
+    raw = frame[list(features)].to_numpy(float)
+    fit_rows = np.unique(np.concatenate([np.arange(p - step + 1, p + 1) for p in split["train"]]))
+    if fit_rows.max() >= split["validation"][0]:
+        raise AssertionError("Scaler touched validation")
+    scaler = MinMaxScaler().fit(raw[fit_rows])
+    transformed = scaler.transform(raw)
+    windows = {name: np.asarray([transformed[p-step+1:p+1] for p in positions], dtype=np.float32)
+               for name, positions in split.items()}
+    return windows, scaler, fit_rows
+
+
+def validation_score(predictions):
+    """No test rows, test ROI, or test labels contribute to model selection."""
+    part = predictions[predictions.Split == "validation"]
+    scores = []
+    for _date, day in part.groupby("Signal_Date", sort=True):
+        if len(day) != len(TICKERS) or set(day.Ticker) != set(TICKERS):
+            raise ValueError("Validation requires five distinct stocks per signal")
+        if day.Predicted.std() < 1e-12 or day.Actual_5d_Pct.std() < 1e-12:
+            scores.append(0.0)
+        else:
+            scores.append(float(day.Predicted.corr(day.Actual_5d_Pct, method="spearman")))
+    if not scores or not np.isfinite(scores).all():
+        raise ValueError("No finite validation selection score")
+    return float(np.mean(scores))
+
+
+def choose_candidate(validation, config):
+    scores = {name: validation_score(validation[validation.Model == name])
+              for name in config["candidate_order"]}
+    control, fusion = config["candidate_order"]
+    selected = fusion if scores[fusion] > scores[control] + config["minimum_validation_improvement"] else control
+    return {"selected": selected, "selection_metric": config["selection_metric"],
+            "validation_scores": scores, "minimum_improvement": config["minimum_validation_improvement"],
+            "test_used_for_selection": False,
+            "selection_rule": "Select sentiment_risk_lstm only when its validation score exceeds price_lstm by more than the registered margin; ties retain control."}
+
+
+def _prediction_rows(name, ticker, values, data, split_name):
+    index, positions = data["panel"].index, data["split"][split_name]
+    return [{"Model": name, "Split": split_name, "Fold": 1, "Ticker": ticker,
+             "Signal_Date": str(index[p].date()), "Execution_Date": str(index[p+1].date()),
+             "Label_End": str(index[p+6].date()), "Predicted": float(pred),
+             "Actual_5d_Pct": float(data["target"].iloc[p][ticker])}
+            for p, pred in zip(positions, values)]
+
+
+def _scaler_document(scaler):
+    return {name: getattr(scaler, name + "_").tolist()
+            for name in ("data_min", "data_max", "scale", "min")}
+
+
+def _write_json(path, value):
+    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
+
+
+def _fit_one(tf, windows, target, config):
+    # A private one-thread dataset avoids accumulating TensorFlow input pools.
+    options = tf.data.Options()
+    options.threading.private_threadpool_size = 1
+    options.threading.max_intra_op_parallelism = 1
+    datasets = {}
+    for name in ("train", "validation"):
+        datasets[name] = tf.data.Dataset.from_tensor_slices((windows[name], target[name])).batch(config["batch_size"]).with_options(options)
+    tf.keras.backend.clear_session()
+    tf.keras.utils.set_random_seed(config["seed"])
+    model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=windows["train"].shape[1:]),
+        tf.keras.layers.LSTM(config["units"]),
+        tf.keras.layers.Dropout(config["dropout"]),
+        tf.keras.layers.Dense(1),
+    ])
+    model.compile(optimizer=tf.keras.optimizers.Adam(config["learning_rate"]), loss="mse")
+    history = model.fit(datasets["train"], validation_data=datasets["validation"],
+                        epochs=config["max_epochs"], verbose=0,
+                        callbacks=[tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=config["patience"], restore_best_weights=True)])
+    return model, len(history.history["loss"])
+
+
+def evaluate_books(data, predictions, selected):
+    from experiments.v2.books import index_metrics, metrics, run_book
+
+    test = predictions[predictions.Split == "test"]
+    start, end = pd.Timestamp(test.Execution_Date.min()), pd.Timestamp(test.Label_End.max())
+    calendar = pd.to_datetime(test.Signal_Date.unique())
+    rows, books = [], {}
+    for name in ("price_lstm", "sentiment_risk_lstm"):
+        block = predictions[predictions.Model == name]
+        book = run_book(data["panel"], data["risk"], block[block.Split == "test"], data["sentiment"],
+                        start, end, 5, "threshold", block[block.Split == "validation"], signal_calendar=calendar)
+        row = metrics(book, name, "every_5_sessions")
+        row["Selected_Before_Test_Inference"] = name == selected
+        rows.append(row)
+        books[name] = book
+    for name, mode in (("matched_risk_equal", "equal"), ("full_exposure_buy_hold", "buy_hold")):
+        book = run_book(data["panel"], data["risk"], None, data["sentiment"], start, end, 5, mode,
+                        signal_calendar=calendar)
+        row = metrics(book, name, "every_5_sessions" if mode == "equal" else "buy_and_hold")
+        row["Selected_Before_Test_Inference"] = False
+        rows.append(row)
+        books[name] = book
+    proxy = index_metrics(data["panel"], start, end)
+    proxy["Name"] = "theoretical_twii_with_stock_cost_proxy_not_an_etf"
+    proxy["Selected_Before_Test_Inference"] = False
+    rows.append(proxy)
+    frame = pd.DataFrame(rows)
+    equal_roi = float(frame.loc[frame.Name == "matched_risk_equal", "ROI_Pct"].iloc[0])
+    proxy_roi = float(proxy["ROI_Pct"])
+    frame["Gap_Vs_Matched_Equal_Pp"] = frame.ROI_Pct - equal_roi
+    frame["Gap_Vs_Theoretical_Index_Proxy_Pp"] = frame.ROI_Pct - proxy_roi
+    return frame, books
+
+
+def train(data, config, output_dir, price_path, sentiment_path, config_path):
+    output = Path(output_dir).resolve()
+    if output.exists():
+        raise FileExistsError("Use a new output directory; research selections and results are immutable")
+    if output == ROOT.resolve() or output.is_relative_to(MARKET_DIR.resolve()) or output.is_relative_to((ROOT / "models").resolve()):
+        raise ValueError("Research output must not replace production inputs or models")
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+    os.environ.setdefault("TF_NUM_INTRAOP_THREADS", "1")
+    os.environ.setdefault("TF_NUM_INTEROP_THREADS", "1")
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    import tensorflow as tf
+
+    try:
+        tf.config.experimental.enable_op_determinism()
+    except AttributeError:
+        pass
+    output.mkdir(parents=True)
+    (output / "inputs").mkdir()
+    _write_json(output / "registered_config.json", config)
+    # Retain the actual as-of inputs, including provenance columns. Nothing is
+    # backfilled and no later source rows are silently included in this snapshot.
+    for name, source in (("prices", price_path), ("sentiment", sentiment_path)):
+        raw = pd.read_csv(source)
+        raw = raw[pd.to_datetime(raw.Date).dt.normalize() <= data["as_of"]]
+        raw.to_csv(output / "inputs" / f"{name}.csv", index=False)
+    validation_rows, stored_models, arrays, cards = [], {}, {}, {}
+    split = data["split"]
+    for name in config["candidate_order"]:
+        features = config["candidates"][name]
+        cards[name] = {}
+        for ticker in TICKERS:
+            windows, scaler, fit_rows = scaled_windows(data["frames"][ticker], features, split, config["time_step"])
+            target = {part: data["target"].iloc[pos][ticker].to_numpy(np.float32) for part, pos in split.items()}
+            model, epochs = _fit_one(tf, windows, target, config)
+            # Calling the model directly avoids model.predict input-pool creation.
+            val = np.asarray(model(windows["validation"], training=False)).ravel()
+            validation_rows.extend(_prediction_rows(name, ticker, val, data, "validation"))
+            stored_models[(name, ticker)] = (model, windows)
+            weights = model.get_weights()
+            for i, array in enumerate(weights):
+                arrays[f"{name}__{ticker}__{i}"] = array
+            cards[name][ticker] = {"features": features, "scaler": _scaler_document(scaler), "weight_count": len(weights),
+                                   "epochs_run": epochs, "scaler_first_date": str(data["panel"].index[fit_rows[0]].date()),
+                                   "scaler_last_date": str(data["panel"].index[fit_rows[-1]].date())}
+            print(f"[extension] fitted {name} {ticker}; epochs={epochs}", flush=True)
+    validation = pd.DataFrame(validation_rows)
+    selection = choose_candidate(validation, config)
+    selection["selected_at"] = datetime.now(TZ).isoformat()
+    selection["test_predictions_computed"] = False
+    _write_json(output / "selection.json", selection)
+    validation.to_csv(output / "validation_predictions.csv", index=False)
+    # Persist weights and selection before looking at any candidate's test output.
+    np.savez_compressed(output / "weights.npz", **arrays)
+    card = {"protocol": config["protocol_version"], "as_of": str(data["as_of"].date()), "architecture": {
+        key: config[key] for key in ("time_step", "units", "dropout", "learning_rate", "seed")},
+        "selected": selection["selected"], "models": cards,
+        "splits": {name: [str(data["panel"].index[p].date()) for p in positions] for name, positions in split.items()},
+        "label": "100 * (close[i+6] / close[i+1] - 1)", "selected_without_test": True,
+        "production_replacement": False, "study_status": config["study_status"]}
+    _write_json(output / "model_card.json", card)
+    test_rows = []
+    for (name, ticker), (model, windows) in stored_models.items():
+        values = np.asarray(model(windows["test"], training=False)).ravel()
+        test_rows.extend(_prediction_rows(name, ticker, values, data, "test"))
+    predictions = pd.concat([validation, pd.DataFrame(test_rows)], ignore_index=True)
+    predictions.to_csv(output / "predictions.csv", index=False)
+    portfolio, books = evaluate_books(data, predictions, selection["selected"])
+    portfolio.to_csv(output / "strategy_metrics.csv", index=False)
+    for name, book in books.items():
+        book.to_csv(output / f"nav_{name}.csv", index=False)
+    selected_row = portfolio[portfolio.Name == selection["selected"]].iloc[0]
+    summary = {"study_status": config["study_status"], "selected": selection["selected"],
+               "selection_used_test": False, "test_signal_days": len(split["test"]),
+               "mature_test_labels_only": True, "label_gap_sessions": config["label_gap"],
+               "selected_test_roi_pct": float(selected_row.ROI_Pct),
+               "gap_vs_matched_equal_pp": float(selected_row.Gap_Vs_Matched_Equal_Pp),
+               "gap_vs_theoretical_index_proxy_pp": float(selected_row.Gap_Vs_Theoretical_Index_Proxy_Pp),
+               "proved_independent_alpha": False, "historical_news_point_in_time_proven": False,
+               "official_model_replaced": False,
+               "limitations": ["Previously studied historical test period; no new independent test.",
+                               "Historical sentiment availability cannot be proven retroactively.",
+                               "The index comparator is a theoretical price index with a stock-cost proxy, not an investable ETF.",
+                               "Five-day labels overlap; 150 signals are not 150 independent observations.",
+                               "Zero slippage; dividends are excluded because source closes are unadjusted."]}
+    _write_json(output / "summary.json", summary)
+    files = {path.relative_to(output).as_posix(): digest(path) for path in output.rglob("*") if path.is_file()}
+    try:
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        commit = None
+    sources = [Path(__file__), ROOT / "experiments/risk_experiment.py", ROOT / "experiments/v2/books.py",
+               ROOT / "experiments/calendar_rules.py", Path(config_path)]
+    _write_json(output / "reproduction_manifest.json", {
+        "schema": "extension-reproduction-v1", "source_commit": commit,
+        "code_sha256": {str(path.relative_to(ROOT)): digest(path) for path in sources},
+        "files_sha256": files, "versions": {name: importlib.metadata.version(name) for name in ("tensorflow_cpu", "numpy", "pandas", "scikit-learn")},
+        "note": "Verify file hashes before inference or reconstruction; source hashes identify uncommitted code as well as committed code."})
+    lines = ["# 新聞與風控 LSTM 延伸候選", "", f"採用候選：`{selection['selected']}`；採用只看驗證集。",
+             "本結果為已觀察歷史區間的探索性研究，不是獨立樣本外 alpha 證據。", "",
+             "| 策略 | ROI (%) | Sharpe | MDD (%) | 相對可比等權 (pp) |", "| --- | ---: | ---: | ---: | ---: |"]
+    for row in portfolio.itertuples():
+        lines.append(f"| {row.Name} | {row.ROI_Pct:.3f} | {row.Sharpe:.3f} | {row.MDD_Pct:.3f} | {row.Gap_Vs_Matched_Equal_Pp:.3f} |")
+    lines += ["", "大盤列為理論指數加股票成本代理，並非可交易 ETF。所有股票帳本使用相同次日收盤、五日排程、成本及訊號日風控。",
+              "保留原始輸入、候選權重、Scaler、驗證採用決策、逐筆預測及帳本；沒有替換正式模型。",
+              "歷史新聞可取得時間未獲證明，零滑價與不含股利也限制解讀；不可為了超過大盤而重選測試結果。", ""]
+    (output / "summary.md").write_text("\n".join(lines), encoding="utf-8")
+    return summary
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", choices=("check", "train"), default="check")
+    parser.add_argument("--prices", type=Path, default=MARKET_DIR / "prices.csv")
+    parser.add_argument("--sentiment", type=Path, default=MARKET_DIR / "sentiment.csv")
+    parser.add_argument("--config", type=Path, default=CONFIG_PATH)
+    parser.add_argument("--as-of", default=None)
+    parser.add_argument("--output-dir", type=Path, default=None)
+    args = parser.parse_args(argv)
+    config = load_config(args.config)
+    as_of = args.as_of or str(pd.read_csv(args.prices).Date.max())
+    data = prepare_data(args.prices, args.sentiment, as_of, config)
+    if args.mode == "check":
+        report = {"mode": "check", "ready": True, "read_only": True, "tensorflow_imported": False,
+                  "as_of": str(data["as_of"].date()), "study_status": config["study_status"],
+                  "splits": {name: {"samples": len(pos), "first": str(data["panel"].index[pos[0]].date()),
+                                    "last": str(data["panel"].index[pos[-1]].date()),
+                                    "last_label_end": str(data["panel"].index[pos[-1]+6].date())}
+                             for name, pos in data["split"].items()}}
+    else:
+        output = args.output_dir or ROOT / "research/extension/runs" / str(data["as_of"].date())
+        report = train(data, config, output, args.prices, args.sentiment, args.config)
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,34 @@
+{
+  "schema": "extension-reproduction-v1",
+  "source_commit": "4d5a624f72d1f990592c5cd3a4ef71990125cb91",
+  "code_sha256": {
+    "scripts/research_extension.py": "3adc987c59664dc1c3c6abc3d976a0a72e0637f9316e8ff38cb60ffed45dd196",
+    "experiments/risk_experiment.py": "48d2c13944de7fe827bacd2de1dcd7a0fcda2db7c95f5183cb40440f8cf0767f",
+    "experiments/v2/books.py": "8eb4cb36f5d92a8b370c038c32affd32e6c08fb054265b8c16ef4f1855f54867",
+    "experiments/calendar_rules.py": "c2eea45adad3c7037acccaaee25a6cc2382b56b68407b2b359223b21ce13ab2a",
+    "research/extension/config.json": "343ceb12e5d3dc2d06cb77d61e79d5f6c46945524cc3b18f05055eceb54fb2de"
+  },
+  "files_sha256": {
+    "nav_matched_risk_equal.csv": "797fa8283a9a4cafc43636d62b6ec963797e56a9bc355148559a0a7bcf932326",
+    "summary.json": "7abbc5475d9b9b2081ae7ebc8c7ac7e147170bac16dad26e370c90881795f83e",
+    "predictions.csv": "83c5989af6ee89b7b101611e7038cf1381d1b2c4ba08f44b4edd15be5e5d2a05",
+    "registered_config.json": "03b4dd10696430b5b3542b2ed2e7a59776f6e7a0a1b35cf9ca6f61a191c9bacb",
+    "nav_sentiment_risk_lstm.csv": "1e99bdc5d1bcbc5b2f1c13a53fffd9e2ce031d5fa471c9b12b9eae19cdabf622",
+    "model_card.json": "18eb8e1f52ad153a7534c96afc41e77181bd957688e9ac5e7b847fb819a7815f",
+    "weights.npz": "c91fdc5b4e9417a03da42bac08b0a6ba925c09bde75447dba51b9bd404bcaa43",
+    "nav_full_exposure_buy_hold.csv": "16312d64a4d755b6ed2dfce9e51cb7647ab45ea6b001abcf7ad81517da9adc8f",
+    "strategy_metrics.csv": "2527d7c7d57b041d873d2ff4d9101d81d217d72252e0c91275dcb25240908260",
+    "validation_predictions.csv": "8efb6e051ea6887649c253e56213f053eae349f4eb9c543fedadcd51fcd991d6",
+    "nav_price_lstm.csv": "de9a4edda2e209eab3c537fa03d86b33397fe4401c7660eb1e9c3aa3be565d2c",
+    "selection.json": "ba3fee8f5cab3a674a8e1c327fff94dec11a31bdf128a9398dcab09bf5d0d7dd",
+    "inputs/prices.csv": "4337925d43299b29f48518cf3f9bd46fafbdfe18dd5846e45af7fc6231d590ba",
+    "inputs/sentiment.csv": "9f54b16cad1dc66fc6338f06bcaf7da706feea1c4cfd2595592cafca5fd3b019"
+  },
+  "versions": {
+    "tensorflow_cpu": "2.20.0",
+    "numpy": "2.0.2",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0"
+  },
+  "note": "Verify file hashes before inference or reconstruction; source hashes identify uncommitted code as well as committed code."
+}

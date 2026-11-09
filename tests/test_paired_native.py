@@ -83,6 +83,38 @@ def test_later_export_is_a_historical_replay_without_rewriting_444(tmp_path):
     assert rec.Created_At.eq("2026-11-09T18:00:00+08:00").all()
 
 
+def test_real_444_contract_can_include_a_separate_market_diagnostic_model(tmp_path):
+    baseline, result, daily, day = fixture(tmp_path)
+    predictions = pd.read_csv(baseline / "test_predictions.csv")
+    market = predictions[predictions.Ticker == TICKERS[0]].copy()
+    market["Ticker"], market["Direction_Correct"] = "^TWII", True
+    pd.concat([predictions, market]).to_csv(baseline / "test_predictions.csv", index=False)
+    metrics = pd.read_csv(baseline / "model_metrics.csv")
+    market_metric = metrics.iloc[[0]].copy()
+    market_metric["Ticker"], market_metric["Direction_Accuracy_Pct"] = "^TWII", 100.
+    pd.concat([metrics, market_metric]).to_csv(baseline / "model_metrics.csv", index=False)
+    source = {p.name: p.read_bytes() for p in baseline.iterdir()}
+    output = tmp_path / "555/native"
+    export_paired_native(result, daily, baseline, output, day, f"{day}T17:37:00+08:00")
+    assert set(pd.read_csv(output / "model_metrics.csv").Ticker) == set(TICKERS)
+    assert set(pd.read_csv(output / "test_predictions.csv").Ticker) == set(TICKERS)
+    assert pd.read_csv(output / "strategy_metrics.csv").Direction_Accuracy_Pct.iloc[0] == 0.
+    protocol = json.loads((output / "evaluation_protocol.json").read_text())
+    assert protocol["excluded_nonportfolio_source_tickers"] == ["^TWII"]
+    assert {p.name: p.read_bytes() for p in baseline.iterdir()} == source
+
+
+def test_extra_market_metric_does_not_hide_a_missing_portfolio_stock(tmp_path):
+    baseline, result, daily, day = fixture(tmp_path)
+    metrics = pd.read_csv(baseline / "model_metrics.csv")
+    metrics.loc[metrics.Ticker == TICKERS[-1], "Ticker"] = "^TWII"
+    metrics.to_csv(baseline / "model_metrics.csv", index=False)
+    output = tmp_path / "555/native"
+    with pytest.raises(ValueError, match="do not match"):
+        export_paired_native(result, daily, baseline, output, day, f"{day}T17:37:00+08:00")
+    assert not output.exists()
+
+
 @pytest.mark.parametrize("failure", ["baseline_destination", "stale", "naive_time", "duplicate"])
 def test_invalid_native_export_fails_before_creating_output(tmp_path, failure):
     baseline, result, daily, day = fixture(tmp_path)

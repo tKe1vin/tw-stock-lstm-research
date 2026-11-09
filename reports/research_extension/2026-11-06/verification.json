@@ -1,0 +1,23 @@
+{
+  "unit_tests_passed": 13,
+  "read_only_book_replay": {
+    "reproduced": true,
+    "maximum_deltas": {
+      "ROI_Pct": 0.0,
+      "Sharpe": 4.440892098500626e-16,
+      "MDD_Pct": 1.7763568394002505e-15,
+      "Total_Transaction_Cost": 0.0
+    },
+    "tensorflow_used": false,
+    "historical_alpha_proven": false
+  },
+  "forecast_fit_was_forbidden": true,
+  "forecast_reported_as_historical_replay": true,
+  "forecast_published_signal": false,
+  "forecast_rows": 5,
+  "saved_prediction_reconstruction_date": "2026-10-29",
+  "maximum_prediction_delta_pp": 2.980232233218416e-08,
+  "run_files_unchanged_by_replay_and_forecast": true,
+  "weights_sha256": "c91fdc5b4e9417a03da42bac08b0a6ba925c09bde75447dba51b9bd404bcaa43",
+  "selection_sha256": "ba3fee8f5cab3a674a8e1c327fff94dec11a31bdf128a9398dcab09bf5d0d7dd"
+}

@@ -1,0 +1,24 @@
+{
+  "study_status": "exploratory_previously_observed_historical_period",
+  "selected": "sentiment_risk_lstm",
+  "selection_used_test": false,
+  "test_signal_days": 150,
+  "mature_test_labels_only": true,
+  "label_gap_sessions": 6,
+  "selected_test_roi_pct": 16.181955912120994,
+  "gap_vs_matched_equal_pp": -0.6514054636351112,
+  "gap_vs_theoretical_index_proxy_pp": -20.292126859708734,
+  "proved_independent_alpha": false,
+  "historical_news_point_in_time_proven": false,
+  "official_model_replaced": false,
+  "limitations": [
+    "Previously studied historical test period; no new independent test.",
+    "Historical sentiment availability cannot be proven retroactively.",
+    "The index comparator is a theoretical price index with a stock-cost proxy, not an investable ETF.",
+    "Five-day labels overlap; 150 signals are not 150 independent observations.",
+    "Zero slippage; dividends are excluded because source closes are unadjusted."
+  ],
+  "portfolio_end_policy": "five_session_exit_of_last_scheduled_test_trade",
+  "portfolio_start": "2026-03-23",
+  "portfolio_end": "2026-11-02"
+}
