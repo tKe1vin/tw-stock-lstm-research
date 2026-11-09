@@ -2,6 +2,7 @@
 
 本專題研究新聞與市場風險資訊能否改善 LSTM 投資組合的風險調整後績效。2026-11-09 修訂以 **相同 444 預測核心**建立 555 主研究，控制模型、價格、日期、成交與成本，再分離動態配置、新聞與風控效果。既有凍結權重與已發布訊號保留原始 bytes。
 
+- [V3：大盤核心＋新聞超額配置設計（尚未訓練）](research/v3/design.md)
 - [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
 - [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
 - [修訂後配對研究實測](reports/research_revision/2026-11-06/paired/comparison.md)

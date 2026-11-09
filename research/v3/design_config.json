@@ -1,0 +1,103 @@
+{
+  "protocol_version": "benchmark_relative_sentiment_v3_design_1",
+  "designed_on": "2026-11-10",
+  "status": "design_only_untrained_data_and_execution_gates_pending",
+  "future_model_freeze_at": null,
+  "performance_claim": "none",
+  "replace_existing_daily_models": false,
+  "objective": "positive net total-return excess versus the predeclared investable benchmark",
+  "benchmark": {
+    "ticker": "006204.TW",
+    "tracking_index": "TAIEX",
+    "data_verified": false,
+    "liquidity_verified": false,
+    "total_return_required": true
+  },
+  "initial_satellite_tickers": [
+    "2330.TW",
+    "2317.TW",
+    "2603.TW",
+    "2002.TW",
+    "2891.TW"
+  ],
+  "allocation": {
+    "minimum_benchmark_weight": 0.8,
+    "maximum_satellite_weight": 0.2,
+    "maximum_direct_stock_weight": 0.1,
+    "maximum_active_stocks": 2,
+    "long_only": true,
+    "leverage": 1.0,
+    "unallocated_satellite_destination": "benchmark",
+    "risk_off_halves_portfolio": false
+  },
+  "target": {
+    "entry": "next_session_close",
+    "hold_sessions": 5,
+    "label_gap_sessions": 6,
+    "definition": "stock total return i+1 to i+6 minus benchmark total return over the same interval"
+  },
+  "model_pair": {
+    "architecture": "shared_LSTM32",
+    "time_step": 10,
+    "loss": "Huber",
+    "max_epochs": 20,
+    "patience": 3,
+    "seed": 42,
+    "only_differing_input": "news_information_channels",
+    "train_only_scaler": true,
+    "train_signal_samples": 756,
+    "validation_signal_samples_per_fold": 60,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "huber_delta_percentage_points": 1.0
+  },
+  "arms": [
+    "B0_benchmark",
+    "B1_core_equal_satellite",
+    "B2_core_price_model",
+    "B3_core_same_model_with_news"
+  ],
+  "execution": {
+    "rebalance_every_sessions": 5,
+    "weight_change_no_trade_band": 0.02,
+    "minimum_expected_edge_cost_multiplier": 1.5,
+    "fee_schedule_required_per_asset": true,
+    "stock_sell_tax": 0.003,
+    "equity_etf_sell_tax": 0.001,
+    "spread_and_liquidity_inputs_required": true,
+    "fractional_share_assumption_allowed_for_exploration_only": true,
+    "expired_signal_carry_forward": false,
+    "broker_fee_rate": 0.001425,
+    "minimum_broker_fee": "must be verified and registered before execution",
+    "dividend_and_split_ledger_required": true,
+    "transaction_costs_include_etf_switch_legs": true
+  },
+  "selection": {
+    "history_status": "all_current_history_is_exploratory",
+    "chronological_validation_folds": 3,
+    "minimum_positive_net_excess_folds": 2,
+    "primary_metrics": [
+      "net_benchmark_relative_return",
+      "information_ratio"
+    ],
+    "news_must_beat_no_news_on_validation": true,
+    "maximum_annualized_tracking_error": 0.06,
+    "test_used_for_selection": false,
+    "failure_fallback": "B0_benchmark"
+  },
+  "prospective_review": {
+    "first_operational_review_mature_signals": 60,
+    "first_effect_review_execution_sessions": 252,
+    "bootstrap_block_sessions": 20,
+    "confidence": 0.95,
+    "interim_reselection_allowed": false
+  },
+  "blocking_requirements": [
+    "benchmark point-in-time total-return and liquidity inputs",
+    "per-asset tax and dividend ledger",
+    "news availability and NLP checkpoint audit",
+    "paired training and validation",
+    "reviewed frozen model bundle before new forward observations"
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "period": [
+    "2026-03-23",
+    "2026-11-02"
+  ],
+  "accounting": {
+    "price_lstm": {
+      "net_roi_pp": 17.4563673004404,
+      "pnl_contribution_pp": 18.51120905621891,
+      "cost_contribution_pp": 1.0548417557786804,
+      "cost_currency": 1054.8417557786806,
+      "average_equity_pct": 63.65195005294758,
+      "risk_off_flag_days": 109,
+      "days": 151,
+      "risk_off_at_rebalance": 22,
+      "rebalance_days": 30
+    },
+    "sentiment_risk_lstm": {
+      "net_roi_pp": 16.181955912120994,
+      "pnl_contribution_pp": 17.274477820379133,
+      "cost_contribution_pp": 1.092521908258442,
+      "cost_currency": 1092.521908258442,
+      "average_equity_pct": 63.63607126623021,
+      "risk_off_flag_days": 109,
+      "days": 151,
+      "risk_off_at_rebalance": 22,
+      "rebalance_days": 30
+    },
+    "matched_risk_equal": {
+      "net_roi_pp": 16.833361375756105,
+      "pnl_contribution_pp": 17.655871661275015,
+      "cost_contribution_pp": 0.8225102855191322,
+      "cost_currency": 822.5102855191323,
+      "average_equity_pct": 63.64301897983297,
+      "risk_off_flag_days": 109,
+      "days": 151,
+      "risk_off_at_rebalance": 22,
+      "rebalance_days": 30
+    },
+    "full_exposure_buy_hold": {
+      "net_roi_pp": 27.017180912220205,
+      "pnl_contribution_pp": 27.72402729422238,
+      "cost_contribution_pp": 0.7068463820021882,
+      "cost_currency": 706.8463820021882,
+      "average_equity_pct": 100.00000000000003,
+      "risk_off_flag_days": 109,
+      "days": 151,
+      "risk_off_at_rebalance": 1,
+      "rebalance_days": 1
+    }
+  },
+  "full_exposure_diagnostic_ablations": {
+    "full_equal_weekly": {
+      "Name": "full_equal_weekly",
+      "Schedule": "every_5_sessions",
+      "Study": "exploratory_not_a_new_independent_test",
+      "Execution": "next_session_close",
+      "Same_Close_Execution": false,
+      "ROI_Pct": 28.08843058252437,
+      "Sharpe": 2.1196588939045675,
+      "MDD_Pct": -12.501475278853015,
+      "Total_Transaction_Cost": 959.9229920150519,
+      "Average_Equity_Weight_Pct": 100.0,
+      "Average_Cash_Weight_Pct": -5.8887053349174515e-15,
+      "Exclusion_Count": 0,
+      "Rebalance_Days": 30,
+      "Skipped_Rebalance_Days": 0,
+      "Sessions": 151,
+      "Average_Turnover": 0.011393873079909722
+    },
+    "full_price_weekly": {
+      "Name": "full_price_weekly",
+      "Schedule": "every_5_sessions",
+      "Study": "exploratory_not_a_new_independent_test",
+      "Execution": "next_session_close",
+      "Same_Close_Execution": false,
+      "ROI_Pct": 30.191025804861948,
+      "Sharpe": 2.255297819764761,
+      "MDD_Pct": -10.81454061670809,
+      "Total_Transaction_Cost": 1386.6853522440972,
+      "Average_Equity_Weight_Pct": 100.0,
+      "Average_Cash_Weight_Pct": 3.195953878839332e-15,
+      "Exclusion_Count": 0,
+      "Rebalance_Days": 30,
+      "Skipped_Rebalance_Days": 0,
+      "Sessions": 151,
+      "Average_Turnover": 0.0194371575800653
+    },
+    "full_news_weekly": {
+      "Name": "full_news_weekly",
+      "Schedule": "every_5_sessions",
+      "Study": "exploratory_not_a_new_independent_test",
+      "Execution": "next_session_close",
+      "Same_Close_Execution": false,
+      "ROI_Pct": 27.155876366258024,
+      "Sharpe": 2.091470664387949,
+      "MDD_Pct": -11.904633616515047,
+      "Total_Transaction_Cost": 1427.2448489400163,
+      "Average_Equity_Weight_Pct": 100.0,
+      "Average_Cash_Weight_Pct": 3.3903829840884408e-15,
+      "Exclusion_Count": 0,
+      "Rebalance_Days": 30,
+      "Skipped_Rebalance_Days": 0,
+      "Sessions": 151,
+      "Average_Turnover": 0.02065542221528224
+    }
+  },
+  "stock_gross_price_returns_pct": {
+    "2330.TW": 28.729281767955793,
+    "2317.TW": 28.06122448979591,
+    "2603.TW": 34.558823529411775,
+    "2002.TW": 1.8372724172546429,
+    "2891.TW": 45.63106796116505
+  },
+  "index_gross_price_return_pct": 37.27600466040186,
+  "test_prediction_quality_descriptive_only": {
+    "price_lstm": {
+      "mean_cross_section_spearman": 0.02000000000000001,
+      "positive_prediction_pct": 42.266666666666666,
+      "actual_positive_pct": 53.06666666666666,
+      "direction_accuracy_pct": 50.93333333333333,
+      "mae_pp": 3.332251781947536,
+      "per_ticker": [
+        {
+          "ticker": "2002.TW",
+          "pred_mean": -0.019517536652274382,
+          "pred_std": 0.008146526976341025,
+          "actual_std": 2.539832067064121,
+          "prediction_positive_rate": 0.0,
+          "actual_positive_rate": 0.4666666666666667
+        },
+        {
+          "ticker": "2317.TW",
+          "pred_mean": -0.2325088851650556,
+          "pred_std": 0.037922937955457495,
+          "actual_std": 5.686299169135842,
+          "prediction_positive_rate": 0.0,
+          "actual_positive_rate": 0.5133333333333333
+        },
+        {
+          "ticker": "2330.TW",
+          "pred_mean": 0.9456648274262747,
+          "pred_std": 0.00856307096859556,
+          "actual_std": 4.115941300546943,
+          "prediction_positive_rate": 1.0,
+          "actual_positive_rate": 0.5533333333333333
+        },
+        {
+          "ticker": "2603.TW",
+          "pred_mean": -0.37876857633392014,
+          "pred_std": 0.3843750757911707,
+          "actual_std": 5.467134446360205,
+          "prediction_positive_rate": 0.11333333333333333,
+          "actual_positive_rate": 0.5533333333333333
+        },
+        {
+          "ticker": "2891.TW",
+          "pred_mean": 0.442420875231425,
+          "pred_std": 0.026530207065129464,
+          "actual_std": 4.3015980375835685,
+          "prediction_positive_rate": 1.0,
+          "actual_positive_rate": 0.5666666666666667
+        }
+      ]
+    },
+    "sentiment_risk_lstm": {
+      "mean_cross_section_spearman": 0.060666666666666653,
+      "positive_prediction_pct": 69.86666666666666,
+      "actual_positive_pct": 53.06666666666666,
+      "direction_accuracy_pct": 50.0,
+      "mae_pp": 3.367435326122686,
+      "per_ticker": [
+        {
+          "ticker": "2002.TW",
+          "pred_mean": 0.021871202534530287,
+          "pred_std": 0.024492256790461225,
+          "actual_std": 2.539832067064121,
+          "prediction_positive_rate": 0.78,
+          "actual_positive_rate": 0.4666666666666667
+        },
+        {
+          "ticker": "2317.TW",
+          "pred_mean": -0.14315866983185208,
+          "pred_std": 0.0734593987933073,
+          "actual_std": 5.686299169135842,
+          "prediction_positive_rate": 0.03333333333333333,
+          "actual_positive_rate": 0.5133333333333333
+        },
+        {
+          "ticker": "2330.TW",
+          "pred_mean": 0.4420654569069544,
+          "pred_std": 0.154282046414448,
+          "actual_std": 4.115941300546943,
+          "prediction_positive_rate": 1.0,
+          "actual_positive_rate": 0.5533333333333333
+        },
+        {
+          "ticker": "2603.TW",
+          "pred_mean": 1.1149279272556305,
+          "pred_std": 1.6792107203574125,
+          "actual_std": 5.467134446360205,
+          "prediction_positive_rate": 0.7733333333333333,
+          "actual_positive_rate": 0.5533333333333333
+        },
+        {
+          "ticker": "2891.TW",
+          "pred_mean": 0.24625136636197567,
+          "pred_std": 0.1653024600511672,
+          "actual_std": 4.3015980375835685,
+          "prediction_positive_rate": 0.9066666666666666,
+          "actual_positive_rate": 0.5666666666666667
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Accounting cost add-back does not recompute a no-cost path; share counts were affected by costs",
+    "Risk filter ablation is descriptive on observed test; it cannot be used as independent validation or a test-selected final strategy",
+    "Full equal vs fixed buy-hold separates rebalancing drift; broad index gap also includes stock universe/sector composition",
+    "Raw index with stock-cost proxy is not an investable ETF or total-return benchmark"
+  ],
+  "arithmetic_descriptive_decomposition": {
+    "total_gap_pp": 20.292126859708734,
+    "index_vs_full_weekly_equal_pp": 8.385652189305357,
+    "full_equal_vs_risk_equal_pp": 11.255069206768265,
+    "risk_equal_vs_model_pp": 0.6514054636351112,
+    "model_minus_risk_equal_net_pp": -0.6514054636351112,
+    "model_minus_risk_equal_stock_pnl_pp": -0.3813938408958819,
+    "model_extra_cost_vs_risk_equal_pp": 0.2700116227393099,
+    "risk_off_rebalance_pct": 73.33333333333333
+  },
+  "status": "posthoc_description_not_candidate_selection_or_independent_test",
+  "source_base_commit": "69972559fb2a5cedd92e492870a48847396c8e81",
+  "source_files_sha256": {
+    "reports/research_extension/2026-11-06/predictions.csv": "83c5989af6ee89b7b101611e7038cf1381d1b2c4ba08f44b4edd15be5e5d2a05",
+    "reports/research_extension/2026-11-06/strategy_metrics.csv": "00a357bb812f3fc1da3764ac69bb00e5f08579d67437a8df1805fe34d1332857",
+    "reports/research_extension/2026-11-06/inputs/prices.csv": "4337925d43299b29f48518cf3f9bd46fafbdfe18dd5846e45af7fc6231d590ba",
+    "reports/research_extension/2026-11-06/inputs/sentiment.csv": "9f54b16cad1dc66fc6338f06bcaf7da706feea1c4cfd2595592cafca5fd3b019",
+    "experiments/v2/books.py": "976397c9c62170e5b0e0427ade9432f01056b0cf3ec3a2a0b6d53b211921ae2a",
+    "scripts/research_extension.py": "96fec3155fde54d584104172f4b5ee166671e91d1bc2ebc374831d48c3fbbfa5"
+  },
+  "diagnostic_script_sha256": "4ddc58783f2524cee5a29f2701583392c2048c9009164256cdbadc1fb20d55ff"
+}
