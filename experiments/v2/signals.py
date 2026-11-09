@@ -100,23 +100,39 @@ def calibrate(predictions, model="B"):
     """Fit each line on the earlier validation dates and score the later dates.
 
     Test labels are not used. The later validation block is the only block that
-    may decide whether calibration replaces the control.
+    may decide whether calibration replaces the control. Calibration labels must
+    mature strictly before that block starts; signal-date separation alone is
+    insufficient for the overlapping five-session labels.
     """
     source = predictions[predictions.Model == model].copy()
     rows = []
     audits = []
     for (fold_id, ticker), part in source.groupby(["Fold", "Ticker"]):
-        validation = part[part.Split == "validation"].sort_values("Signal_Date")
+        validation = part[part.Split == "validation"].copy()
+        if "Label_End" not in validation:
+            raise ValueError("校準驗證資料必須包含 Label_End，不能假設五日標籤已成熟")
+        validation["Signal_Date"] = pd.to_datetime(validation.Signal_Date, errors="raise")
+        validation["Label_End"] = pd.to_datetime(validation.Label_End, errors="coerce")
+        if validation.Label_End.isna().any() or (validation.Label_End <= validation.Signal_Date).any():
+            raise ValueError("校準驗證資料的 Label_End 必須有效且晚於 Signal_Date")
+        validation = validation.sort_values("Signal_Date")
         test = part[part.Split == "test"].sort_values("Signal_Date")
         dates = validation.Signal_Date.drop_duplicates().sort_values()
+        if len(dates) < 2:
+            raise ValueError("校準至少需要兩個驗證訊號日，才能保留獨立的後半段")
         cut = max(len(dates) // 2, 1)
         fit_dates = set(pd.to_datetime(dates.iloc[:cut]))
         hold_dates = set(pd.to_datetime(dates.iloc[cut:]))
         fit = validation[pd.to_datetime(validation.Signal_Date).isin(fit_dates)]
         hold = validation[pd.to_datetime(validation.Signal_Date).isin(hold_dates)]
-        intercept, slope, pearson, status = _line(
-            fit.Predicted.to_numpy(dtype=float), fit.Actual_5d_Pct.to_numpy(dtype=float),
-        )
+        hold_start = hold.Signal_Date.min()
+        fit = fit[fit.Label_End < hold_start]
+        if len(fit) < 5:
+            intercept, slope, pearson, status = 0.0, 1.0, 0.0, "identity_insufficient_matured_fit_window"
+        else:
+            intercept, slope, pearson, status = _line(
+                fit.Predicted.to_numpy(dtype=float), fit.Actual_5d_Pct.to_numpy(dtype=float),
+            )
         audits.append({
             "Fold": int(fold_id),
             "Ticker": ticker,
@@ -124,7 +140,10 @@ def calibrate(predictions, model="B"):
             "Intercept": intercept,
             "Slope": slope,
             "Status": status,
-            "Fit_Days": int(len(fit_dates)),
+            "Fit_Days": int(fit.Signal_Date.nunique()),
+            "Purged_Fit_Days": int(len(fit_dates) - fit.Signal_Date.nunique()),
+            "Fit_Last_Label_End": fit.Label_End.max(),
+            "Holdout_Start": hold_start,
             "Holdout_Days": int(len(hold_dates)),
         })
         for block, split in ((hold, "validation"), (test, "test")):

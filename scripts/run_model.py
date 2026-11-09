@@ -74,7 +74,7 @@ def prepare_independent_ledger() -> Path:
     if sha256(archived) != EXPECTED_SIGNAL:
         raise ValueError("開發者原始訊號封存已被改動，停止更新獨立市場鏡像")
     required = ("prices.csv", "prices_seed.csv", "sentiment.csv", "sentiment_seed.csv", "manifest.json", "state.json")
-    optional = ("news_cache.csv", "fetch_audit.jsonl", "news_scan_coverage.json")
+    optional = ("news_cache.csv", "news_cache_provenance.jsonl", "fetch_audit.jsonl", "news_scan_coverage.json")
     for name in required:
         if not (market_src / name).is_file():
             raise ValueError(f"shared market is incomplete: {name}")
@@ -229,6 +229,9 @@ def inspect_model(model: str, now=None, fixture: str = "") -> dict:
             payload["weight_sha256"] = digest
             if digest != EXPECTED_WEIGHTS or card.get("weight_sha256") != digest:
                 raise ValueError("frozen weight hash mismatch")
+            from scripts.model_bundle import verify_bundle
+
+            payload["bundle_sha256"] = verify_bundle(weight_dir=weights, root=ROOT, card=card)["bundle_sha256"]
             if model == "v211":
                 signal = ROOT / "experiments" / "results" / "v2" / "v211" / "daily" / "2026-11-05.csv"
                 if sha256(signal) != EXPECTED_SIGNAL:
@@ -308,7 +311,7 @@ def run_notebook(kind: str, mode: str, fixture: str = "") -> int:
     os.environ["LSTM_AS_OF_DATE"] = str(completed.date())
     os.environ["LSTM_PRICE_CSV"] = str(price)
     os.environ["LSTM_OUTPUT_DIR"] = str(out)
-    os.environ["LSTM_SAVE_MODELS"] = "0"
+    os.environ.setdefault("LSTM_SAVE_MODELS", "1")
     history = out / "recommendation_history" if fixture else ROOT / "outputs" / kind / "recommendation_history"
     os.environ["LSTM_RECOMMENDATION_HISTORY_DIR"] = str(history)
     if feature is not None:
@@ -426,6 +429,9 @@ def _frozen_card() -> tuple[str, dict]:
     card = json.loads((folder / "model_card.json").read_text(encoding="utf-8"))
     if digest != EXPECTED_WEIGHTS or card.get("weight_sha256") != digest:
         raise ValueError("frozen weight hash mismatch; training is prohibited in the daily runner")
+    from scripts.model_bundle import verify_bundle
+
+    verify_bundle(weight_dir=folder, root=ROOT, card=card)
     return digest, card
 
 
@@ -472,6 +478,9 @@ def run_555_v2(mode: str) -> int:
 
     context = load_market_context()
     _digest, card = _frozen_card()
+    from scripts.model_bundle import verify_bundle
+
+    bundle = verify_bundle(weight_dir=tracker.WEIGHT_DIR, root=ROOT, card=card)
     if not (tracker.WEIGHT_DIR / "model_card.json").exists() or sha256(weight_path) != digest:
         payload["status"] = "failed"
         payload["reason"] = "weights changed during reuse"
@@ -479,6 +488,8 @@ def run_555_v2(mode: str) -> int:
         return 1
     rows, execution, _five = tracker.predict_rows(card, context, completed)
     dates = v2_date_record(str(completed.date()), str(today.date()), execution)
+    dates.update(tracker.execution_eligibility(completed))
+    dates["intended_execution_date_meaning"] = "相容舊欄位：預測標籤的假設進場日；實際交易須另看 trade_eligible 與 scheduled_rebalance_date"
     out = ROOT / "outputs" / "555_v2" / str(today.date())
     out.mkdir(parents=True, exist_ok=True)
     export = rows.copy()
@@ -506,9 +517,12 @@ def run_555_v2(mode: str) -> int:
             "target_weight": item["Target_Weight"],
             "cash_weight": item["Cash_Weight"],
             "risk_status": "Risk_Off" if bool(item["Risk_Off"]) else "Risk_On",
-            "intended_execution_date": dates["intended_execution_date"],
+            "intended_execution_date": dates["forecast_entry_date"] if dates["trade_eligible"] else NOT_APPLICABLE,
+            "forecast_entry_date": dates["forecast_entry_date"],
+            "scheduled_rebalance_date": dates["scheduled_rebalance_date"],
+            "trade_eligible": dates["trade_eligible"],
             "execution_price": NOT_APPLICABLE,
-            "execution_status": "not_filled",
+            "execution_status": "eligible_unfilled" if dates["trade_eligible"] else "forecast_only",
             "model_hash": digest,
             "data_hash": sha256(PRICES),
         })
@@ -520,6 +534,7 @@ def run_555_v2(mode: str) -> int:
         "research_sample": False,
         "v211_signal_written": False,
         "dates": dates,
+        "model_bundle_sha256": bundle["bundle_sha256"],
         "note": "This CSV is a prediction export. Only the V2.11 ledger file is a research signal.",
     })
     payload.update({
@@ -598,13 +613,86 @@ def run_v211(mode: str) -> int:
     return int(completed_run.returncode)
 
 
-def run(model: str, mode: str, fixture: str = "") -> int:
+def run_paired_555(mode: str) -> int:
+    """Use this session's saved 444 core; do not fit a different comparison model."""
+    if mode == "check":
+        return _check("555")
+    from scripts.paired_delivery import build_paired_report
+    from scripts.paired_native import export_paired_native
+    from scripts.paired_research import paired_daily_recommendation, run_paired_research
+
+    now, today, completed = run_day()
+    price, price_reason = _price_snapshot(completed)
+    sentiment, sentiment_reason = _sentiment_snapshot(completed)
+    baseline = ROOT / "outputs/444" / str(today.date()) / "native"
+    baseline_status = ROOT / "outputs/444" / str(today.date()) / "status.json"
+    status444 = json.loads(baseline_status.read_text(encoding="utf-8")) if baseline_status.is_file() else {}
+    payload = {"model": "555", "mode": mode, "status": "waiting", "core_model": "444",
+               "training_executed": False, "forecast_produced": False,
+               "completed_session": str(completed.date()), "run_date": str(today.date()),
+               "research_protocol": "paired-444-core-allocation-v1",
+               "execution_assumption": "signal-day allocation; next-session close; common costs",
+               "research_status": "exploratory", "historical_news_point_in_time_proven": False}
+    if (price is None or sentiment is None or status444.get("status") != "success"
+            or status444.get("completed_session") != str(completed.date())):
+        payload["reason"] = price_reason if price is None else sentiment_reason if sentiment is None else "waiting_for_current_444_core"
+        _write_status("555", today, payload)
+        print(json.dumps(payload, ensure_ascii=False), flush=True)
+        return 2
+    protocol = json.loads((baseline / "evaluation_protocol.json").read_text(encoding="utf-8"))
+    result = run_paired_research(baseline / "test_predictions.csv", price, sentiment, protocol)
+    recommendation = paired_daily_recommendation(baseline / "next_day_recommendation.csv", price, sentiment, protocol)
+    out = ROOT / "outputs/555" / str(today.date())
+    native = out / "native"
+    export = export_paired_native(result, recommendation, baseline, native, completed, datetime.now(TZ))
+    research = build_paired_report(baseline, price, sentiment, ROOT / "reports/daily" / str(completed.date()) / "paired", root=ROOT)
+    rec = pd.read_csv(native / "next_day_recommendation.csv")
+    # Separate method histories: never blend these with the old six-feature 555.
+    history = ROOT / "outputs/555/paired_recommendation_history"
+    history.mkdir(parents=True, exist_ok=True)
+    history_path = history / f"{export['run_id']}.csv"
+    if history_path.exists():
+        raise FileExistsError(history_path)
+    shutil.copy2(native / "next_day_recommendation.csv", history_path)
+    rows = []
+    for item in rec.to_dict("records"):
+        row = blank_row()
+        row.update({"model_id": "555", "model_version": payload["research_protocol"],
+                    "signal_date": item["Signal_Date"], "run_date": str(today.date()),
+                    "generated_at": item["Created_At"], "data_asof": str(completed.date()),
+                    "stock_id": item["Ticker"], "stock_name": NAMES[item["Ticker"]],
+                    "predicted_return_pct": item["Predicted_Return_Pct"], "prediction_horizon_days": 1,
+                    "target_weight": item["Target_Weight"], "cash_weight": item["Cash_Weight"],
+                    "risk_status": "Risk_Off" if bool(item["Risk_Off"]) else "Risk_On",
+                    "forecast_entry_date": item["Target_Date"], "scheduled_rebalance_date": item["Target_Date"],
+                    "trade_eligible": True, "intended_execution_date": item["Target_Date"],
+                    "execution_status": "research_target_only_no_order", "data_hash": sha256(price)})
+        rows.append(row)
+    unified = out / "unified_signal.csv"
+    write_table(unified, rows, {"model_id": "555", "core_model": "444", "research_sample": False,
+                              "execution_assumption": payload["execution_assumption"],
+                              "prediction_target": "444 next-day model label; not a forecast of post-fill holding profit",
+                              "sentiment_sha256": sha256(sentiment), "core_source_sha256": export["core_source_sha256"],
+                              "original_six_feature_555": "available through --legacy-555; a separate secondary study"})
+    payload.update({"status": "success", "forecast_produced": True,
+                    "reason": "shared_444_core_dynamic_news_risk_exported", "primary_research": research,
+                    "native_output_dir": native.relative_to(ROOT).as_posix(),
+                    "daily_native_dir": native.relative_to(ROOT).as_posix(),
+                    "unified_csv": unified.relative_to(ROOT).as_posix()})
+    _write_status("555", today, payload)
+    print(json.dumps(payload, ensure_ascii=False), flush=True)
+    return 0
+
+
+def run(model: str, mode: str, fixture: str = "", legacy_555: bool = False) -> int:
     if mode == "check":
         return _check(model, fixture)
     os.chdir(ROOT)
     if fixture and model not in {"444", "555"}:
         raise SystemExit("reproducible 測試資料只供 444 與 555 使用")
     try:
+        if model == "555" and not fixture and not legacy_555:
+            return run_paired_555(mode)
         if model in {"444", "555"}:
             return run_notebook(model, mode, fixture)
         if model == "555_v2":
@@ -627,8 +715,9 @@ def main() -> int:
     parser.add_argument("--model", required=True, choices=["444", "555", "555_v2", "v211"])
     parser.add_argument("--mode", choices=["check", "full"], default="full")
     parser.add_argument("--fixture", default="", choices=["", "reproducible"])
+    parser.add_argument("--legacy-555", action="store_true", help="Run the preserved six-feature 555 as a separate historical/extension diagnostic")
     args = parser.parse_args()
-    return run(args.model, args.mode, args.fixture)
+    return run(args.model, args.mode, args.fixture, legacy_555=args.legacy_555)
 
 
 if __name__ == "__main__":

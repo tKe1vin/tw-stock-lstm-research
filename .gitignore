@@ -17,6 +17,7 @@ outputs/444/*/
 !outputs/444/recommendation_history/
 outputs/555/*/
 !outputs/555/recommendation_history/
+!outputs/555/paired_recommendation_history/
 outputs/555_v2/*/
 outputs/v211/*/
 outputs/daily_summary/*/

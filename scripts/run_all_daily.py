@@ -127,6 +127,8 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
             from scripts.run_model import EXPECTED_WEIGHTS
             if status.get("weight_sha256") != EXPECTED_WEIGHTS:
                 return None
+        if model == "555" and status.get("research_protocol") != "paired-444-core-allocation-v1":
+            return None  # Old six-feature exports are not the new shared-core study.
         return {"model": model, "status": "success", "exit_code": 0,
                 "reason": "already_completed_for_this_session", "outputs_retained": True}
     except (OSError, ValueError, TypeError):

@@ -326,6 +326,10 @@ def _remember(day, report):
             "ready_at": report.get("fetched_at"),
             "price_sha256": report.get("price_sha256"),
             "sentiment_sha256": report.get("sentiment_sha256"),
+            "fetched_at_kind": report.get("fetched_at_kind", "unverified_legacy_record"),
+            "news_provenance_status": report.get("news_provenance_status", "retrospective_unverified"),
+            "news_provenance_path": report.get("news_provenance_path"),
+            "news_available_at": report.get("news_available_at"),
         }
         _write_json(STATE, state)
         return sessions_state[key]
@@ -340,14 +344,18 @@ def source_for(day):
         "price_source": PRICE_SOURCE,
         "sentiment_source": SENTIMENT_SOURCE,
         "calendar": CALENDAR,
-        "price_sha256": info.get("price_sha256"),
-        "sentiment_sha256": info.get("sentiment_sha256"),
+        "price_sha256": sha256(PRICES),
+        "sentiment_sha256": sha256(SENTIMENT),
         "fetched_at": info.get("ready_at"),
+        "fetched_at_kind": info.get("fetched_at_kind", "unverified_legacy_record"),
+        "news_provenance_status": info.get("news_provenance_status", "retrospective_unverified"),
+        "news_provenance_path": info.get("news_provenance_path"),
+        "news_available_at": info.get("news_available_at"),
         "used_previous_day_sentiment": False,
     }
 
 
-def extend_prices(as_of, now, report):
+def extend_prices(as_of, now, report, *, clock=None):
     ledger = pd.read_csv(PRICES)
     ledger["Date"] = pd.to_datetime(ledger["Date"]).dt.normalize()
     as_of = pd.Timestamp(as_of).normalize()
@@ -381,11 +389,15 @@ def extend_prices(as_of, now, report):
     report["prices_ready"] = True
     report["prices_through"] = str(as_of.date())
     report["price_sha256"] = sha256(PRICES)
-    report["price_fetched_at"] = now.astimezone(TZ).isoformat()
+    from scripts.news_update import observation_time
+    report["price_fetched_at"] = observation_time(clock)
 
 
-def extend_sentiment(as_of, now, report):
-    from scripts.news_update import MODEL_ID, fetch_day, matches, to_signal_date, SentimentScorer
+def extend_sentiment(as_of, now, report, *, clock=None):
+    from scripts.news_update import (MODEL_ID, fetch_day, matches, to_signal_date, SentimentScorer,
+                                    article_provenance, observation_time, load_news_cache,
+                                    append_provenance, append_news_cache, provenance_path, cache_row_hash,
+                                    PROVENANCE_FIELDS)
 
     manifest = _read_json(MANIFEST)
     existing = pd.read_csv(SENTIMENT)
@@ -421,12 +433,15 @@ def extend_sentiment(as_of, now, report):
     coverage = {}
     for date in pd.date_range(start, as_of, freq="D"):
         entries = fetch_day(date)
+        fetched_at = observation_time(clock)
         print(f"[V211][NEWS] {date.strftime('%Y-%m-%d')}: fetched {len(entries)} articles", flush=True)
-        scanned.extend(entries)
-        coverage[str(date.date())] = {"articles": len(entries), "completed_at": now.astimezone(TZ).isoformat()}
-    old = pd.read_csv(CACHE, dtype={"news_id": str}) if CACHE.exists() else pd.DataFrame()
+        scanned.extend([{**entry, **article_provenance(entry, fetched_at)} for entry in entries])
+        coverage[str(date.date())] = {"articles": len(entries), "completed_at": fetched_at,
+                                    "timestamp_kind": "observed_completion"}
+    old = load_news_cache(CACHE)
     already = set(zip(old.news_id.astype(str), old.ticker.astype(str))) if len(old) else set()
     new = []
+    observations = []
     for article in scanned:
         signal = to_signal_date(article["publish_time"])
         if signal <= seed_end:
@@ -434,7 +449,14 @@ def extend_sentiment(as_of, now, report):
         content = article["title"] + " " + article["summary"]
         for ticker in TICKERS:
             key = (article["news_id"], ticker)
-            if key in already or not matches(content, ticker):
+            if not matches(content, ticker):
+                continue
+            evidence = {field: article.get(field) for field in PROVENANCE_FIELDS
+                        if field not in ("available_at", "cache_row_hash", "provenance_status")}
+            observations.append({"record_type": "article_observation", "news_id": article["news_id"],
+                                 "ticker": ticker, "Date": str(signal.date()),
+                                 "publish_time": article["publish_time"], **evidence})
+            if key in already:
                 continue
             new.append({
                 "news_id": article["news_id"],
@@ -442,6 +464,7 @@ def extend_sentiment(as_of, now, report):
                 "publish_time": article["publish_time"],
                 "Date": str(signal.date()),
                 "text": content,
+                **evidence,
             })
             already.add(key)
     if new:
@@ -453,8 +476,12 @@ def extend_sentiment(as_of, now, report):
             row["Daily_Sentiment"] = scores[row["news_id"]]
             row["Model_ID"] = MODEL_ID
             del row["text"]
+            row["available_at"] = observation_time(clock)
+            row["cache_row_hash"] = cache_row_hash(row)
+            row["provenance_status"] = "observed_at_recorded_time"
+            observations.append({"record_type": "scored_cache_row", **row})
         new_frame = pd.DataFrame(new)
-        old = pd.concat([old, new_frame], ignore_index=True)
+        old = pd.concat([old, new_frame], ignore_index=True) if len(old) else new_frame.copy()
     if len(old):
         old = old.drop_duplicates(["news_id", "ticker"]).sort_values(["Date", "ticker", "news_id"])
     built = rows_for_sessions(old, missing)
@@ -468,22 +495,36 @@ def extend_sentiment(as_of, now, report):
     # be retried without any already-published sentiment row being rewritten.
     scan_state = _read_json(SCAN_COVERAGE)
     scan_state.setdefault("calendar_days", {}).update(coverage)
+    completed_at = observation_time(clock)
+    provenance_file = provenance_path(CACHE)
+    def session_evidence(day):
+        part = old[old.Date.astype(str) == str(day.date())]
+        verified = not len(part) or bool((part.provenance_status == "observed_at_recorded_time").all())
+        # Later retrieval cannot prove that an earlier historical decision had the articles.
+        timely = pd.Timestamp(completed_at).date() <= day.date()
+        return {"source_start": str(start.date()), "source_end": str(as_of.date()),
+                "completed_at": completed_at, "available_at": completed_at,
+                "timestamp_kind": "observed_completion",
+                "provenance_status": "observed_at_recorded_time" if verified and timely else "retrospective_unverified",
+                "news_provenance_path": str(provenance_file),
+                "unverified_article_rows": int((part.provenance_status != "observed_at_recorded_time").sum()) if len(part) else 0}
     scan_state.setdefault("signal_sessions", {}).update({
-        str(day.date()): {"source_start": str(start.date()), "source_end": str(as_of.date()),
-                          "completed_at": now.astimezone(TZ).isoformat()}
+        str(day.date()): session_evidence(day)
         for day in missing
     })
-    if len(old):
-        temporary = assert_v211(CACHE.with_suffix(CACHE.suffix + ".tmp"))
-        old.to_csv(temporary, index=False, encoding="utf-8-sig", lineterminator="\r\n")
-        temporary.replace(assert_v211(CACHE))
+    assert_v211(provenance_file)
+    append_provenance(CACHE, observations)
+    if new:
+        append_news_cache(CACHE, new_frame)
     _write_json(SCAN_COVERAGE, scan_state)
     _append_csv(SENTIMENT, built)
     report["sentiment_ready"] = True
     report["sentiment_through"] = str(as_of.date())
     report["sentiment_sha256"] = sha256(SENTIMENT)
     report["appended_sentiment_dates"] = [str(pd.Timestamp(day).date()) for day in missing]
-    report["sentiment_fetched_at"] = now.astimezone(TZ).isoformat()
+    report["sentiment_fetched_at"] = completed_at
+    report["news_provenance_status"] = scan_state["signal_sessions"][str(as_of.date())]["provenance_status"]
+    report["news_provenance_path"] = str(provenance_file)
     report["new_articles"] = len(new)
     report["news_source_start"] = str(start.date())
     report["news_source_end"] = str(as_of.date())
@@ -517,6 +558,7 @@ def _market_report(now):
         "ready_to_predict": False,
         "completed_session": str(completed.date()),
         "clock": now.astimezone(TZ).isoformat(),
+        "run_started_at": now.astimezone(TZ).isoformat(),
         "prices_ready": False,
         "sentiment_ready": False,
         "price_source": PRICE_SOURCE,
@@ -527,6 +569,8 @@ def _market_report(now):
         "error": None,
         "price_error": None,
         "sentiment_error": None,
+        "historical_sentiment_provenance": "retrospective_unverified",
+        "news_provenance_schema_version": 1,
         "appended_price_dates": [],
         "appended_sentiment_dates": [],
     }
@@ -563,6 +607,21 @@ def inspect_market(now=None):
         report["error"] = " | ".join(errors) if errors else None
         stored = _read_json(STATE).get("sessions", {}).get(str(completed.date()), {})
         report["fetched_at"] = stored.get("ready_at")
+        report["fetched_at_kind"] = stored.get("fetched_at_kind", "unverified_legacy_record")
+        evidence = _read_json(SCAN_COVERAGE).get("signal_sessions", {}).get(str(completed.date()), {})
+        report["news_provenance_status"] = evidence.get("provenance_status", "retrospective_unverified")
+        from scripts.news_update import provenance_path
+        report["news_provenance_path"] = str(provenance_path(CACHE))
+        report["news_available_at"] = evidence.get("available_at")
+        if evidence.get("available_at") and pd.Timestamp(evidence["available_at"]) > pd.Timestamp(now):
+            report["ready_to_predict"] = False
+            report["gate"] = "news_not_yet_available_at_decision"
+            report["error"] = "新聞特徵完成時間晚於決策時點"
+        if (report["ready_to_predict"] and report["fetched_at_kind"] == "observed_completion" and report.get("fetched_at")
+                and pd.Timestamp(report["fetched_at"]) > pd.Timestamp(now)):
+            report["ready_to_predict"] = False
+            report["gate"] = "market_not_yet_available_at_decision"
+            report["error"] = "市場快照完成時間晚於決策時點"
         report["official_price_changed_since_seed"] = sha256(OFFICIAL_PRICES) != manifest["official_price_sha256_at_seed"]
         report["official_sentiment_changed_since_seed"] = sha256(OFFICIAL_SENTIMENT) != manifest["official_sentiment_sha256_at_seed"]
     except Exception as exc:
@@ -574,7 +633,7 @@ def inspect_market(now=None):
     return report
 
 
-def update_market(now=None):
+def update_market(now=None, *, clock=None):
     """Fetch once into the append-only canonical ledger, independently per source."""
     now = now or datetime.now(TZ)
     report = _market_report(now)
@@ -585,16 +644,23 @@ def update_market(now=None):
         fetch_errors = {}
         for name, extend in (("price", extend_prices), ("sentiment", extend_sentiment)):
             try:
-                extend(completed, now, report)
+                if clock is None:
+                    extend(completed, now, report)
+                else:
+                    extend(completed, now, report, clock=clock)
             except Exception as exc:
                 fetch_errors[name] = f"{type(exc).__name__}: {exc}"
         # Validate the actual saved rows even after a source failed. A complete
         # current day with verified provenance may still be used; stale rows
         # never acquire the requested date simply because a fetch was attempted.
-        saved = inspect_market(now)
+        from scripts.news_update import observation_time
+        completed_at = observation_time(clock)
+        saved = inspect_market(pd.Timestamp(completed_at).to_pydatetime())
         appended = {key: report[key] for key in ("appended_price_dates", "appended_sentiment_dates")}
         report.update(saved)
         report.update(appended)
+        report["run_started_at"] = now.astimezone(TZ).isoformat()
+        report["completed_at"] = completed_at
         for name, error in fetch_errors.items():
             report[f"{name}_fetch_error"] = error
         if fetch_errors:
@@ -605,7 +671,11 @@ def update_market(now=None):
             report["used_existing_current_data"] = bool(saved["ready_to_predict"])
         if report["ready_to_predict"]:
             if not report.get("fetched_at"):
-                report["fetched_at"] = now.astimezone(TZ).isoformat()
+                # Existing unversioned files do not acquire a made-up historical fetch time.
+                observed = report.get("appended_price_dates") or report.get("appended_sentiment_dates")
+                if observed:
+                    report["fetched_at"] = completed_at
+                    report["fetched_at_kind"] = "observed_completion"
             _remember(completed, report)
     except Exception as exc:
         report["prices_ready"] = False

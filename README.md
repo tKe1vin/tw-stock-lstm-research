@@ -1,58 +1,51 @@
-# 台股 444／555／555 V2／V2.11 每日研究自動化
+# 台股 LSTM、新聞情緒與動態配置研究
 
-本版本整合原正式版的新聞與 GitHub 自動化，以及 Complete 套件的凍結候選與研究帳本。四個系統各自保存輸出；新聞與行情只更新一次。
+本專題研究新聞與市場風險資訊能否改善 LSTM 投資組合的風險調整後績效。2026-11-09 修訂以 **相同 444 預測核心**建立 555 主研究，控制模型、價格、日期、成交與成本，再分離動態配置、新聞與風控效果。既有凍結權重與已發布訊號保留原始 bytes。
 
-| 系統 | 工作 | 每日輸出 |
+- [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
+- [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
+- [修訂後配對研究實測](reports/research_revision/2026-11-06/paired/comparison.md)
+- [固定設定的多變量 LSTM 延伸](reports/research_extension/2026-11-06/summary.md)
+- [每日狀態](reports/latest/summary.md) · [驗證紀錄](VALIDATION.md)
+
+## 每日功能
+
+| 系統 | 工作 | 輸出 |
 | --- | --- | --- |
-| 444 | 原始單變量 LSTM，獨立重新訓練；固定持股參考 | `outputs/444/日期/` |
-| 555 | 原始六特徵 LSTM、新聞情緒及動態風控，獨立重新訓練 | `outputs/555/日期/` |
-| 555 V2 | 使用已凍結的 rolling_selected 權重預測五日報酬，不重訓 | `outputs/555_v2/日期/` |
-| V2.11 | 同一凍結模型的不可覆寫訊號、次日收盤模擬成交、成熟標籤 | `experiments/results/v2/v211/` |
+| 444 | 保留原單變量 LSTM 訓練與預測；主研究固定持股基準由共同帳本重算 | `outputs/444/日期/` |
+| 555 | **444 相同預測＋動態權重＋新聞＋風控**；不另外訓練不同模型作主比較 | `outputs/555/日期/`、`reports/daily/日期/paired/` |
+| 555 V2 | 沿用原凍結 rolling_selected 五日權重，只輸出預測 | `outputs/555_v2/日期/` |
+| V2.11 | 不可覆寫訊號、次日收盤模擬成交、五日排程及成熟標籤 | `experiments/results/v2/v211/` |
 
-## GitHub 每日執行
+原六特徵 555 Notebook 完整保留，使用 `--legacy-555` 執行，屬另一項模型延伸／歷史診斷。`--fixture reproducible` 仍重播原 444／六特徵 555，不把歷史重播回填為前瞻訊號。
 
-工作流程：[Daily four-system LSTM research](../../actions/workflows/daily-lstm.yml)。使用 Ubuntu CPU、Python 3.12。
+GitHub Actions 維持台北週一至週五 **17:37** 執行、**21:37** 重試。以 XTAI 及經來源確認的特殊休市日判斷當日收盤；行情與新聞只更新一次，順序仍為 **V2.11 → 555 V2 → 444 → 555**。同日合法成功結果可重用，舊六特徵 555 不冒充新主研究。部分失敗仍保存其他合法結果；`check` 保持唯讀，等待資料回傳 2、錯誤回傳 1、完成回傳 0。沒有券商下單介面。
 
-- 週一至週五台北 **17:37** 執行，**21:37** 再試一次。GitHub 排程可能延遲。
-- 以 XTAI 日曆檢查交易日；當日尚未收盤或休市時跳過，不把上個交易日冒充今天。
-- 先共用更新市場與新聞，再依序處理 **V2.11 → 555 V2 → 444 → 555**，讓研究訊號先保存。
-- 同交易日已成功的模型預設不重訓；V2.11 仍處理成交和已成熟標籤。`force` 僅強制重跑模型輸出，不能改寫已發布訊號。
-- 其中一步失敗仍保留其他合法結果。精簡市場狀態、新聞快取、訊號、預測歷史與報表提交 Git，完整執行檔與日誌上傳 Actions artifacts，保留 30 天。
-- 資料等待或程式失敗會在 Actions 如實顯示失敗，摘要區分 `waiting` 與 `failed`。
+## 公平比較與研究結果
 
-第一次部署或修改程式也會觸發檢查；資料與報表的自動提交不會循環觸發。需要手動補跑時，到 Actions 選取工作流程，再按 **Run workflow**。必須允許 GitHub Actions 執行，且 workflow 的 `contents: write` 不被帳號或組織政策禁止。
+主研究提供固定持股、動態無新聞、動態有新聞、各自有／無風控，以及再平衡等權與相同政策曝險等權。所有股票組使用同一份 444 預測、次日收盤、手續費 0.1425%、賣出稅 0.3%、同一價格及期末處理。當日收盤後算出的權重不在同一收盤成交。
 
-## 結果在哪裡
+444 原 Notebook 的舊固定持股 ROI 與六特徵 555 的舊同收盤 ROI 保留作歷史紀錄。**主比較使用 paired 帳本重新計算兩者，不將新舊協議混排。**^TWII 為理論價格指數參考；不能將其視為可交易 ETF 或含息報酬。
 
-- [`reports/latest/summary.md`](reports/latest/summary.md)：四系統狀態與當日結果摘要。
-- [`reports/latest/four_systems.json`](reports/latest/four_systems.json)：各系統日期與完整性。
-- `reports/daily/YYYY-MM-DD/`：每日摘要、444／555 的同協議比較。
-- `reports/journals/444.md`、`555.md`：個別研究日誌，只核對當時真正保存的預測。
-- `outputs/{444,555}/recommendation_history/`：跨日保存的一日預測。
-- `experiments/results/v2/v211/daily/`：原始不可覆寫研究訊號。
-- Actions 每次執行的 artifacts：完整 Notebook runs、圖及日誌。
+截至 2026-11-06 的共同核心重播：444 固定持股淨 ROI **18.32%**，完整新聞／風控配置 **−2.93%**，相同政策曝險等權 **7.12%**。新聞未改善此固定配置的淨報酬；研究另提供換手、成本、風險狀態與固定區塊重抽樣分析。
 
-摘要會明確標示當日尚未完成的系統；過去成功結果保留原日期，不會被標成今天。444／555 的 `lstm-evaluation-v1` 與 V2 的下一交易日收盤帳本分開解讀，不將四者 ROI 混排。
+延伸研究只訓練預先固定的價格 LSTM／情緒風控 LSTM 兩候選，先用驗證集選擇並保存權重，再計算測試預測。2026-03-23～11-02 的新聞候選 **16.18%**，可比風控等權 **16.83%**，理論大盤成本代理 **36.47%**。**尚未超越大盤；未因測試落後而重新調參。**該延伸沒有取代既有 V2 凍結模型。
 
-## 共用資料與新聞
+以上期間已被查看，歷史新聞也缺完整取得證據，全部屬探索性。較低 MDD、較高 Sharpe、新聞效果與交易成本的取捨都可作研究結果；不預設顯著或必然勝過大盤。
 
-唯一每日市場來源為 `experiments/results/v2/v211/market/`，當日驗證通過後複製到 `data/snapshots/交易日/`，供 444／555 使用；V2 模型與帳本讀同一來源。更新市場的子程序結束後才啟動模型，釋放 NLP 記憶體。
+## 時點、來源與凍結保護
 
-新聞沿用正式版的 **鉅亨網台股類別＋Erlangshen 中文情緒分類模型**：逐篇去重，分數為 P(positive)−P(negative)，同股票同訊號日取平均。13:30 後的新聞歸到下一個 XTAI 交易日。抓取涵蓋前一交易日至當日的完整日曆區間，包含週末與長假，成功後記錄 `news_scan_coverage.json`。
+新聞使用鉅亨網台股類別及 `IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment`，分數為 P(positive)−P(negative)。13:30 後發布歸下一個 XTAI 訊號日；新增逐篇來源側錄，保存首次取得、完成時間、評分可用時間、內容／payload 雜湊及版本。合法收盤後取得可用於當晚決策；決策後才可用的資訊會被拒絕。來源失敗與經完整查詢的無匹配文章分開。
 
-只有查詢完整且沒有符合股票的文章時才記為零分／`verified_no_matching_article`；來源失敗保持等待，不沿用昨日情緒。這不代表全市場沒有新聞。保留原有股票篩選及情緒模型，沒有混入歷史 SnowNLP 原型或重算舊分數。
+歷史無證據分數明標 `retrospective_unverified`，不補造時間。11/05 匯入訊號的發布時刻為開發者紀錄，缺可獨立核實的進場前證據；11/06 舊訊號的缺欄以 `signal_audit.json` 說明，不改寫原檔。
 
-保留 GitHub 正式資料截至 2026-11-05 的版本，以及相容的逐篇新聞快取。共用市場沿用 V2.11 已修補的歷史交易日（例如 2025-08-01），因此新版每日 555 的有效訓練日期可能比舊正式來源多，不能承諾數值完全不變；原 11/04 重播輸入另外封存。`data/prices/historical_prices.csv`、`data/sentiment_features_2026.csv` 作為匯入基準，不由新版每日流程改寫；每日新增資料在上述 canonical 市場帳本。
+凍結 NPZ SHA-256 維持 `53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144`。完整 bundle 驗證模型卡、Scaler、特徵順序、架構、tau 與推論程式；每日流程只驗證，不自行重建 manifest。
 
-## 權重與原始訊號
+`forecast_entry_date` 是每日預測的標籤進場日；`scheduled_rebalance_date` 與 `trade_eligible` 才說明帳本交易資格。11/06 預測可標假設 11/09 進場，但五日帳本當天不交易；11/13 必須使用 11/12 新訊號，不能沿用舊訊號。五日標籤為 `close[i+6]/close[i+1]-1`，切分／校準使用成熟日隔離六個交易日。
 
-凍結權重 SHA-256：`53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144`。
+## 執行與重現
 
-2026-11-05 原始研究訊號 SHA-256：`37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659`。它來自 Complete 套件所保存的開發者紀錄，記載發布時間為 2026-11-05 23:23:09 +08:00；不把本次 GitHub 上傳時間當成原發布時間。
-
-預設 `research/v211/config/ledger.yaml` 使用 `imported_research`，在此儲存庫接續該封存帳本。`new_independent` 使用獨立訊號帳本、共用凍結權重與經前綴驗證的市場鏡像，不匯入 11/05 訊號。請只指定一個儲存庫／runner 作為研究帳本寫入端，不合併多台電腦各自發布的帳本。
-
-## 本機操作與驗證
+Python 3.12，CPU。正式 Actions 使用固定 `requirements-ci.txt`。
 
 ```bash
 python3.12 -m venv .venv
@@ -60,28 +53,23 @@ python3.12 -m venv .venv
 python -m pip install 'torch==2.15.0' --index-url https://download.pytorch.org/whl/cpu
 python -m pip install -r requirements-ci.txt
 python -m pytest -q
+python -m scripts.verify_package
 python -m scripts.verify_models
 python -m scripts.run_all_daily --mode check
 python -m scripts.run_all_daily --mode full
 ```
 
-`check` 為唯讀：不下載、不訓練、不寫預測或帳本。結束碼 0 表示就緒，2 表示資料尚未到齊，1 表示錯誤。`full --skip-download` 僅使用已存在的完整快照。舊指令 `python -m scripts.pipeline` 也轉到四系統入口。
-
-可重現的 2026-11-04 歷史輸入另放在 `data/examples/reproducible/`，雜湊與 Complete 套件一致：
+單獨執行 555 前須先有同日成功的 444 與完整快照；缺資料會等待，不用昨日核心替代。`--force` 不得改寫 V2.11 已發訊號。
 
 ```bash
+python -m scripts.run_model --model 555 --mode full --legacy-555
 python -m scripts.run_model --model 444 --mode full --fixture reproducible
 python -m scripts.run_model --model 555 --mode full --fixture reproducible
+python -m scripts.paired_delivery --replay reports/research_revision/2026-11-06/paired/reproduction_manifest.json --output work/replayed_pair
+python -m scripts.research_extension --mode reproduce --output-dir reports/research_extension/2026-11-06
+python -m scripts.research_extension --mode forecast --output-dir reports/research_extension/2026-11-06 --as-of 2026-11-06
 ```
 
-歷史重播與正式跨日預測歷史分開，不回填研究訊號。`tests/legacy_delivery/` 保留交付當下的舊快照測試，預設不執行；目前 CI 使用固定時間與隔離資料的測試。
+配對研究的原始預測、價格、情緒、協議及建議以內容雜湊永久壓縮保存於 `data/research_snapshots/`，可逐位元重算投資組合 CSV；這不等於宣稱神經網路重新訓練必然逐位元一致。原始模型訓練檔、權重與日誌在 Actions artifacts 保留 **90 天**。延伸模型另保存本次訓練權重、Scaler、輸入、原始／修正來源及重現驗證。
 
-## 研究結果的限制
-
-444 的固定持股 ROI 不代表 LSTM 擇時獲利。555 採已揭露的理想化同日收盤成交假設。V2 的探索性歷史結果尚未優於可比固定等權；最新凍結權重的成效須看後續訊號，不能挪用滾動研究的報酬。
-
-歷史情緒大部分缺乏完整新聞來源與當時可取得時間；新資料的稽核欄位不能追溯證明舊分數。股價使用未調整 Close，未另計股利現金流；價格基礎績效不等於含息總報酬。V2.11 至少 60 個成熟訊號日只是人工審視門檻，程式不會自動更換正式 555。
-
-完整歷史探索的中間預測大檔保留在原始 ZIP；GitHub 保留研究報告、程式、必要市場狀態與凍結權重。
-
-沒有券商下單介面。`notebooks/original_*` 保留來源追溯，不在每日流程重複執行。
+ZIP 是舊交付版本。部分 v28 中間預測仍缺，不能宣稱舊歷史比較已完整重現；原研究價格已能以雜湊相同的 `data/examples/reproducible/prices.csv` 解析。`tests/legacy_delivery/` 保留舊快照測試，預設 CI 不執行。

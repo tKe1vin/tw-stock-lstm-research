@@ -57,6 +57,24 @@ OFFICIAL = {
 }
 
 
+def research_price_source():
+    """Resolve the archived study prices without depending on an untracked run.
+
+    The packaged fixture has the exact original study hash. Never silently
+    substitute today's growing canonical ledger into a historical experiment.
+    """
+    original = RUN / "historical_prices.csv"
+    if original.is_file():
+        return original
+    import hashlib
+
+    fixture = ROOT / "data/examples/reproducible/prices.csv"
+    manifest = json.loads((fixture.parent / "manifest.json").read_text(encoding="utf-8"))
+    if hashlib.sha256(fixture.read_bytes()).hexdigest() != manifest["prices_sha256"]:
+        raise ValueError("Archived research price fixture hash mismatch")
+    return fixture
+
+
 def technical_features(close):
     result = pd.DataFrame({"Close": close.astype(float)})
     result["MA20"] = close.rolling(20).mean()

@@ -36,15 +36,16 @@ DATA_FILES = {
     "data/sentiment_features_2026.csv",
     "data/news_scored_cache.csv",
     "data/news_update_state.json",
+    "data/news_scored_cache_provenance.jsonl",
 }
 MARKET_FILES = {
     "prices.csv", "sentiment.csv", "news_cache.csv", "manifest.json",
-    "state.json", "fetch_audit.jsonl", "news_scan_coverage.json",
+    "state.json", "fetch_audit.jsonl", "news_scan_coverage.json", "news_cache_provenance.jsonl",
 }
 BOOK_FILES = {
     "signal_registry.json", "status.json", "matured_scores.csv",
     "live_fills.csv", "live_nav.csv", "equal_nav.csv", "live_book.csv",
-    "LEDGER_ORIGIN.json",
+    "LEDGER_ORIGIN.json", "signal_audit.json",
 }
 COMPACT_EXPORTS = {
     "status.json", "unified_signal.csv", "unified_signal.metadata.json",
@@ -77,6 +78,9 @@ def allowed_path(name: str) -> bool:
         return False
     if name in DATA_FILES:
         return True
+    if (len(path.parts) == 3 and path.parts[:2] == ("data", "research_snapshots")
+            and bool(re.fullmatch(r"[0-9a-f]{64}\.gz", path.name))):
+        return True
     for book in BOOK_ROOTS:
         prefix = book + "/"
         if name.startswith(prefix):
@@ -97,7 +101,7 @@ def allowed_path(name: str) -> bool:
             and parts[3] == "native" and parts[4] in NATIVE_EXPORTS
         )
     if len(parts) == 4 and parts[0] == "outputs":
-        if parts[1] in {"444", "555"} and parts[2] == "recommendation_history":
+        if parts[1] in {"444", "555"} and parts[2] in {"recommendation_history", "paired_recommendation_history"}:
             return parts[3].endswith(".csv")
         if parts[1] == "daily_summary" and DATE.fullmatch(parts[2]):
             return parts[3] == "summary.json"

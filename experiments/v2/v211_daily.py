@@ -87,50 +87,28 @@ def update_recorded_results(now):
     return {"scoring": scored, "book": book, "as_of": str(now.astimezone(TZ).date())}
 
 
-def main():
+def main(clock=None):
+    clock = clock or (lambda: datetime.now(TZ))
     try:
         seal_signals()
         before = snapshot()
         weights = WEIGHT_DIR / "weights.npz"
         before_hash = sha256(weights)
-        now = datetime.now(TZ)
+        now = clock()
         if os.environ.get("TW_LSTM_SKIP_MARKET_UPDATE") == "1":
-            from experiments.v2.v211_market import (
-                CALENDAR,
-                PRICE_SOURCE,
-                PRICES,
-                SENTIMENT,
-                SENTIMENT_SOURCE,
-                prediction_gate,
-            )
-            from scripts.common import current_completed_session
-
-            completed = pd.Timestamp(current_completed_session(now)).normalize()
-            prices = pd.read_csv(PRICES)
-            sentiment = pd.read_csv(SENTIMENT)
-            ready, reason = prediction_gate(prices, sentiment, completed)
-            report = {
-                "ready_to_predict": bool(ready),
-                "completed_session": str(completed.date()),
-                "clock": now.astimezone(TZ).isoformat(),
-                "prices_ready": bool(ready),
-                "sentiment_ready": bool(ready),
-                "price_source": PRICE_SOURCE,
-                "sentiment_source": SENTIMENT_SOURCE,
-                "calendar": CALENDAR,
-                "used_previous_day_sentiment": False,
-                "v211_module_downloads": False,
-                "gate": reason,
-                "error": None if ready else reason,
-                "skipped_download": True,
-            }
+            from experiments.v2.v211_market import inspect_market
+            report = inspect_market(now)
+            report["skipped_download"] = True
         else:
-            report = update_market(now)
+            report = update_market(now, clock=clock)
+        # A completion/decision time must follow fetching and scoring, rather than
+        # being the run-start timestamp carried through a potentially long scan.
+        now = clock()
         recorded = update_recorded_results(now)
         if report.get("ready_to_predict"):
             from experiments.v2.v211 import run
 
-            status = run(now, fetch=report)
+            status = run(now, fetch=report, publication_clock=clock)
         else:
             status = waiting_status(now, report)
             status["scoring"] = recorded["scoring"]

@@ -32,7 +32,7 @@ from experiments.risk_experiment import (
     SEED,
     load_sentiment,
 )
-from experiments.v2.books import index_metrics, metrics, run_book, validation_tau
+from experiments.v2.books import index_metrics, metrics, run_book
 from experiments.v2.guard import OUT, PHASE5, SENTIMENT, snapshot
 from experiments.v2.signals import quality_row
 from experiments.v2.v28_rules import (
@@ -452,17 +452,20 @@ def _books(panel, risk, named, adopted, start, end):
         test = frame[frame.Split == "test"]
         if set(pd.to_datetime(test.Signal_Date)) != control_dates:
             continue
-        specs.append((f"{name}_threshold_weekly", test, "threshold", validation_tau(frame)))
-    specs.append((
-        "adopted_threshold_weekly",
-        named[adopted][named[adopted].Split == "test"],
-        "threshold",
-        validation_tau(named[adopted]),
-    ))
+        specs.append((f"{name}_threshold_weekly", test, "threshold", frame[frame.Split == "validation"]))
+    # `adopted` was chosen using all folds. Backfilling that global choice into
+    # the early test history would be a post-hoc strategy selection. Retain the
+    # candidate decision for research, but do not manufacture its historical ROI.
     rows = []
     for name, preds, weight, tau in specs:
-        daily = run_book(panel, risk, preds, sentiment, start, end, 5, weight, tau)
-        rows.append(metrics(daily, name, "every_5_sessions" if weight != "buy_hold" else "buy_and_hold"))
+        daily = run_book(panel, risk, preds, sentiment, start, end, 5, weight, tau,
+                         signal_calendar=control_dates)
+        result = metrics(daily, name, "every_5_sessions" if weight != "buy_hold" else "buy_and_hold")
+        result["Risk_As_Of"] = "preceding_signal_session"
+        result["Threshold_Protocol"] = "same_fold_validation_labels_before_signal" if weight == "threshold" else "not_used"
+        result["Global_Adoption_Backfilled"] = False
+        result["Comparable_With_Equal"] = weight != "buy_hold"
+        rows.append(result)
     rows.append(index_metrics(panel, start, end))
     portfolios = pd.DataFrame(rows)
     equal = float(portfolios.loc[portfolios.Name == "equal_weekly", "ROI_Pct"].iloc[0])
@@ -485,6 +488,9 @@ def _write_report(adopted, decisions, quality, portfolios, windows, costs, cover
     payload = {
         "study": "exploratory_not_a_new_independent_test",
         "selection_used_test_roi": False,
+        "selection_scope": "posthoc_research_choice_across_all_validation_folds",
+        "global_adoption_historical_roi_reported": False,
+        "execution_protocol": "next_close_signal_day_risk_fold_local_matured_validation_v2",
         "adopted_signal": adopted,
         "windows": list(WINDOWS),
         "architectures": ARCHITECTURES,
@@ -642,11 +648,8 @@ def main(train=True):
         panel, risk, named, adopted,
         pd.Timestamp(test.Execution_Date.min()), pd.Timestamp(test.Label_End.max()),
     )
-    saved = pd.read_csv(OUT / "strategy_metrics.csv")
-    expected = float(saved.loc[saved.Name == "equal_weekly", "ROI_Pct"].iloc[0])
-    actual = float(portfolios.loc[portfolios.Name == "equal_weekly", "ROI_Pct"].iloc[0])
-    if abs(actual - expected) > 1e-6:
-        raise AssertionError(f"等權帳本和 V2 已保存結果不一致：{actual} 對 {expected}")
+    # Saved legacy ROI used a different information timing and global tau.
+    # It is not an expected value for this corrected causal execution protocol.
     costs = pd.concat([
         _read(V28 / "fixed_cost.csv"),
         _read(V28 / "schedule_cost.csv"),

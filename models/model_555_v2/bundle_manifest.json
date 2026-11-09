@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "model_version": "rolling_selected_fold16_window756_carried",
+  "artifacts": {
+    "weights.npz": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "model_card.json": "277220d082d40d10943fa2495990a20f420e6c366e455737ea224ff9953d20ab"
+  },
+  "input_contract": {
+    "model_version": "rolling_selected_fold16_window756_carried",
+    "features": [
+      "Close",
+      "MA20",
+      "RSI_14",
+      "MACD_Hist",
+      "Market_Vol_20d",
+      "Daily_Sentiment"
+    ],
+    "time_step": 10,
+    "layers": 2,
+    "units": 50,
+    "dropout": 0.2,
+    "scalers_sha256": "5336afbadb718529b4744ddf01e6575b7a72e8ddfb24090f945b2d1c7ab7bc7b",
+    "tau_sha256": "d8285b935238a5cfb6905c44218672fdc12ceac7b4cc95d8884d12d282faee0b",
+    "weight_counts": {
+      "2330.TW": 8,
+      "2317.TW": 8,
+      "2603.TW": 8,
+      "2002.TW": 8,
+      "2891.TW": 8
+    }
+  },
+  "inference_sources": {
+    "experiments/risk_experiment.py": "48d2c13944de7fe827bacd2de1dcd7a0fcda2db7c95f5183cb40440f8cf0767f",
+    "experiments/calendar_rules.py": "c2eea45adad3c7037acccaaee25a6cc2382b56b68407b2b359223b21ce13ab2a",
+    "experiments/horizon_experiment.py": "8e31b0fe5c4e0f5434fb16be3b102e072d0dbd4bcd4ae6c2d89bdcda51fa2405",
+    "experiments/v2/v28.py": "2ffa8d4088a5bebc92f9b11c0274d1f46a4f067698a5ff8abe30549d47561361",
+    "experiments/v2/v29.py": "d4e7b605f96d20af52ca845a519f5d2db5da9737ceeb4583489cd66c76294561",
+    "experiments/v2/v28_rules.py": "8546aa520e5097d4a826ece163a737adbd69a863827163d73cd4c70adeb971a9",
+    "experiments/v2/books.py": "976397c9c62170e5b0e0427ade9432f01056b0cf3ec3a2a0b6d53b211921ae2a",
+    "experiments/v2/v211.py": "e575466edd3d3a2d356c5c4296f250b76735f2aea714e75a66419f01ee072af8",
+    "scripts/common.py": "766f525d810957c34091bcf64133a59c177095ae2f3d78947358de2adc035dd4",
+    "scripts/model_bundle.py": "1dcda5ceb3ae4c57dee5350bc435751867a6de9ad19e4f1eb2044b93ba038a80"
+  },
+  "bundle_sha256": "5244f169d3b05b54185e3441b00f449097e86c10e61754757d0fab9124feb6a8"
+}

@@ -9,23 +9,17 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_WEIGHTS = "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144"
 EXPECTED_SIGNAL = "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659"
 REQUIRED = [
-    "AGENTS.md",
     "README.md",
-    "QUICK_START.md",
-    "AI_HANDOFF.md",
     "ARCHITECTURE.md",
     "DATA_DICTIONARY.md",
     "MODEL_CARDS.md",
     "RESEARCH_HISTORY.md",
-    "HANDOVER_STATUS.md",
     "requirements.txt",
-    "install.bat",
-    "check_environment.bat",
-    "run_all.bat",
-    "run_444.bat",
-    "run_555.bat",
-    "run_555_v2.bat",
-    "run_v211.bat",
+    "scripts/run_all_daily.py",
+    "scripts/paired_research.py",
+    "scripts/paired_delivery.py",
+    "docs/research_protocol_v2.md",
+    "docs/p0_remediation.md",
     "models/model_444/444.ipynb",
     "models/model_555/555.ipynb",
     "models/model_555_v2/555_V2.ipynb",
@@ -33,7 +27,7 @@ REQUIRED = [
     "research/v211/signal_registry/developer_original/2026-11-05.csv",
     "experiments/results/v2/v211/daily/2026-11-05.csv",
     "experiments/results/v2/v211/weights/weights.npz",
-    "docs/handover_checklist.md",
+    "models/model_555_v2/bundle_manifest.json",
 ]
 
 
@@ -61,6 +55,8 @@ def main() -> int:
         print(f"signal hash {signal}")
         return 1
     for name in ("install.bat", "run_all.bat", "run_444.bat", "run_555.bat", "run_555_v2.bat", "run_v211.bat"):
+        if not (ROOT / name).is_file():
+            continue  # Optional Windows launchers belong to the archived delivery.
         text = (ROOT / name).read_text(encoding="utf-8")
         if "陳麒方" in text or "C:\\Users" in text or "C:/Users" in text:
             print(f"{name} contains a machine-specific path")
@@ -68,7 +64,11 @@ def main() -> int:
     if sys.version_info[:2] != (3, 12):
         print(f"python {sys.version} is not 3.12")
         return 1
-    print("package ok")
+    from scripts.model_bundle import verify_bundle
+
+    bundle = verify_bundle(root=ROOT)
+    print("GitHub checkout package ok")
+    print(f"bundle {bundle['bundle_sha256']}")
     print(f"weights {weight}")
     print(f"signal {signal}")
     return 0

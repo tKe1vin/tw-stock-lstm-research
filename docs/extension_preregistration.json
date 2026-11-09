@@ -1,0 +1,66 @@
+{
+  "schema_version": "sentiment-lstm-extension-protocol-v1",
+  "document_date_taipei": "2026-11-09",
+  "status": "prospective_protocol_unsealed",
+  "holdout_eligible": false,
+  "purpose": "在公平成本與可取得資訊下，檢驗含情緒的 LSTM 延伸是否改善風險調整績效及可比基準淨報酬；不保證超越大盤。",
+  "candidate_scope": {
+    "existing_frozen_candidate": "rolling_selected_fold16_window756_carried",
+    "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "new_candidate_training_authorized_by_this_document": false,
+    "rule": "新增架構、特徵、視窗或交易參數時，先列出有限集合及驗證規則，再以新版本封存；不得改寫本候選的歷史成效。"
+  },
+  "required_seal": {
+    "registered_at_actual": null,
+    "freeze_commit": null,
+    "bundle_sha256": null,
+    "validation_input_sha256": null,
+    "protocol_sha256": null,
+    "first_eligible_signal_after_seal": null,
+    "eligibility_rule": "所有必填封存資料完成後，僅採納實際發布時間晚於封存、且來源取得稽核合格的新訊號。不能回填封存前資料。"
+  },
+  "data_policy": {
+    "tickers": ["2330.TW", "2317.TW", "2603.TW", "2002.TW", "2891.TW"],
+    "timezone": "Asia/Taipei",
+    "news_publication_cutoff": "13:30:00",
+    "calendar": "XTAI plus explicit extraordinary closures",
+    "point_in_time_required_for_confirmatory_holdout": true,
+    "historical_unknown_availability": "retrospective_unverified_exploratory_only",
+    "already_observed_test_period": "exploratory_not_a_new_independent_test"
+  },
+  "label_policy": {
+    "execution": "next_session_close",
+    "holding_sessions": 5,
+    "label_index_gap": 6,
+    "label_formula": "100 * (Close[t+6] / Close[t+1] - 1)",
+    "split_rule": "Label_End < next_block_first_signal",
+    "scaler_rule": "fit only rows used by training windows",
+    "tau_rule": "validation predictions available before that fold test; no future fold pooling"
+  },
+  "comparators": {
+    "primary": "same_schedule_same_risk_equal_weight_net",
+    "secondary": ["same_schedule_full_exposure_equal_weight_net", "444_shared_core_static_holdings"],
+    "descriptive_only": "TWII_unadjusted_price_index",
+    "tradable_market_outperformance_claim": "requires separately preregistered tradable benchmark with aligned dividend, execution and cost assumptions"
+  },
+  "selection_and_review": {
+    "existing_candidate_reselection": false,
+    "new_candidate_selection": "validation_only_under_a_separately_sealed_finite_search_space",
+    "test_roi_is_selection_input": false,
+    "minimum_matured_signal_days_for_first_manual_review": 60,
+    "first_review_means_confirmation": false,
+    "minimum_execution_sessions_for_confirmatory_effect_review": 252,
+    "automatic_official_model_replacement": false,
+    "holdout_feedback_to_same_candidate": false,
+    "rule_change": "new protocol version, new seal and new future holdout"
+  },
+  "reporting": {
+    "primary_effect": "net Sharpe difference against same-schedule same-risk equal weight",
+    "required_metrics": ["net_ROI", "Sharpe", "MDD", "turnover", "transaction_cost", "mean_cash_weight", "paired_return_difference", "news_audit_coverage"],
+    "bootstrap": {"unit": "paired chronological daily return blocks", "block_sessions": 20, "replications": 2000, "confidence_level": 0.95},
+    "five_day_labels_are_independent": false,
+    "cross_section_rows_are_independent_market_samples": false,
+    "negative_results_retained": true,
+    "market_outperformance_guaranteed": false
+  }
+}

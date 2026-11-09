@@ -40,7 +40,7 @@ jobs:
     env:
       TZ: Asia/Taipei
       PYTHONUNBUFFERED: '1'
-      LSTM_SAVE_MODELS: '0'
+      LSTM_SAVE_MODELS: '1'
       MPLBACKEND: Agg
       USE_TF: '0'
       HF_HUB_DISABLE_TELEMETRY: '1'
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: daily-lstm-${{ github.run_id }}-${{ github.run_attempt }}
-          retention-days: 30
+          retention-days: 90
           if-no-files-found: warn
           path: |
             logs/

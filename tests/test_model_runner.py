@@ -35,6 +35,8 @@ def write_sources(folder):
 
 
 def frozen_files(root, monkeypatch):
+    from scripts import model_bundle
+    monkeypatch.setattr(model_bundle, 'verify_bundle', lambda **kwargs: {'bundle_sha256': 'fixture-bundle'})
     ledger = root / 'experiments/results/v2/v211'
     folder = ledger / 'weights'
     folder.mkdir(parents=True)

@@ -405,11 +405,16 @@ def build_tau_table(panel, folds):
     return pd.concat(tables, ignore_index=True)
 
 
-def tau_for(table, target):
+def tau_for(table, target, *, as_of=None):
     target = pd.Timestamp(target).normalize()
     hit = table[(table.oos_start <= target) & (table.oos_end >= target)]
     if set(hit.Ticker) != set(TICKERS) or hit.Ticker.duplicated().any():
         raise ValueError(f"{target.date()} 找不到唯一的驗證門檻")
+    if as_of is not None:
+        if "Validation_End" not in hit or pd.to_datetime(hit.Validation_End).isna().any():
+            raise ValueError("驗證門檻缺少可得時間")
+        if (pd.to_datetime(hit.Validation_End) > pd.Timestamp(as_of)).any():
+            raise ValueError("驗證門檻使用了訊號日之後的價格")
     return hit.set_index("Ticker").loc[TICKERS, "Tau_Pct"].to_numpy(dtype=float)
 
 
@@ -498,17 +503,26 @@ def run_book(
     liquidate=True,
     equalize_gross=False,
 ):
-    """Mark every trading session. A missing signal never moves a due date."""
+    """Fill at the next session close using only the preceding signal's inputs.
+
+    The schedule is anchored on signal sessions; missing predictions cannot move
+    it. This corrected execution protocol must be rerun before citing any ROI.
+    """
     if schedule not in {"trading_calendar", "prediction_rows"}:
         raise ValueError(schedule)
     mapped, order = _prediction_map(predictions)
+    if not order:
+        raise ValueError("帳本沒有訊號")
     first = order[0]
     last = pd.Timestamp(predictions.Date.max()).normalize()
-    dates = panel.index[(panel.index >= first) & (panel.index <= last)]
+    dates = panel.index[(panel.index > first) & (panel.index <= last)]
+    if not len(dates):
+        raise ValueError("訊號之後沒有下一交易日成交價格")
     if schedule == "prediction_rows":
         due = set(order[::gap])
     else:
-        due = {pd.Timestamp(dates[i]) for i in range(0, len(dates), gap)}
+        signal_dates = panel.index[(panel.index >= first) & (panel.index < last)]
+        due = {pd.Timestamp(signal_dates[i]) for i in range(0, len(signal_dates), gap)}
     shares = np.zeros(len(TICKERS))
     cash = INITIAL_CAPITAL
     previous = None
@@ -520,24 +534,25 @@ def run_book(
         change = np.zeros(len(TICKERS)) if previous is None else held * (price - previous)
         old_values = held * price
         pre_nav = float(old_values.sum() + cash)
-        flag = bool(risk.loc[day, "Risk_Off"])
+        signal = pd.Timestamp(panel.index[panel.index.get_loc(day) - 1])
+        flag = bool(risk.loc[signal, "Risk_Off"])
         traded = False
         skipped = False
         ledger = _empty_ledger()
         pred = np.full(len(TICKERS), np.nan)
         sent = np.full(len(TICKERS), np.nan)
         cutoff = np.full(len(TICKERS), np.nan)
-        if day in due and day in mapped:
-            info = mapped[day]
+        if signal in due and signal in mapped:
+            info = mapped[signal]
             pred = info.Predicted_Return_Pct.to_numpy(dtype=float)
             sent = info.Daily_Sentiment.to_numpy(dtype=float)
             target = pd.Timestamp(info.Date.iloc[0]).normalize()
-            cutoff = tau_for(tau_table, target)
+            cutoff = tau_for(tau_table, target, as_of=signal)
             weights = apply_rule(rule, pred, sent, flag, cutoff, equalize_gross=equalize_gross)
             target_values, cash, ledger = rebalance(old_values, cash, weights)
             shares = target_values / price
             traded = True
-        elif day in due:
+        elif signal in due:
             skipped = True
             weights = old_values / pre_nav if pre_nav else np.zeros(len(TICKERS))
         else:
@@ -550,8 +565,9 @@ def run_book(
             nav -= liquidation_cost
         row = {
             "Date": day,
+            "Signal_Date": signal,
             "Trade": traded,
-            "Scheduled": day in due,
+            "Scheduled": signal in due,
             "Skipped_For_Missing_Prediction": skipped,
             "Risk_Off": flag,
             "NAV_Pre": pre_nav,
@@ -561,7 +577,7 @@ def run_book(
             "Equity_Weight": float(post_values.sum() / (post_values.sum() + cash)) if post_values.sum() + cash else 0.0,
             "Cash_Weight": float(cash / (post_values.sum() + cash)) if post_values.sum() + cash else 1.0,
             "Stock_PnL": float(change.sum()),
-            "Execution": "signal_close",
+            "Execution": "next_session_close",
         }
         for ticker, pnl, weight, prediction in zip(TICKERS, change, weights, pred):
             row[f"PnL_{ticker}"] = float(pnl)
@@ -605,7 +621,8 @@ def book_metrics(daily, rule, schedule, window):
         "Rebalance_Days": int(daily.Trade.sum()),
         "Skipped_Rebalance_Days": int(daily.Skipped_For_Missing_Prediction.sum()),
         "Sessions": int(len(daily)),
-        "Same_Close_Execution": True,
+        "Same_Close_Execution": False,
+        "Execution": "next_session_close",
     }
 
 
@@ -807,11 +824,8 @@ def build_report(repair=None):
         raise AssertionError(f"交易日曆有未解釋的差異：{calendar_check}")
     gap_status = prediction_gap_status(panel, predictions)
 
-    from experiments.g_validation import run_detailed
-    from experiments.risk_experiment import strategies
-
-    spec = next(item for item in strategies() if item["id"] == "G")
-    _, _, official_g = run_detailed(predictions, panel, risk, spec)
+    # The legacy G replay filled on the signal close. Its saved ROI/cost is no
+    # longer an expected value after the next-close timing correction.
     window = "2022-05-06_to_2026-03-25"
     books = {}
     metrics = []
@@ -826,11 +840,6 @@ def build_report(repair=None):
         row = book_metrics(daily, rule, schedule, window)
         row["Name"] = name
         metrics.append(row)
-    if abs(metrics[0]["ROI_Pct"] - official_g["ROI_Pct"]) > 1e-4:
-        raise AssertionError("預測列再平衡的期末報酬與方案 G 不一致")
-    if abs(metrics[0]["Total_Transaction_Cost"] - official_g["Total_Transaction_Cost"]) > 1e-4:
-        raise AssertionError("預測列再平衡的交易成本與方案 G 不一致")
-
     equalized = {}
     for rule in RULES:
         daily = books["G_calendar"] if rule == "A" else run_book(
@@ -865,8 +874,9 @@ def build_report(repair=None):
     official_555 = pd.read_csv(ROOT / "reports" / "latest" / "555" / "strategy_metrics.csv")
     summary = {
         "study": "exploratory_not_a_new_independent_test",
-        "same_close_execution": True,
-        "same_close_note": "訊號仍假設可在當日收盤成交；本實驗沒有改成下一交易日開盤",
+        "same_close_execution": False,
+        "execution_protocol": "next_session_close_signal_day_inputs_v2",
+        "same_close_note": "前一訊號日決定權重與風控，下一交易日收盤成交；舊版績效須重新計算",
         "parameters_not_fit_on_backtest_roi": {
             "base": BASE_WEIGHT,
             "confident": CONFIDENT_WEIGHT,
@@ -905,7 +915,8 @@ def build_report(repair=None):
             "rebalance_dates_only_in_row_schedule": sorted(str(day.date()) for day in row_dates - calendar_dates),
             "rebalance_dates_only_in_calendar": sorted(str(day.date()) for day in calendar_dates - row_dates),
             "first_diverging_rebalance": None if first_gap is None else str(pd.Timestamp(first_gap).date()),
-            "official_g_roi_pct": official_g["ROI_Pct"],
+            "official_g_roi_pct": None,
+            "legacy_g_comparison": "not_comparable_after_next_close_execution_fix",
         },
         "index_price_return_pct": {
             "walk_forward_window": index_main * 100,

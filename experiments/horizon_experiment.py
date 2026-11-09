@@ -39,6 +39,7 @@ from experiments.risk_experiment import (
     load_sentiment,
     max_drawdown,
     rebalance,
+    research_price_source,
     sharpe_ratio,
 )
 
@@ -267,7 +268,7 @@ def flat_skill(predicted, actual):
 def load_context():
     if not SENTIMENT_PATH.exists():
         raise FileNotFoundError("缺少第四階段的實驗情緒副本")
-    panel = load_panel(RUN / "historical_prices.csv")
+    panel = load_panel(research_price_source())
     sentiment = load_sentiment(SENTIMENT_PATH, panel.index)
     if sentiment.loc[pd.Timestamp("2025-08-01"), TICKERS].isna().any():
         raise ValueError("實驗情緒副本仍缺少 2025-08-01，拒絕用 0 補上")

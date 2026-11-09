@@ -1,6 +1,7 @@
 """Hash the frozen weights from the file bytes and load them with TensorFlow."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -21,7 +22,14 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--hash-only", action="store_true", help="verify the complete bundle without importing TensorFlow")
+    args = parser.parse_args(argv)
+    from scripts.model_bundle import verify_bundle
+
+    bundle = verify_bundle()
+    print(f"bundle_sha256 {bundle['bundle_sha256']}")
     path = ROOT / "experiments" / "results" / "v2" / "v211" / "weights" / "weights.npz"
     card_path = path.with_name("model_card.json")
     digest = sha256(path)
@@ -34,6 +42,9 @@ def main() -> int:
     if card.get("weight_sha256") != digest:
         print("model card hash does not match the file")
         return 1
+    if args.hash_only:
+        print("model bundle verified without TensorFlow")
+        return 0
     os_level = __import__("os")
     os_level.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     import numpy as np

@@ -13,6 +13,12 @@ TZ = ZoneInfo('Asia/Taipei')
 
 # Verified extraordinary exchange-wide closures; not ordinary missing Yahoo rows.
 SPECIAL_MARKET_CLOSURES = {
+    # TWSE 2023 final session was Jan 17; reopen Jan 30 (CNA quoting TWSE).
+    # https://www.cna.com.tw/news/afe/202211150057.aspx
+    '2023-01-18': 'TWSE Lunar New Year settlement closure after Jan 17 final session',
+    # TWSE closure notice, reproduced by E.SUN Securities; TAIFEX also closed.
+    # https://www.taifex.com.tw/cht/11/newsDetail?idx=15446&newsType=1
+    '2024-10-31': 'Typhoon Kong-rey: TWSE closed',
     '2026-07-10': 'Typhoon Bavi: TWSE closed',
     '2026-10-23': 'Typhoon Changpi: TWSE closed',
 }

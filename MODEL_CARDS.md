@@ -11,16 +11,18 @@
 - 已保存正式結果：截至 2026-11-04，淨報酬 21.376684850112927%
 - 沒有凍結權重。`model_hash` 在統一 CSV 寫「不適用」
 
-## 555
+## 555（共同核心主研究）
 
-- 識別：`555`
-- 來源：`notebooks/555_multivariate.ipynb`
-- 特徵順序：Close、MA20、RSI_14、MACD_Hist、Market_Vol_20d、Daily_Sentiment
-- 訓練：每次執行重新訓練。`EPOCHS = 50`，`PATIENCE = 5`，`BATCH_SIZE = 32`，`SEED = 42`，`TIME_STEP = 10`
-- 風控沿用 Notebook 內的動態曝險，股票總曝險在 Risk-Off 時上限 0.50
-- 協議：`lstm-evaluation-v1`
-- 已保存正式結果：截至 2026-11-04，淨報酬 11.953686872710323%
-- 不讀取 555 V2 的 `weights.npz`
+- 識別：`555`；協議：`paired-444-core-allocation-v1`
+- 同日成功的 444 預測作共同核心，加入預先固定的動態權重、新聞與市場風控；不另訓練不同核心作主對照。
+- 所有主研究組共用次日收盤、交易日、價格與費率，包含新聞／風控 2×2 消融與同曝險等權。
+- 一日模型標籤在次日收盤前已完成；配置是延遲訊號規則，不把該段預測報酬當成新進部位的可賺報酬。
+- 歷史新聞來源與已觀察區間仍屬探索性。推薦／研究輸出沒有券商訂單。
+
+## 原六特徵 555（保留的延伸／歷史診斷）
+
+- `notebooks/555_multivariate.ipynb` 保留原始模型；以 `--legacy-555` 或原 reproducible fixture 重播。
+- Close、MA20、RSI_14、MACD_Hist、Market_Vol_20d、Daily_Sentiment；原同收盤 ROI 僅為理想化歷史紀錄，不與新主研究混排。
 
 ## 555 V2
 
@@ -42,3 +44,10 @@
 - 職責：保存訊號、用下一交易日收盤模擬成交、在標籤成熟後評分
 - 第一筆可信任訊號：2026-11-05 23:23:09 +08:00
 - 升級門檻：至少 60 個成熟訊號日，而且仍須由人決定。程式內的升級旗標維持否
+
+## 新固定設定的多變量延伸
+
+- `scripts.research_extension`，兩候選：價格 LSTM 與六特徵情緒／風控 LSTM。固定 LSTM32、Dropout0.2、最多20epochs、patience3、seed42。
+- 訓練756、驗證60、測試150個成熟訊號；六交易日標籤隔離，train-only scaler。
+- 驗證橫斷面 Spearman 需比價格控制提高超過0.02才採情緒候選；先保存 selection/weights 再計 test。
+- 可讀保存權重作 forecast，不擬合、不重新選模、不發布 live 訊號。結果仍屬已觀察歷史期間的探索。

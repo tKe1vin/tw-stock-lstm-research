@@ -118,10 +118,17 @@ def _markdown(report: dict, destination: Path) -> str:
         "555 V2 是凍結候選的預測輸出；V2.11 使用同一模型保存研究訊號、成交與成熟標籤。",
         "四套系統的 ROI 不合併排名；未完成的當日結果不以舊結果代替。", "",
     ]
-    if report["comparison_status"] == "matched_test_dates_and_price_panel":
+    paired = report.get("primary_research") or {}
+    if paired.get("status") == "complete":
+        target = os.path.relpath(ROOT / paired["report"], destination).replace(os.sep, "/")
+        lines += [f"**主研究：[444 共同核心＋555 動態權重／新聞／風控消融]({target})**。原六特徵 555 比較為延伸診斷。", ""]
+    else:
+        lines += [f"共同核心主研究尚未完成：{paired.get('reason', 'waiting_for_444_and_shared_market')}。", ""]
+    if report["comparison_status"] in {"matched_test_dates_and_price_panel", "paired_444_core_next_close"}:
         comparison = ROOT / "reports" / "daily" / report["as_of_date"] / "comparison.md"
         target = os.path.relpath(comparison, destination).replace(os.sep, "/")
-        lines += [f"[查看 444／555 同協議比較]({target})", ""]
+        label = "共同核心、次日收盤比較" if report["comparison_status"] == "paired_444_core_next_close" else "舊六特徵模型之描述性比較"
+        lines += [f"[查看 444／555 {label}]({target})", ""]
     else:
         lines += ["當日 444／555 比較尚未完成。", ""]
     if report.get("last_successful_as_of_date") and report["status"] != "complete":
@@ -174,14 +181,25 @@ def build_reports(summary: dict, completed_session) -> dict:
         records[model] = record
 
     comparison_status = "waiting_for_both_current_notebooks"
+    primary_research = None
     if set(native) == {"444", "555"}:
-        from scripts.compare import compare
-        from scripts.journal import write_journals
         comparison_dir = ROOT / "reports" / "daily" / day / "comparison_data"
-        compare(native["444"], native["555"], comparison_dir)
-        prices = ROOT / "experiments/results/v2/v211/market/prices.csv"
-        write_journals(day, native["444"], native["555"], comparison_dir, price_path=prices)
-        comparison_status = "matched_test_dates_and_price_panel"
+        if _read(native["555"] / "evaluation_protocol.json").get("protocol_version") == "paired-444-core-allocation-v1":
+            from scripts.paired_delivery import build_paired_report, publish_comparison_contract
+
+            market = ROOT / "experiments/results/v2/v211/market"
+            paired_dir = ROOT / "reports/daily" / day / "paired"
+            primary_research = build_paired_report(native["444"], market / "prices.csv", market / "sentiment.csv", paired_dir, root=ROOT)
+            publish_comparison_contract(paired_dir, native["444"], comparison_dir, root=ROOT)
+            comparison_status = "paired_444_core_next_close"
+        else:
+            from scripts.compare import compare
+            from scripts.journal import write_journals
+
+            compare(native["444"], native["555"], comparison_dir)
+            prices = ROOT / "experiments/results/v2/v211/market/prices.csv"
+            write_journals(day, native["444"], native["555"], comparison_dir, price_path=prices)
+            comparison_status = "matched_test_dates_and_price_panel"
         for name in ("strategy_comparison.csv", "per_stock_comparison.csv", "comparison.md", "comparison_readme.json"):
             latest.mkdir(parents=True, exist_ok=True)
             shutil.copy2(comparison_dir / name, latest / name)
@@ -195,6 +213,22 @@ def build_reports(summary: dict, completed_session) -> dict:
             if source_file.is_file() and source_file.resolve() != (target / name).resolve():
                 shutil.copy2(source_file, target / name)
 
+    if primary_research is None:
+        primary_research = {"status": "waiting", "reason": "waiting_for_444_and_shared_market"}
+    if primary_research.get("status") != "complete" and "444" in native:
+        market = ROOT / "experiments/results/v2/v211/market"
+        needed = (native["444"] / "test_predictions.csv", market / "prices.csv", market / "sentiment.csv")
+        if all(path.is_file() for path in needed):
+            from scripts.paired_delivery import build_paired_report
+
+            primary_research = build_paired_report(native["444"], market / "prices.csv", market / "sentiment.csv",
+                                                   ROOT / "reports/daily" / day / "paired", root=ROOT)
+            atomic_json(latest / "paired_research.json", primary_research)
+        else:
+            primary_research["reason"] = "paired_source_predictions_or_market_missing"
+    if primary_research.get("status") == "complete":
+        atomic_json(latest / "paired_research.json", primary_research)
+
     complete = all(record["current"] for record in records.values())
     report = {
         "report_schema": REPORT_SCHEMA,
@@ -205,6 +239,7 @@ def build_reports(summary: dict, completed_session) -> dict:
         "models": records, "comparison_status": comparison_status,
         "market": summary.get("market", {}),
         "performance_protocols_combined": False,
+        "primary_research": primary_research,
     }
     daily = ROOT / "reports" / "daily" / day
     atomic_json(daily / "status.json", report)

@@ -31,6 +31,7 @@ from experiments.v2.v28 import _prepare
 from experiments.v2.v28_rules import ES_LEN, classification_scores
 from experiments.v2.v29 import CorrectedFitter
 from scripts.common import TZ, current_completed_session, sessions
+from scripts.model_bundle import verify_bundle
 
 V211 = OUT / "v211"
 LIVE = V211 / "daily"
@@ -195,6 +196,11 @@ def _load_weights(card):
 
 
 def predict_rows(card, context, signal_date):
+    verify_bundle(weight_dir=WEIGHT_DIR, card=card)
+    if (list(FEATURES) != card["features"] or TIME_STEP != card["time_step"]
+            or (card["layers"], card["units"], card["dropout"]) != (2, 50, 0.2)
+            or card["model_version"] != MODEL_VERSION):
+        raise ValueError("runtime feature order or network architecture differs from the frozen bundle")
     panel, frames, risk, _one, five, _excess = context
     index = frames[TICKERS[0]].index
     signal = pd.Timestamp(signal_date).normalize()
@@ -246,6 +252,49 @@ def predict_rows(card, context, signal_date):
     return pd.DataFrame(rows), str(pd.Timestamp(following[0]).date()), five
 
 
+def _forecast_entry(signal_date):
+    signal = pd.Timestamp(signal_date).normalize()
+    following = sessions(signal + pd.Timedelta(days=1), signal + pd.Timedelta(days=40))
+    if not len(following):
+        raise RuntimeError("找不到下一個交易日")
+    return pd.Timestamp(following[0]).normalize()
+
+
+def _execution_anchor(signal_date):
+    """The ledger's first forecast entry anchors its fixed five-session clock."""
+    files = sorted(LIVE.glob("*.csv"))
+    first = min(
+        [pd.Timestamp(pd.read_csv(path, usecols=["Signal_Date"]).Signal_Date.iloc[0]).normalize()
+         for path in files] + [pd.Timestamp(signal_date).normalize()]
+    )
+    return _forecast_entry(first)
+
+
+def execution_eligibility(signal_date, first_execution_date=None):
+    """Distinguish a forecast's next close from a scheduled portfolio trade.
+
+    An ineligible forecast is never held over for the next rebalance. That
+    rebalance requires the immediately preceding session's own saved signal.
+    """
+    entry = _forecast_entry(signal_date)
+    anchor = (pd.Timestamp(first_execution_date).normalize()
+              if first_execution_date is not None else _execution_anchor(signal_date))
+    if entry < anchor:
+        raise ValueError("forecast entry precedes the ledger execution anchor")
+    calendar = sessions(anchor, entry + pd.Timedelta(days=40))
+    if anchor not in calendar or entry not in calendar:
+        raise ValueError("execution dates must be exchange sessions")
+    position = int(calendar.get_loc(entry))
+    next_position = position + (-position % 5)
+    return {
+        "forecast_entry_date": str(entry.date()),
+        "scheduled_rebalance_date": str(pd.Timestamp(calendar[next_position]).date()),
+        "trade_eligible": bool(position % 5 == 0),
+        "execution_anchor": str(anchor.date()),
+        "execution_policy": "exact_previous_session_signal_only; no carry-forward",
+    }
+
+
 def commit_signal(path, frame):
     path = assert_v211(path)
     if path.exists():
@@ -259,15 +308,29 @@ def commit_signal(path, frame):
     return reread
 
 
-def _signal_frame(rows, now, data_through, execution, card, source=None):
+def _signal_frame(rows, now, data_through, execution, card, source=None, decision_at=None):
     source = source or {}
+    required = ("price_sha256", "sentiment_sha256", "fetched_at")
+    missing = [name for name in required if not source.get(name)]
+    if missing:
+        raise ValueError("new signal source audit is incomplete: " + ", ".join(missing))
+    eligibility = execution_eligibility(data_through)
+    if str(execution) != eligibility["forecast_entry_date"]:
+        raise ValueError("prediction entry differs from the next exchange session")
+    bundle = verify_bundle(weight_dir=WEIGHT_DIR, card=card)
     frame = rows.copy()
     frame.insert(0, "Signal_Date", data_through)
     frame.insert(1, "Created_At", now.astimezone(TAIPEI).isoformat())
     frame.insert(2, "Data_Through", data_through)
     frame.insert(3, "Model_Version", MODEL_VERSION)
     frame.insert(4, "Model_Sha256", card.get("weight_sha256", sha256(WEIGHT_DIR / "weights.npz")))
+    frame["Model_Bundle_Sha256"] = bundle["bundle_sha256"]
+    frame["Decision_At"] = (decision_at or now).astimezone(TAIPEI).isoformat()
     frame["Planned_Execution_Date"] = execution
+    frame["Forecast_Entry_Date"] = eligibility["forecast_entry_date"]
+    frame["Scheduled_Rebalance_Date"] = eligibility["scheduled_rebalance_date"]
+    frame["Trade_Eligible"] = eligibility["trade_eligible"]
+    frame["Execution_Status"] = "eligible_unfilled" if eligibility["trade_eligible"] else "forecast_only"
     frame["Feature_AsOf"] = data_through
     frame["Price_AsOf"] = data_through
     frame["Sentiment_AsOf"] = data_through
@@ -283,7 +346,7 @@ def _signal_frame(rows, now, data_through, execution, card, source=None):
     return frame
 
 
-def publish_today(now, context, card, source=None):
+def publish_today(now, context, card, source=None, publication_clock=None):
     panel = context[0]
     decision = publication_decision(now, panel.index)
     if not decision["publish"]:
@@ -303,12 +366,21 @@ def publish_today(now, context, card, source=None):
 
         source = source_for(signal)
     rows, execution, _five = predict_rows(card, context, signal)
-    frame = _signal_frame(rows, now, signal.strftime("%Y-%m-%d"), execution, card, source)
+    written_at = (publication_clock or (lambda: datetime.now(TZ)))()
+    if written_at.tzinfo is None:
+        raise ValueError("publication clock must contain timezone")
+    if written_at.astimezone(TAIPEI).date() != now.astimezone(TAIPEI).date():
+        raise RuntimeError("prediction finished on another date; refusing a backdated publication")
+    if written_at < now:
+        raise RuntimeError("publication clock precedes the decision time")
+    frame = _signal_frame(rows, written_at, signal.strftime("%Y-%m-%d"), execution, card, source,
+                          decision_at=now)
     reread = commit_signal(path, frame)
     decision["path"] = str(path.relative_to(ROOT))
     decision["created_at"] = str(reread.Created_At.iloc[0])
     decision["reread_rows"] = int(len(reread))
     decision["planned_execution"] = str(reread.Planned_Execution_Date.iloc[0])
+    decision.update(execution_eligibility(signal))
     return decision
 
 
@@ -431,6 +503,21 @@ def audit_signal_frame(frame):
         raise RuntimeError("股票權重與現金比例無法還原")
     if frame.Used_Previous_Day_Sentiment.astype(str).str.lower().isin(["true", "1"]).any():
         raise RuntimeError("訊號使用了前一日情緒")
+    if "Model_Bundle_Sha256" in frame:
+        required_audit = ("Price_Sha256", "Sentiment_Sha256", "Fetched_At", "Decision_At",
+                          "Forecast_Entry_Date", "Scheduled_Rebalance_Date", "Trade_Eligible")
+        if any(name not in frame or frame[name].isna().any() for name in required_audit):
+            raise RuntimeError("新訊號缺少完整的來源或成交資格紀錄")
+        eligibility = execution_eligibility(signal_day)
+        if set(frame.Forecast_Entry_Date.astype(str)) != {eligibility["forecast_entry_date"]}:
+            raise RuntimeError("新訊號的預測進場日與交易日曆不同")
+        if set(frame.Scheduled_Rebalance_Date.astype(str)) != {eligibility["scheduled_rebalance_date"]}:
+            raise RuntimeError("新訊號的再平衡日與交易日曆不同")
+        flags = frame.Trade_Eligible.astype(str).str.lower().isin(["true", "1"])
+        if not bool((flags == eligibility["trade_eligible"]).all()):
+            raise RuntimeError("新訊號的成交資格與交易日曆不同")
+        if (pd.to_datetime(frame.Created_At, utc=True) < pd.to_datetime(frame.Decision_At, utc=True)).any():
+            raise RuntimeError("訊號發布時間早於決策時間")
     return {
         "created_at": created,
         "model_sha256": str(frame.Model_Sha256.iloc[0]),
@@ -462,7 +549,36 @@ def seal_signals():
         raise RuntimeError(f"已發布訊號檔消失：{missing}")
     if found != saved:
         assert_v211(registry).write_text(json.dumps(found, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_signal_audit()
     return found
+
+
+def write_signal_audit():
+    """Append provenance findings beside immutable legacy CSVs; never repair them."""
+    path = V211 / "signal_audit.json"
+    previous = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    records = {}
+    for signal_path in sorted(LIVE.glob("*.csv")):
+        frame = pd.read_csv(signal_path)
+        signal = frame.Signal_Date.iloc[0]
+        missing = [name for name in ("Price_Sha256", "Sentiment_Sha256", "Fetched_At")
+                   if name not in frame or frame[name].isna().any()
+                   or frame[name].astype(str).str.strip().eq("").any()]
+        records[signal_path.name] = {
+            "file_sha256": sha256(signal_path),
+            "recorded_created_at": str(frame.Created_At.iloc[0]),
+            "execution": execution_eligibility(signal),
+            "source_audit_status": "incomplete_legacy_record" if missing else "source_fields_present",
+            "missing_source_fields": missing,
+            "publication_evidence": ("developer_recorded_time_without_independent_pretrade_receipt"
+                                     if str(signal) == "2026-11-05" else "repository_signal_record"),
+            "legacy_csv_unchanged": True,
+        }
+    document = {"schema_version": 1, "signals": records,
+                "note": "Retrospective audit only; present fields do not prove historical availability."}
+    if previous != document:
+        assert_v211(path).write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return document
 
 
 def build_live_book(panel, signals):
@@ -477,6 +593,15 @@ def build_live_book(panel, signals):
     frame["Planned_Execution_Date"] = pd.to_datetime(frame["Planned_Execution_Date"]).dt.normalize()
     if (frame.Planned_Execution_Date <= frame.Signal_Date).any():
         raise RuntimeError("成交日沒有晚於訊號日")
+    expected_entries = frame.Signal_Date.map(_forecast_entry)
+    if not bool((frame.Planned_Execution_Date == expected_entries).all()):
+        raise RuntimeError("每筆預測只能對應下一交易日，不能挪用舊訊號至再平衡日")
+    if "Created_At" in frame:
+        created = pd.to_datetime(frame.Created_At, utc=True)
+        deadlines = pd.DatetimeIndex(frame.Planned_Execution_Date).tz_localize(TAIPEI) + pd.Timedelta(hours=13, minutes=30)
+        if (created.to_numpy() >= deadlines.tz_convert("UTC").to_numpy()).any():
+            raise RuntimeError("訊號在預定收盤之後才發布，拒絕事後模擬成交")
+    first = expected_entries.min()
     available = frame[frame.Planned_Execution_Date.isin(panel.index)]
     if available.empty:
         return {
@@ -488,12 +613,14 @@ def build_live_book(panel, signals):
         }
     by_exec = {}
     for day, part in available.groupby("Planned_Execution_Date", sort=True):
-        if set(part.Ticker.astype(str)) != set(TICKERS):
+        if len(part) != len(TICKERS) or set(part.Ticker.astype(str)) != set(TICKERS):
             raise RuntimeError(f"{pd.Timestamp(day).date()} 的已發布訊號不完整")
         by_exec[pd.Timestamp(day).normalize()] = part.set_index("Ticker").loc[TICKERS]
-    start = min(by_exec)
+    start = first
+    if start not in panel.index:
+        raise RuntimeError("缺少第一筆預測的進場價格，拒絕重設再平衡起點")
     index = panel.index[panel.index >= start]
-    anchor = int(panel.index.get_loc(pd.Timestamp(start)))
+    execution_calendar = sessions(start, panel.index[-1])
     books = {}
     for name in ("published", "equal"):
         shares = np.zeros(len(TICKERS))
@@ -510,7 +637,7 @@ def build_live_book(panel, signals):
             change = np.zeros(len(TICKERS)) if previous is None else held * (price - previous)
             old_values = held * price
             pre_nav = float(old_values.sum() + cash)
-            due = (int(panel.index.get_loc(day)) - anchor) % 5 == 0
+            due = day in execution_calendar and int(execution_calendar.get_loc(day)) % 5 == 0
             info = by_exec.get(day)
             traded = False
             skipped = False
@@ -652,8 +779,8 @@ def rebalance_state(panel, now):
         return {"rebalance_today": False, "reason": "no_live_execution_anchor", "today": str(today.date())}
     executions = []
     for path in files:
-        frame = pd.read_csv(path, usecols=["Planned_Execution_Date"])
-        executions.append(pd.Timestamp(frame.Planned_Execution_Date.iloc[0]).normalize())
+        frame = pd.read_csv(path, usecols=["Signal_Date"])
+        executions.append(_forecast_entry(frame.Signal_Date.iloc[0]))
     first = min(executions)
     if first not in panel.index:
         return {
@@ -662,7 +789,6 @@ def rebalance_state(panel, now):
             "first_execution": str(first.date()),
             "today": str(today.date()),
         }
-    anchor = int(panel.index.get_loc(first))
     if today not in panel.index:
         return {
             "rebalance_today": False,
@@ -670,13 +796,18 @@ def rebalance_state(panel, now):
             "first_execution": str(first.date()),
             "today": str(today.date()),
         }
-    loc = int(panel.index.get_loc(today))
-    due = loc >= anchor and (loc - anchor) % 5 == 0
+    calendar = sessions(first, today)
+    due = today in calendar and int(calendar.get_loc(today)) % 5 == 0
+    previous = sessions(today - pd.Timedelta(days=40), today - pd.Timedelta(days=1))[-1]
+    required_signal = str(pd.Timestamp(previous).date())
     return {
         "rebalance_today": bool(due),
         "reason": "every_5_sessions_from_first_fill",
         "first_execution": str(first.date()),
         "today": str(today.date()),
+        "required_signal_date": required_signal if due else None,
+        "required_signal_present": bool(due and (LIVE / f"{required_signal}.csv").exists()),
+        "signal_carry_forward_allowed": False,
     }
 
 
@@ -731,7 +862,7 @@ def resolve_context():
     return load_context(), "frozen_555_snapshot"
 
 
-def run(now=None, fetch=None):
+def run(now=None, fetch=None, publication_clock=None):
     now = now or datetime.now(TZ)
     try:
         context, source_name = resolve_context()
@@ -765,7 +896,7 @@ def run(now=None, fetch=None):
     weights_existed = (WEIGHT_DIR / "model_card.json").exists()
     card = fit_and_save(context)
     try:
-        decision = publish_today(now, context, card, fetch)
+        decision = publish_today(now, context, card, fetch, publication_clock=publication_clock)
         error = None
     except Exception as exc:
         decision = {"publish": False, "reason": "prediction_failed"}
