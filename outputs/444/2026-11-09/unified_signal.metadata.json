@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-11-09T23:41:16.438690+08:00",
+  "predicted_return_pct_unit": "percent_points",
+  "percent_points_meaning": "0.677330 means +0.677330 percent, not 67.7330 percent.",
+  "target_weight_unit": "fraction_of_capital",
+  "cash_weight_unit": "fraction_of_capital",
+  "not_applicable_token": "不適用",
+  "comparison_allowed": false,
+  "model_id": "444",
+  "execution_assumption": "lstm-evaluation-v1; not the 555 V2 next-close research book",
+  "native_column_copied": "Predicted_Return_Pct",
+  "values_were_rescaled": false,
+  "research_sample": false
+}

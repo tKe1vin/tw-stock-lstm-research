@@ -3,7 +3,7 @@
   "error": null,
   "data_updated_through_latest_completed_session": true,
   "data": {
-    "prices_through": "2026-11-06",
+    "prices_through": "2026-11-09",
     "price_names_on_last_day": [
       "2002.TW",
       "2317.TW",
@@ -26,27 +26,36 @@
   "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
   "weights_reused": true,
   "signal": {
-    "publish": false,
-    "reason": "already_written",
-    "completed_session": "2026-11-06",
-    "path": "experiments/results/v2/v211/daily/2026-11-06.csv",
-    "created_at": "2026-11-06T22:56:20.508919+08:00",
-    "reread_rows": 5
+    "publish": true,
+    "reason": "today_close_is_stored",
+    "completed_session": "2026-11-09",
+    "path": "experiments/results/v2/v211/daily/2026-11-09.csv",
+    "created_at": "2026-11-09T23:39:58.381692+08:00",
+    "reread_rows": 5,
+    "planned_execution": "2026-11-10",
+    "forecast_entry_date": "2026-11-10",
+    "scheduled_rebalance_date": "2026-11-13",
+    "trade_eligible": false,
+    "execution_anchor": "2026-11-06",
+    "execution_policy": "exact_previous_session_signal_only; no carry-forward"
   },
-  "signal_published": false,
-  "rebalance_today": true,
+  "signal_published": true,
+  "rebalance_today": false,
   "rebalance": {
-    "rebalance_today": true,
+    "rebalance_today": false,
     "reason": "every_5_sessions_from_first_fill",
     "first_execution": "2026-11-06",
-    "today": "2026-11-06"
+    "today": "2026-11-09",
+    "required_signal_date": null,
+    "required_signal_present": false,
+    "signal_carry_forward_allowed": false
   },
   "labels_matured_today": [],
   "scorable_signal_days": 0,
-  "immature_predictions": 10,
+  "immature_predictions": 15,
   "scoring": {
     "matured_signal_days": 0,
-    "pending_predictions": 10,
+    "pending_predictions": 15,
     "matured_today": [],
     "pending_labels": [
       {
@@ -56,6 +65,10 @@
       {
         "signal": "2026-11-06",
         "label_end": "2026-11-16"
+      },
+      {
+        "signal": "2026-11-09",
+        "label_end": "2026-11-17"
       }
     ],
     "next_label_end": "2026-11-13",
@@ -64,13 +77,13 @@
   "book": {
     "status": "updated",
     "first_fill_completed": true,
-    "signals": 2,
+    "signals": 3,
     "rebalance_is_every": 5,
     "prediction_is": "daily",
     "fill_price": "next_session_close",
-    "sessions": 1,
-    "open_nav": 99928.80072948025,
-    "cash_weight": 0.5000000000000001,
+    "sessions": 2,
+    "open_nav": 101428.46101915013,
+    "cash_weight": 0.4926073003839292,
     "entry_cost": 71.19927051975466
   },
   "first_fill_completed": true,
@@ -84,8 +97,9 @@
   },
   "fetch": {
     "ready_to_predict": true,
-    "completed_session": "2026-11-06",
-    "clock": "2026-11-06T23:04:07.190806+08:00",
+    "completed_session": "2026-11-09",
+    "clock": "2026-11-09T23:39:54.557415+08:00",
+    "run_started_at": "2026-11-09T23:39:54.557415+08:00",
     "prices_ready": true,
     "sentiment_ready": true,
     "price_source": "yfinance unadjusted Close",
@@ -93,8 +107,25 @@
     "calendar": "exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES",
     "used_previous_day_sentiment": false,
     "v211_module_downloads": false,
-    "gate": "ready",
     "error": null,
+    "price_error": null,
+    "sentiment_error": null,
+    "historical_sentiment_provenance": "retrospective_unverified",
+    "news_provenance_schema_version": 1,
+    "appended_price_dates": [],
+    "appended_sentiment_dates": [],
+    "prices_through": "2026-11-09",
+    "price_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "sentiment_through": "2026-11-09",
+    "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "gate": "ready",
+    "fetched_at": "2026-11-09T23:39:51.258570+08:00",
+    "fetched_at_kind": "observed_completion",
+    "news_provenance_status": "observed_at_recorded_time",
+    "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+    "news_available_at": "2026-11-09T23:39:51.218466+08:00",
+    "official_price_changed_since_seed": true,
+    "official_sentiment_changed_since_seed": true,
     "skipped_download": true
   },
   "risk_cap": 0.5,

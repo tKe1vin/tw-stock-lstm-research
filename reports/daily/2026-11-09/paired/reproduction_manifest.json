@@ -1,0 +1,94 @@
+{
+  "schema": "research-replay-v2",
+  "inputs": {
+    "predictions": {
+      "sha256": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
+      "archive": "data/research_snapshots/610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54.gz",
+      "original_path": "outputs/444/2026-11-09/native/test_predictions.csv",
+      "bytes": 103318
+    },
+    "prices": {
+      "sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+      "archive": "data/research_snapshots/b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a.gz",
+      "original_path": "experiments/results/v2/v211/market/prices.csv",
+      "bytes": 605503
+    },
+    "sentiment": {
+      "sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+      "archive": "data/research_snapshots/254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32.gz",
+      "original_path": "experiments/results/v2/v211/market/sentiment.csv",
+      "bytes": 212309
+    },
+    "baseline_protocol": {
+      "sha256": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
+      "archive": "data/research_snapshots/4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63.gz",
+      "original_path": "outputs/444/2026-11-09/native/evaluation_protocol.json",
+      "bytes": 4732
+    },
+    "core_recommendation": {
+      "sha256": "3b254c139d3a4bfbfd184d08527836d6e5b109a8975e661e9aa18e7c1a1d3e1d",
+      "archive": "data/research_snapshots/3b254c139d3a4bfbfd184d08527836d6e5b109a8975e661e9aa18e7c1a1d3e1d.gz",
+      "original_path": "outputs/444/2026-11-09/native/next_day_recommendation.csv",
+      "bytes": 1250
+    }
+  },
+  "source_sha256": {
+    "scripts/__init__.py": "c83acd39bd8f618dbdbf2cbb248d5d8ca2c1281144ddc7d34428fade35d796a3",
+    "scripts/baseline_adapter.py": "375dac300193840e3fcba64e29f8ed2c1f3ca5b93daca451cb185b7f43baedc6",
+    "scripts/common.py": "766f525d810957c34091bcf64133a59c177095ae2f3d78947358de2adc035dd4",
+    "scripts/compare.py": "91e9c40a9ad3cf251dae8fb9fd6932f27cd035cc3bd6fd3540821f6c219ebf3c",
+    "scripts/daily_reports.py": "83db3d1618f53e90b49faee4e9495b83be7de39ddc757b7a8ec061168ff5e08c",
+    "scripts/execute_nb.py": "8089d7732052e0fab1b01f27fd708679e59ecc2b6ea0ea1dc8f8593cac68adc9",
+    "scripts/journal.py": "0deb279a9feec0ce65797b77f7760300dc73c2e7ba155222258655a297d37958",
+    "scripts/model_bundle.py": "1dcda5ceb3ae4c57dee5350bc435751867a6de9ad19e4f1eb2044b93ba038a80",
+    "scripts/news_update.py": "3b11293f3f911b3cd0e60aaba6d4fc333fc995aab954d3634899b49c738995d5",
+    "scripts/paired_analysis.py": "daf240227ba9e35f205b4e239a9adc48b410a925e8dd4472701a3d7311c3edcd",
+    "scripts/paired_delivery.py": "2b4dd893b7e1c3acf4dfe017b417290c89361515899cd1f14057e98220704973",
+    "scripts/paired_native.py": "3ca215b1b891b5bda115edf0d4f1c8353a151c2eda3dd58ff6349a14aa4ea08e",
+    "scripts/paired_research.py": "f882c1a64924d68857e9a5edc66a4c6d84a9687abc3dc3aeb7012e0da2abc0bd",
+    "scripts/persist_daily_state.py": "fcaf7318e6abb38e28e5acc283069b21305063f8232ce6b546bc6e3bdfa33762",
+    "scripts/pipeline.py": "9d257a1ff9c6e454d5549a4a3f62f7765e96dc97240acdc2c6009ccdb1bbaf06",
+    "scripts/plot_research.py": "aed7a9ee2758404757c369b486c46e7a8e5d2dd841330e5071135c0e7b797e43",
+    "scripts/prices.py": "d2cdaf47dd396df666ce5ab444280dde188d43e5c792ee6d1d787ff82be8444c",
+    "scripts/reproducibility.py": "b6c56eda3595bfee778efff95812bf147438ddbb1d6477f7fbeb34afb56e09c1",
+    "scripts/research_extension.py": "96fec3155fde54d584104172f4b5ee166671e91d1bc2ebc374831d48c3fbbfa5",
+    "scripts/run_all_daily.py": "716dab50c76900e1c4ffe93e251a1aac625874767f69e3311f79c6a0b8dcc41b",
+    "scripts/run_model.py": "04739bb1bb66ffe80ab4b45ae7ee53ed1076d2c81ea93c53df92dbd426eb80c1",
+    "scripts/setup_scheduler.py": "7b559c0444bd6325b7fb0a636227c35d26e1d268464935b64bb7469bb46ab0c5",
+    "scripts/unified_csv.py": "3ba566e7e2e8bc8d6d2025182fc7d9b090ce226c2238ed793952faf015d8f303",
+    "scripts/update_market_data.py": "9807081af1d4f28326e2cf0706ea4610f7218cbbd6fc7cc58afa0ad4ef00ef11",
+    "scripts/verify_models.py": "0c5c0007bf427dd8090f405634cdde6a78add8a66d0a8821514b10a88d0d5339",
+    "scripts/verify_package.py": "6108352be3d875283acc04f5c9f6596b88cd4c44b12c7fd89cef714147c2066a",
+    "experiments/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/calendar_rules.py": "c2eea45adad3c7037acccaaee25a6cc2382b56b68407b2b359223b21ce13ab2a",
+    "experiments/horizon_experiment.py": "8e31b0fe5c4e0f5434fb16be3b102e072d0dbd4bcd4ae6c2d89bdcda51fa2405",
+    "experiments/risk_experiment.py": "48d2c13944de7fe827bacd2de1dcd7a0fcda2db7c95f5183cb40440f8cf0767f",
+    "experiments/v2/__init__.py": "3bd4d436e01a2a96c433dba819e5908d344f0eeeed9a90e9a5f660abf506793b",
+    "experiments/v2/books.py": "976397c9c62170e5b0e0427ade9432f01056b0cf3ec3a2a0b6d53b211921ae2a",
+    "experiments/v2/guard.py": "7fc405c3589d9c1c0538c5b525bb30186fc55277c66b877b9283b6be1a7e8912",
+    "experiments/v2/signals.py": "33af6e798481e3009603be5d7dc3edce13624003d0c0446c79273877749e0161",
+    "experiments/v2/v211.py": "e575466edd3d3a2d356c5c4296f250b76735f2aea714e75a66419f01ee072af8",
+    "experiments/v2/v211_daily.py": "cfc2cda1e532956d5265a42b580276797b308601a420c7131a1b694f0078fd2a",
+    "experiments/v2/v211_market.py": "f725954155cf86f30db46f062e9dc48c145f58c78c385ba17fa3ab95f97f5ebc",
+    "experiments/v2/v211_schedule.py": "a6835c06838bbff0a13409a883f9ec3106a4019cdb14b13eb11834df74f037bc",
+    "experiments/v2/v28.py": "2ffa8d4088a5bebc92f9b11c0274d1f46a4f067698a5ff8abe30549d47561361",
+    "experiments/v2/v28_rules.py": "8546aa520e5097d4a826ece163a737adbd69a863827163d73cd4c70adeb971a9",
+    "experiments/v2/v29.py": "d4e7b605f96d20af52ca845a519f5d2db5da9737ceeb4583489cd66c76294561"
+  },
+  "git_head": "ea13f3379e7c04cad9e1e9b49a957a02466e0e2e",
+  "dependencies": {
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.8.0",
+    "tensorflow-cpu": "2.20.0",
+    "exchange-calendars": "4.13.2"
+  },
+  "replay_scope": "exact saved-prediction portfolio replay",
+  "training_bitwise_reproduction_claimed": false,
+  "outputs_sha256": {
+    "metrics.csv": "360a6152ef8fef86d706f76740657d286134a034a8b2a08411cc7e2139329515",
+    "nav.csv": "8a3f27fe29c0560222c0c013bd98f5744b3e3975904a9d3402ed917011d229c2",
+    "weights.csv": "61cea98f047b83159aad9b94f887d289001a11902c3a300c526c05010b58dc66",
+    "fills.csv": "68d582313db7ed9124b5a09e5c75b09561c3f56f02368b19ed1b6c48b11ba7df"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "model": "v211",
+  "mode": "full",
+  "ledger_mode": "imported_research",
+  "status": "success",
+  "exit_code": 0,
+  "completed_session": "2026-11-09",
+  "run_date": "2026-11-09",
+  "imported_signal_sha256_before": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
+  "imported_signal_sha256_after": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
+  "imported_signal_unchanged": true,
+  "imported_signal_created_at": "2026-11-05T23:23:09.114628+08:00",
+  "signal_origin": "developer_original_2026-11-05",
+  "official_555_replacement": false,
+  "stdout_tail": "03839292, \"entry_cost\": 71.19927051975466}, \"first_fill_completed\": true, \"next_label_date\": \"2026-11-13\", \"review\": {\"minimum_matured_signal_days\": 60, \"matured_signal_days\": 0, \"ready_for_first_review\": false, \"recommend_replace_official_555\": false, \"reason\": \"60 個重疊的五日標籤只是最低觀察數。程式不能更換正式 555。\"}, \"fetch\": {\"ready_to_predict\": true, \"completed_session\": \"2026-11-09\", \"clock\": \"2026-11-09T23:39:54.557415+08:00\", \"run_started_at\": \"2026-11-09T23:39:54.557415+08:00\", \"prices_ready\": true, \"sentiment_ready\": true, \"price_source\": \"yfinance unadjusted Close\", \"sentiment_source\": \"cnyes tw_stock + IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment\", \"calendar\": \"exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES\", \"used_previous_day_sentiment\": false, \"v211_module_downloads\": false, \"error\": null, \"price_error\": null, \"sentiment_error\": null, \"historical_sentiment_provenance\": \"retrospective_unverified\", \"news_provenance_schema_version\": 1, \"appended_price_dates\": [], \"appended_sentiment_dates\": [], \"prices_through\": \"2026-11-09\", \"price_sha256\": \"b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a\", \"sentiment_through\": \"2026-11-09\", \"sentiment_sha256\": \"254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32\", \"gate\": \"ready\", \"fetched_at\": \"2026-11-09T23:39:51.258570+08:00\", \"fetched_at_kind\": \"observed_completion\", \"news_provenance_status\": \"observed_at_recorded_time\", \"news_provenance_path\": \"/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl\", \"news_available_at\": \"2026-11-09T23:39:51.218466+08:00\", \"official_price_changed_since_seed\": true, \"official_sentiment_changed_since_seed\": true, \"skipped_download\": true}, \"risk_cap\": 0.5, \"official_555_replacement\": false, \"tracker_downloads_data\": false}\n{\"published\": true, \"reason\": \"today_close_is_stored\", \"exit_code\": 0, \"weights_reused\": true, \"first_fill_completed\": true, \"next_label_date\": \"2026-11-13\"}\n"
+}

@@ -1,0 +1,10 @@
+{
+  "model": "555",
+  "mode": "full",
+  "status": "failed",
+  "exit_code": 1,
+  "reason": "ValueError: Saved 444 model outputs do not match the paired stocks",
+  "forecast_produced": false,
+  "completed_session": "2026-11-09",
+  "run_date": "2026-11-09"
+}

@@ -1,0 +1,117 @@
+{
+  "report_schema": "four-systems-v1",
+  "as_of_date": "2026-11-09",
+  "run_date": "2026-11-09",
+  "started": "2026-11-09T23:39:21.158701+08:00",
+  "finished": null,
+  "status": "partial",
+  "last_successful_as_of_date": "2026-11-06",
+  "models": {
+    "444": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-09",
+      "reason": null,
+      "current_output": "reports/latest/444/next_day_recommendation.csv"
+    },
+    "555": {
+      "status": "failed",
+      "exit_code": 1,
+      "current": false,
+      "observed_as_of_date": "2026-11-09",
+      "reason": "ValueError: Saved 444 model outputs do not match the paired stocks",
+      "current_output": null
+    },
+    "555_v2": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-09",
+      "reason": "prediction_written_not_a_research_signal",
+      "current_output": "outputs/555_v2/2026-11-09/unified_signal.csv"
+    },
+    "v211": {
+      "status": "success",
+      "exit_code": 0,
+      "current": true,
+      "observed_as_of_date": "2026-11-09",
+      "reason": null,
+      "current_output": "experiments/results/v2/v211/daily/2026-11-09.csv"
+    }
+  },
+  "comparison_status": "waiting_for_both_current_notebooks",
+  "market": {
+    "ready_to_predict": true,
+    "completed_session": "2026-11-09",
+    "clock": "2026-11-09T23:39:51.258570+08:00",
+    "run_started_at": "2026-11-09T23:39:22.596169+08:00",
+    "prices_ready": true,
+    "sentiment_ready": true,
+    "price_source": "yfinance unadjusted Close",
+    "sentiment_source": "cnyes tw_stock + IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment",
+    "calendar": "exchange_calendars XTAI, excluding scripts.common.SPECIAL_MARKET_CLOSURES",
+    "used_previous_day_sentiment": false,
+    "v211_module_downloads": false,
+    "error": null,
+    "price_error": null,
+    "sentiment_error": null,
+    "historical_sentiment_provenance": "retrospective_unverified",
+    "news_provenance_schema_version": 1,
+    "appended_price_dates": [
+      "2026-11-09"
+    ],
+    "appended_sentiment_dates": [
+      "2026-11-09"
+    ],
+    "prices_through": "2026-11-09",
+    "price_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "price_overlap_relative_diff": {
+      "2330.TW": 0.0,
+      "2317.TW": 0.0,
+      "2603.TW": 0.0,
+      "2002.TW": 0.0,
+      "2891.TW": 0.0,
+      "^TWII": 0.0
+    },
+    "price_fetched_at": "2026-11-09T23:39:42.500705+08:00",
+    "sentiment_through": "2026-11-09",
+    "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "sentiment_fetched_at": "2026-11-09T23:39:51.218466+08:00",
+    "news_provenance_status": "observed_at_recorded_time",
+    "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+    "new_articles": 6,
+    "news_source_start": "2026-11-06",
+    "news_source_end": "2026-11-09",
+    "gate": "ready",
+    "fetched_at": "2026-11-09T23:39:51.258570+08:00",
+    "fetched_at_kind": "observed_completion",
+    "news_available_at": "2026-11-09T23:39:51.218466+08:00",
+    "official_price_changed_since_seed": true,
+    "official_sentiment_changed_since_seed": true,
+    "completed_at": "2026-11-09T23:39:51.258570+08:00",
+    "snapshot_dir": "data/snapshots/2026-11-09",
+    "used_previous_day_as_today": false,
+    "read_only": false,
+    "shared_source": "v211_market",
+    "snapshot_prices_ready": true,
+    "snapshot_prices_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "snapshot_sentiment_ready": true,
+    "snapshot_sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "status": "success",
+    "exit_code": 0,
+    "log": "logs/orchestrator/20261109T233921381799_market.log"
+  },
+  "performance_protocols_combined": false,
+  "primary_research": {
+    "status": "complete",
+    "protocol": "paired-444-core-allocation-v1",
+    "as_of_date": "2026-11-09",
+    "research_status": "exploratory",
+    "core_model": "444",
+    "source_prediction_sha256": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
+    "report": "reports/daily/2026-11-09/paired/comparison.md",
+    "recommendation": "reports/daily/2026-11-09/paired/555_next_day_recommendation.csv",
+    "news_increment_roi_pp": -1.8723064939308975
+  }
+}

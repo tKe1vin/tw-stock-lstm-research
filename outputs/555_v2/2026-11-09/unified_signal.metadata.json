@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-11-09T23:40:07.467125+08:00",
+  "predicted_return_pct_unit": "percent_points",
+  "percent_points_meaning": "0.677330 means +0.677330 percent, not 67.7330 percent.",
+  "target_weight_unit": "fraction_of_capital",
+  "cash_weight_unit": "fraction_of_capital",
+  "not_applicable_token": "不適用",
+  "comparison_allowed": false,
+  "model_id": "555_v2",
+  "execution_assumption": "next_session_close; rebalance every 5 sessions; risk-off gross cap 0.50",
+  "prediction_horizon_days_meaning": "model label is a five-session return; the book fills at the next close",
+  "research_sample": false,
+  "v211_signal_written": false,
+  "dates": {
+    "signal_date": "2026-11-09",
+    "run_date": "2026-11-09",
+    "data_asof": "2026-11-09",
+    "intended_execution_date": "2026-11-10",
+    "signal_date_meaning": "訊號日：已完成交易日，特徵與收盤只到這一天",
+    "run_date_meaning": "執行日：程式寫出這份檔案的台北日曆日",
+    "data_asof_meaning": "資料截止日：允許進入模型的最後資料日，等於訊號日",
+    "intended_execution_date_meaning": "相容舊欄位：預測標籤的假設進場日；實際交易須另看 trade_eligible 與 scheduled_rebalance_date",
+    "forecast_entry_date": "2026-11-10",
+    "scheduled_rebalance_date": "2026-11-13",
+    "trade_eligible": false,
+    "execution_anchor": "2026-11-06",
+    "execution_policy": "exact_previous_session_signal_only; no carry-forward"
+  },
+  "model_bundle_sha256": "5244f169d3b05b54185e3441b00f449097e86c10e61754757d0fab9124feb6a8",
+  "note": "This CSV is a prediction export. Only the V2.11 ledger file is a research signal."
+}

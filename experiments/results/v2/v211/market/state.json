@@ -9,6 +9,15 @@
       "ready_at": "2026-11-06T22:55:57.952680+08:00",
       "price_sha256": "3f04727cd9d87bba9508783981b126fb3047176db41002539dc0118eb1f0b122",
       "sentiment_sha256": "5dab333642ebac8def5dd8671825d446371154661e1a9ff75709447054d629da"
+    },
+    "2026-11-09": {
+      "ready_at": "2026-11-09T23:39:51.258570+08:00",
+      "price_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+      "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+      "fetched_at_kind": "observed_completion",
+      "news_provenance_status": "observed_at_recorded_time",
+      "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+      "news_available_at": "2026-11-09T23:39:51.218466+08:00"
     }
   }
 }

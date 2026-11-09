@@ -6,7 +6,23 @@
     },
     "2026-11-06": {
       "articles": 30,
-      "completed_at": "2026-11-06T22:55:57.952680+08:00"
+      "completed_at": "2026-11-09T23:39:43.464152+08:00",
+      "timestamp_kind": "observed_completion"
+    },
+    "2026-11-07": {
+      "articles": 26,
+      "completed_at": "2026-11-09T23:39:44.141027+08:00",
+      "timestamp_kind": "observed_completion"
+    },
+    "2026-11-08": {
+      "articles": 11,
+      "completed_at": "2026-11-09T23:39:44.474789+08:00",
+      "timestamp_kind": "observed_completion"
+    },
+    "2026-11-09": {
+      "articles": 30,
+      "completed_at": "2026-11-09T23:39:44.856128+08:00",
+      "timestamp_kind": "observed_completion"
     }
   },
   "signal_sessions": {
@@ -14,6 +30,16 @@
       "source_start": "2026-11-05",
       "source_end": "2026-11-06",
       "completed_at": "2026-11-06T22:55:57.952680+08:00"
+    },
+    "2026-11-09": {
+      "source_start": "2026-11-06",
+      "source_end": "2026-11-09",
+      "completed_at": "2026-11-09T23:39:51.218466+08:00",
+      "available_at": "2026-11-09T23:39:51.218466+08:00",
+      "timestamp_kind": "observed_completion",
+      "provenance_status": "observed_at_recorded_time",
+      "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+      "unverified_article_rows": 0
     }
   }
 }
