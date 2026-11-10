@@ -21,7 +21,12 @@
     },
     "2026-11-09": {
       "articles": 30,
-      "completed_at": "2026-11-09T23:39:44.856128+08:00",
+      "completed_at": "2026-11-10T21:51:32.645564+08:00",
+      "timestamp_kind": "observed_completion"
+    },
+    "2026-11-10": {
+      "articles": 30,
+      "completed_at": "2026-11-10T21:51:33.767357+08:00",
       "timestamp_kind": "observed_completion"
     }
   },
@@ -38,6 +43,17 @@
       "available_at": "2026-11-09T23:39:51.218466+08:00",
       "timestamp_kind": "observed_completion",
       "provenance_status": "observed_at_recorded_time",
+      "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+      "unverified_article_rows": 0
+    },
+    "2026-11-10": {
+      "source_start": "2026-11-09",
+      "source_end": "2026-11-10",
+      "completed_at": "2026-11-10T21:51:37.131967+08:00",
+      "available_at": "2026-11-10T21:51:37.131967+08:00",
+      "timestamp_kind": "observed_completion",
+      "provenance_status": "observed_at_recorded_time",
+      "scoring_provenance_status": "not_applicable_no_articles",
       "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
       "unverified_article_rows": 0
     }

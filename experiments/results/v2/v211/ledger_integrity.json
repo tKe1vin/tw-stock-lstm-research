@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "prefixes": {
+    "market/prices.csv": {
+      "bytes": 605690,
+      "sha256": "93215113692e64c038bcd51e7f99f4a12e1967c434b4b26301808c157ad80ae2"
+    },
+    "market/sentiment.csv": {
+      "bytes": 212669,
+      "sha256": "01cabc6ad18aefcaea89c6d690d0f8961be6efd041179c543b9e8f98f3c3a91b"
+    },
+    "live_fills.csv": {
+      "bytes": 1154,
+      "sha256": "f332e68b7ca9b4a3b5138b6bc8ff02807d284b0b12bcbc135948b289f5f6fd81"
+    },
+    "live_nav.csv": {
+      "bytes": 486,
+      "sha256": "1aa879c33088704761207ea81b35d2759cd3468aa76d983a544971ac00db98e9"
+    },
+    "equal_nav.csv": {
+      "bytes": 485,
+      "sha256": "b499035299618083e6fd1b166d52eb649f3738cbdbd781175c0763ffbcbdd66e"
+    }
+  },
+  "historical_availability_certified": false,
+  "initial_history_status": "legacy_first_observation_unverified"
+}

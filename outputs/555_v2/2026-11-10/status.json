@@ -1,0 +1,30 @@
+{
+  "model": "555_v2",
+  "mode": "full",
+  "status": "success",
+  "research_candidate": true,
+  "official_555_replacement": false,
+  "signal_published": false,
+  "completed_session": "2026-11-10",
+  "run_date": "2026-11-10",
+  "reason": "prediction_written_not_a_research_signal",
+  "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "weights_reused": true,
+  "dates": {
+    "signal_date": "2026-11-10",
+    "run_date": "2026-11-10",
+    "data_asof": "2026-11-10",
+    "intended_execution_date": "2026-11-11",
+    "signal_date_meaning": "訊號日：已完成交易日，特徵與收盤只到這一天",
+    "run_date_meaning": "執行日：程式寫出這份檔案的台北日曆日",
+    "data_asof_meaning": "資料截止日：允許進入模型的最後資料日，等於訊號日",
+    "intended_execution_date_meaning": "相容舊欄位：預測標籤的假設進場日；實際交易須另看 trade_eligible 與 scheduled_rebalance_date",
+    "forecast_entry_date": "2026-11-11",
+    "scheduled_rebalance_date": "2026-11-13",
+    "trade_eligible": false,
+    "execution_anchor": "2026-11-06",
+    "execution_policy": "exact_previous_session_signal_only; no carry-forward"
+  },
+  "planned_execution": "2026-11-11",
+  "unified_csv": "outputs/555_v2/2026-11-10/unified_signal.csv"
+}

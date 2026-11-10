@@ -1,0 +1,30 @@
+{
+  "analysis_version": "paired-effects-block-bootstrap-v1",
+  "status": "exploratory_observed_history",
+  "causal_validated": false,
+  "independent_holdout": false,
+  "bootstrap": {
+    "block_length": 10,
+    "draws": 1000,
+    "seed": 42,
+    "confidence": 0.95
+  },
+  "bootstrap_method": "Circular blocks of fixed length; identical resampled paired dates for every contrast. Regime labels travel with those dates",
+  "block_selection": "Default 10 sessions, declared in code; no selection among blocks, seeds or regimes based on test results",
+  "contrast_unit": "Percentage points of mean arithmetic daily net return, not terminal ROI or annualized alpha",
+  "regime_timing": "Today's return uses the prior execution day's common policy Risk_Off state; never today's newly available state",
+  "regime_interpretation": "Regimes describe the policy state of entering holdings. Static references need not themselves trade on that state",
+  "cost_timing": "Net returns include costs charged at today's close. Holding-return and trading-cost differences are also shown separately",
+  "entry_policy": "First valuation/entry day excluded from contrasts and bootstrap, because there are no prior holdings. Its entry cost and return are separately reported",
+  "terminal_policy": "Liquidate all arms at final close without opening final-day new entries",
+  "first_analyzed_return_date": "2026-04-02",
+  "last_analyzed_return_date": "2026-11-10",
+  "return_dates": 149,
+  "minimum_interval_days": 10,
+  "limitations": [
+    "Observed and overlapping research history is reused; these intervals are not an independent holdout or proof of causal benefit",
+    "News provenance and model training integrity must be established separately",
+    "Fixed descriptive contrasts and two risk regimes are reported together; no multiple-testing-adjusted superiority claim is made",
+    "Short or rare regimes may have unstable intervals; N_Days and usable bootstrap draws are reported"
+  ]
+}

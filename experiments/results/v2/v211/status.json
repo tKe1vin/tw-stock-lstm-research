@@ -3,7 +3,7 @@
   "error": null,
   "data_updated_through_latest_completed_session": true,
   "data": {
-    "prices_through": "2026-11-09",
+    "prices_through": "2026-11-10",
     "price_names_on_last_day": [
       "2002.TW",
       "2317.TW",
@@ -28,12 +28,12 @@
   "signal": {
     "publish": true,
     "reason": "today_close_is_stored",
-    "completed_session": "2026-11-09",
-    "path": "experiments/results/v2/v211/daily/2026-11-09.csv",
-    "created_at": "2026-11-09T23:39:58.381692+08:00",
+    "completed_session": "2026-11-10",
+    "path": "experiments/results/v2/v211/daily/2026-11-10.csv",
+    "created_at": "2026-11-10T21:51:42.283294+08:00",
     "reread_rows": 5,
-    "planned_execution": "2026-11-10",
-    "forecast_entry_date": "2026-11-10",
+    "planned_execution": "2026-11-11",
+    "forecast_entry_date": "2026-11-11",
     "scheduled_rebalance_date": "2026-11-13",
     "trade_eligible": false,
     "execution_anchor": "2026-11-06",
@@ -45,17 +45,17 @@
     "rebalance_today": false,
     "reason": "every_5_sessions_from_first_fill",
     "first_execution": "2026-11-06",
-    "today": "2026-11-09",
+    "today": "2026-11-10",
     "required_signal_date": null,
     "required_signal_present": false,
     "signal_carry_forward_allowed": false
   },
   "labels_matured_today": [],
   "scorable_signal_days": 0,
-  "immature_predictions": 15,
+  "immature_predictions": 20,
   "scoring": {
     "matured_signal_days": 0,
-    "pending_predictions": 15,
+    "pending_predictions": 20,
     "matured_today": [],
     "pending_labels": [
       {
@@ -69,6 +69,10 @@
       {
         "signal": "2026-11-09",
         "label_end": "2026-11-17"
+      },
+      {
+        "signal": "2026-11-10",
+        "label_end": "2026-11-18"
       }
     ],
     "next_label_end": "2026-11-13",
@@ -77,13 +81,13 @@
   "book": {
     "status": "updated",
     "first_fill_completed": true,
-    "signals": 3,
+    "signals": 4,
     "rebalance_is_every": 5,
     "prediction_is": "daily",
     "fill_price": "next_session_close",
-    "sessions": 2,
-    "open_nav": 101428.46101915013,
-    "cash_weight": 0.4926073003839292,
+    "sessions": 3,
+    "open_nav": 101935.95675673541,
+    "cash_weight": 0.49015481832360147,
     "entry_cost": 71.19927051975466
   },
   "first_fill_completed": true,
@@ -97,9 +101,9 @@
   },
   "fetch": {
     "ready_to_predict": true,
-    "completed_session": "2026-11-09",
-    "clock": "2026-11-09T23:39:54.557415+08:00",
-    "run_started_at": "2026-11-09T23:39:54.557415+08:00",
+    "completed_session": "2026-11-10",
+    "clock": "2026-11-10T21:51:39.712943+08:00",
+    "run_started_at": "2026-11-10T21:51:39.712943+08:00",
     "prices_ready": true,
     "sentiment_ready": true,
     "price_source": "yfinance unadjusted Close",
@@ -114,16 +118,17 @@
     "news_provenance_schema_version": 1,
     "appended_price_dates": [],
     "appended_sentiment_dates": [],
-    "prices_through": "2026-11-09",
-    "price_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
-    "sentiment_through": "2026-11-09",
-    "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "prices_through": "2026-11-10",
+    "price_sha256": "93215113692e64c038bcd51e7f99f4a12e1967c434b4b26301808c157ad80ae2",
+    "sentiment_through": "2026-11-10",
+    "sentiment_sha256": "01cabc6ad18aefcaea89c6d690d0f8961be6efd041179c543b9e8f98f3c3a91b",
     "gate": "ready",
-    "fetched_at": "2026-11-09T23:39:51.258570+08:00",
+    "fetched_at": "2026-11-10T21:51:37.163170+08:00",
     "fetched_at_kind": "observed_completion",
     "news_provenance_status": "observed_at_recorded_time",
+    "news_scoring_provenance_status": "not_applicable_no_articles",
     "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
-    "news_available_at": "2026-11-09T23:39:51.218466+08:00",
+    "news_available_at": "2026-11-10T21:51:37.131967+08:00",
     "official_price_changed_since_seed": true,
     "official_sentiment_changed_since_seed": true,
     "skipped_download": true

@@ -1,17 +1,17 @@
 {
   "report_schema": "four-systems-v1",
-  "as_of_date": "2026-11-09",
-  "run_date": "2026-11-09",
-  "started": "2026-11-09T23:39:21.158701+08:00",
-  "finished": "2026-11-10T01:07:13.348204+08:00",
+  "as_of_date": "2026-11-10",
+  "run_date": "2026-11-10",
+  "started": "2026-11-10T21:51:11.263182+08:00",
+  "finished": null,
   "status": "complete",
-  "last_successful_as_of_date": "2026-11-09",
+  "last_successful_as_of_date": "2026-11-10",
   "models": {
     "444": {
       "status": "success",
       "exit_code": 0,
       "current": true,
-      "observed_as_of_date": "2026-11-09",
+      "observed_as_of_date": "2026-11-10",
       "reason": null,
       "current_output": "reports/latest/444/next_day_recommendation.csv"
     },
@@ -19,34 +19,33 @@
       "status": "success",
       "exit_code": 0,
       "current": true,
-      "observed_as_of_date": "2026-11-09",
-      "reason": "repaired_saved_research_export_not_a_forward_signal",
-      "current_output": "reports/latest/555/next_day_recommendation.csv",
-      "run_mode": "historical_replay"
+      "observed_as_of_date": "2026-11-10",
+      "reason": "shared_444_core_dynamic_news_risk_exported",
+      "current_output": "reports/latest/555/next_day_recommendation.csv"
     },
     "555_v2": {
       "status": "success",
       "exit_code": 0,
       "current": true,
-      "observed_as_of_date": "2026-11-09",
+      "observed_as_of_date": "2026-11-10",
       "reason": "prediction_written_not_a_research_signal",
-      "current_output": "outputs/555_v2/2026-11-09/unified_signal.csv"
+      "current_output": "outputs/555_v2/2026-11-10/unified_signal.csv"
     },
     "v211": {
       "status": "success",
       "exit_code": 0,
       "current": true,
-      "observed_as_of_date": "2026-11-09",
+      "observed_as_of_date": "2026-11-10",
       "reason": null,
-      "current_output": "experiments/results/v2/v211/daily/2026-11-09.csv"
+      "current_output": "experiments/results/v2/v211/daily/2026-11-10.csv"
     }
   },
   "comparison_status": "paired_444_core_next_close",
   "market": {
     "ready_to_predict": true,
-    "completed_session": "2026-11-09",
-    "clock": "2026-11-09T23:39:51.258570+08:00",
-    "run_started_at": "2026-11-09T23:39:22.596169+08:00",
+    "completed_session": "2026-11-10",
+    "clock": "2026-11-10T21:51:37.163170+08:00",
+    "run_started_at": "2026-11-10T21:51:12.141687+08:00",
     "prices_ready": true,
     "sentiment_ready": true,
     "price_source": "yfinance unadjusted Close",
@@ -60,13 +59,13 @@
     "historical_sentiment_provenance": "retrospective_unverified",
     "news_provenance_schema_version": 1,
     "appended_price_dates": [
-      "2026-11-09"
+      "2026-11-10"
     ],
     "appended_sentiment_dates": [
-      "2026-11-09"
+      "2026-11-10"
     ],
-    "prices_through": "2026-11-09",
-    "price_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "prices_through": "2026-11-10",
+    "price_sha256": "93215113692e64c038bcd51e7f99f4a12e1967c434b4b26301808c157ad80ae2",
     "price_overlap_relative_diff": {
       "2330.TW": 0.0,
       "2317.TW": 0.0,
@@ -75,59 +74,45 @@
       "2891.TW": 0.0,
       "^TWII": 0.0
     },
-    "price_fetched_at": "2026-11-09T23:39:42.500705+08:00",
-    "sentiment_through": "2026-11-09",
-    "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
-    "sentiment_fetched_at": "2026-11-09T23:39:51.218466+08:00",
+    "price_fetched_at": "2026-11-10T21:51:31.439500+08:00",
+    "sentiment_through": "2026-11-10",
+    "sentiment_sha256": "01cabc6ad18aefcaea89c6d690d0f8961be6efd041179c543b9e8f98f3c3a91b",
+    "sentiment_fetched_at": "2026-11-10T21:51:37.131967+08:00",
     "news_provenance_status": "observed_at_recorded_time",
+    "news_scoring_provenance_status": "not_applicable_no_articles",
     "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
-    "new_articles": 6,
-    "news_source_start": "2026-11-06",
-    "news_source_end": "2026-11-09",
+    "new_articles": 3,
+    "news_source_start": "2026-11-09",
+    "news_source_end": "2026-11-10",
     "gate": "ready",
-    "fetched_at": "2026-11-09T23:39:51.258570+08:00",
+    "fetched_at": "2026-11-10T21:51:37.163170+08:00",
     "fetched_at_kind": "observed_completion",
-    "news_available_at": "2026-11-09T23:39:51.218466+08:00",
+    "news_available_at": "2026-11-10T21:51:37.131967+08:00",
     "official_price_changed_since_seed": true,
     "official_sentiment_changed_since_seed": true,
-    "completed_at": "2026-11-09T23:39:51.258570+08:00",
-    "snapshot_dir": "data/snapshots/2026-11-09",
+    "completed_at": "2026-11-10T21:51:37.163170+08:00",
+    "snapshot_dir": "data/snapshots/2026-11-10",
     "used_previous_day_as_today": false,
     "read_only": false,
     "shared_source": "v211_market",
     "snapshot_prices_ready": true,
-    "snapshot_prices_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "snapshot_prices_sha256": "93215113692e64c038bcd51e7f99f4a12e1967c434b4b26301808c157ad80ae2",
     "snapshot_sentiment_ready": true,
-    "snapshot_sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "snapshot_sentiment_sha256": "01cabc6ad18aefcaea89c6d690d0f8961be6efd041179c543b9e8f98f3c3a91b",
     "status": "success",
     "exit_code": 0,
-    "log": "logs/orchestrator/20261109T233921381799_market.log"
+    "log": "logs/orchestrator/20261110T215111395093_market.log"
   },
   "performance_protocols_combined": false,
   "primary_research": {
     "status": "complete",
     "protocol": "paired-444-core-allocation-v1",
-    "as_of_date": "2026-11-09",
+    "as_of_date": "2026-11-10",
     "research_status": "exploratory",
     "core_model": "444",
-    "source_prediction_sha256": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
-    "report": "reports/daily/2026-11-09/paired/comparison.md",
-    "recommendation": "reports/daily/2026-11-09/paired/555_next_day_recommendation.csv",
-    "news_increment_roi_pp": -1.8723064939308975
-  },
-  "research_export_repair": {
-    "as_of_date": "2026-11-09",
-    "repaired_at": "2026-11-10T01:07:11.867563+08:00",
-    "run_mode": "historical_replay",
-    "original_failure_preserved": true,
-    "training_executed": false,
-    "live_signal_published": false,
-    "source_sha256": {
-      "evaluation_protocol.json": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
-      "test_predictions.csv": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
-      "model_metrics.csv": "7dc35ce996cab6a928e16586adaabb5fab024fbe608f4d75fa42e9eb09bbec51"
-    },
-    "original_run_summary_changed": false
-  },
-  "original_workflow_status": "failed; retained in Actions and original saved summary"
+    "source_prediction_sha256": "120d7e041203be996529f9c82e45937a56e294c5beaafcbc191255f6150e7611",
+    "report": "reports/daily/2026-11-10/paired/comparison.md",
+    "recommendation": "reports/daily/2026-11-10/paired/555_next_day_recommendation.csv",
+    "news_increment_roi_pp": -1.2866558346917412
+  }
 }

@@ -1,0 +1,11 @@
+{
+  "comparison_status": "paired_444_core_next_close",
+  "as_of_date": "2026-11-10",
+  "protocol": "paired-444-core-allocation-v1",
+  "core_model": "444",
+  "result_status": "exploratory",
+  "identical_model_metrics_expected": true,
+  "trade_win_rate": "undefined",
+  "original_444_native_roi": "legacy descriptive fixed-share ledger; main ROI recomputed through the paired next-close ledger",
+  "market": "theoretical price reference only; not an investable net benchmark"
+}

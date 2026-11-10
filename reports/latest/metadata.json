@@ -1,8 +1,8 @@
 {
   "report_schema": "four-systems-v1",
-  "as_of_date": "2026-11-09",
+  "as_of_date": "2026-11-10",
   "status": "complete",
-  "last_successful_as_of_date": "2026-11-09",
+  "last_successful_as_of_date": "2026-11-10",
   "comparison_status": "paired_444_core_next_close",
   "model_currentness": {
     "444": true,
@@ -10,20 +10,5 @@
     "555_v2": true,
     "v211": true
   },
-  "note": "Read four_systems.json before treating any older result file as current.",
-  "research_export_repair": {
-    "as_of_date": "2026-11-09",
-    "repaired_at": "2026-11-10T01:07:11.867563+08:00",
-    "run_mode": "historical_replay",
-    "original_failure_preserved": true,
-    "training_executed": false,
-    "live_signal_published": false,
-    "source_sha256": {
-      "evaluation_protocol.json": "4c04803ebddf2c2af748f841458ee1e8b5b8e8b11216836c8875472061acdc63",
-      "test_predictions.csv": "610b5915c5d51d8eafa6a34f1756c2a19a89067d1cca90926c2bbf467e4e3c54",
-      "model_metrics.csv": "7dc35ce996cab6a928e16586adaabb5fab024fbe608f4d75fa42e9eb09bbec51"
-    },
-    "original_run_summary_changed": false
-  },
-  "original_workflow_status": "failed; retained in Actions and original saved summary"
+  "note": "Read four_systems.json before treating any older result file as current."
 }

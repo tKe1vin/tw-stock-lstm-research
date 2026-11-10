@@ -22,5 +22,13 @@
     "planned_execution": "2026-11-10",
     "rows": 5,
     "file_sha256": "ea03e280f3d9f7973d67b88e882438bd770c0e416b45006169fc0dd7f5375525"
+  },
+  "2026-11-10.csv": {
+    "created_at": "2026-11-10T21:51:42.283294+08:00",
+    "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "signal_date": "2026-11-10",
+    "planned_execution": "2026-11-11",
+    "rows": 5,
+    "file_sha256": "5a685fbd2da249bd14ae2f30880eb7e94331e2a6835ba9a9b4ca580f27b13a3f"
   }
 }

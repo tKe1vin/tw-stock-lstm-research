@@ -49,6 +49,21 @@
       "missing_source_fields": [],
       "publication_evidence": "repository_signal_record",
       "legacy_csv_unchanged": true
+    },
+    "2026-11-10.csv": {
+      "file_sha256": "5a685fbd2da249bd14ae2f30880eb7e94331e2a6835ba9a9b4ca580f27b13a3f",
+      "recorded_created_at": "2026-11-10T21:51:42.283294+08:00",
+      "execution": {
+        "forecast_entry_date": "2026-11-11",
+        "scheduled_rebalance_date": "2026-11-13",
+        "trade_eligible": false,
+        "execution_anchor": "2026-11-06",
+        "execution_policy": "exact_previous_session_signal_only; no carry-forward"
+      },
+      "source_audit_status": "source_fields_present",
+      "missing_source_fields": [],
+      "publication_evidence": "repository_signal_record",
+      "legacy_csv_unchanged": true
     }
   },
   "note": "Retrospective audit only; present fields do not prove historical availability."
