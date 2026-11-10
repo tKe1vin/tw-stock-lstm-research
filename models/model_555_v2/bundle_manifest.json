@@ -32,14 +32,17 @@
   "inference_sources": {
     "experiments/risk_experiment.py": "48d2c13944de7fe827bacd2de1dcd7a0fcda2db7c95f5183cb40440f8cf0767f",
     "experiments/calendar_rules.py": "c2eea45adad3c7037acccaaee25a6cc2382b56b68407b2b359223b21ce13ab2a",
-    "experiments/horizon_experiment.py": "8e31b0fe5c4e0f5434fb16be3b102e072d0dbd4bcd4ae6c2d89bdcda51fa2405",
-    "experiments/v2/v28.py": "2ffa8d4088a5bebc92f9b11c0274d1f46a4f067698a5ff8abe30549d47561361",
+    "experiments/horizon_experiment.py": "89b6e3daf586c0feb65aadb612fe6ed67738483c1216c11b4969c6e36936dc9a",
+    "experiments/v2/v28.py": "508d0ee42bcd6b329f308753d4a01d5c12a9a98bfd42681eeab99b9128b265e4",
     "experiments/v2/v29.py": "d4e7b605f96d20af52ca845a519f5d2db5da9737ceeb4583489cd66c76294561",
-    "experiments/v2/v28_rules.py": "8546aa520e5097d4a826ece163a737adbd69a863827163d73cd4c70adeb971a9",
+    "experiments/v2/v28_rules.py": "8fa422eb110b180122c10184a1f1c72ac4991258f9903a9039325887f02b9c65",
     "experiments/v2/books.py": "976397c9c62170e5b0e0427ade9432f01056b0cf3ec3a2a0b6d53b211921ae2a",
-    "experiments/v2/v211.py": "e575466edd3d3a2d356c5c4296f250b76735f2aea714e75a66419f01ee072af8",
-    "scripts/common.py": "766f525d810957c34091bcf64133a59c177095ae2f3d78947358de2adc035dd4",
-    "scripts/model_bundle.py": "1dcda5ceb3ae4c57dee5350bc435751867a6de9ad19e4f1eb2044b93ba038a80"
+    "experiments/v2/v211.py": "823f913c71a88b10e45e8deed99df14c933ec48b9c4f8e1aebc80111a6b586f2",
+    "experiments/v2/v211_market.py": "db59370b2a9954ae97b7f13fd1732d5af10a79ee603e7c3014de59bfe90db93b",
+    "scripts/news_update.py": "72406c90c43aafbad8279319cc90380e709706c3a75060c66aa802b7ff1eabc7",
+    "scripts/ledger_integrity.py": "2055366c9dd745808126f54f350bfc14b29dcbcdef7b90050eefdc4f821b9a16",
+    "scripts/common.py": "499b163c47ed6d1dc5780d9c2d58dc1b14de81e26fde354689ea329c4e6f950c",
+    "scripts/model_bundle.py": "d0e421a0cbf87f0e277d76b890bd8013e1f54e4f1b10b4a202d673b640ae80cd"
   },
-  "bundle_sha256": "5244f169d3b05b54185e3441b00f449097e86c10e61754757d0fab9124feb6a8"
+  "bundle_sha256": "e307bf53d52ec0c5a7248f316a552cd4611b5b999362640fea5421d169ade85d"
 }

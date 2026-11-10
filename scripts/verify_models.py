@@ -35,7 +35,8 @@ def main(argv=None) -> int:
     digest = sha256(path)
     card = json.loads(card_path.read_text(encoding="utf-8"))
     print(f"computed_sha256 {digest}")
-    print(f"card_sha256 {card.get('weight_sha256')}")
+    print(f"card_sha256 {sha256(card_path)}")
+    print(f"card_declared_weight_sha256 {card.get('weight_sha256')}")
     if digest != EXPECTED:
         print("computed hash does not match the frozen weight hash")
         return 1

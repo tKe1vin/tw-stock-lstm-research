@@ -13,14 +13,21 @@ TZ = ZoneInfo('Asia/Taipei')
 
 # Verified extraordinary exchange-wide closures; not ordinary missing Yahoo rows.
 SPECIAL_MARKET_CLOSURES = {
+    # TWSE's final pre-Lunar-New-Year session was Jan 26; reopen Feb 7.
+    # XTAI's library calendar otherwise incorrectly includes Feb 4.
+    # https://www.cna.com.tw/news/afe/202201260247.aspx
+    '2022-02-04': 'TWSE Lunar New Year closure; reopen Feb 7',
     # TWSE 2023 final session was Jan 17; reopen Jan 30 (CNA quoting TWSE).
     # https://www.cna.com.tw/news/afe/202211150057.aspx
     '2023-01-18': 'TWSE Lunar New Year settlement closure after Jan 17 final session',
     # TWSE closure notice, reproduced by E.SUN Securities; TAIFEX also closed.
     # https://www.taifex.com.tw/cht/11/newsDetail?idx=15446&newsType=1
     '2024-10-31': 'Typhoon Kong-rey: TWSE closed',
+    # https://www.taifex.com.tw/cht/11/newsDetail?newsType=1&idx=17137
+    # TWSE notice reproduced by E.SUN: see docs/audit_130_critical.md.
     '2026-07-10': 'Typhoon Bavi: TWSE closed',
-    '2026-10-23': 'Typhoon Changpi: TWSE closed',
+    # https://www.cna.com.tw/news/afe/202610220388.aspx (TWSE/TPEx notice)
+    '2026-10-23': 'Typhoon Champi: TWSE closed',
 }
 SPECIAL_MARKET_CLOSURE_DATES = pd.DatetimeIndex(list(SPECIAL_MARKET_CLOSURES))
 

@@ -1,0 +1,13 @@
+Candidate,Fold,Split,Relative_Wealth_Excess_Pct,Tracking_Error_Annualized,Information_Ratio,Stress_Relative_Wealth_Excess_Pct,ROI_Pct
+ridge_price,1,validation,-0.48100188222027773,0.008939459451030973,-2.233901924165426,0.0,11.557195243163765
+ridge_news,1,validation,-0.812828433570778,0.011864986938729625,-2.882493208693115,0.0,11.185229688083865
+lstm_price,1,validation,0.0,0.0,0.0,0.0,12.096380945412012
+lstm_news,1,validation,0.0,0.0,0.0,0.0,12.096380945412012
+ridge_price,2,validation,0.0,0.0,0.0,0.0,22.540395607451956
+ridge_news,2,validation,0.0,0.0,0.0,0.0,22.540395607451956
+lstm_price,2,validation,0.0,0.0,0.0,0.0,22.540395607451956
+lstm_news,2,validation,0.0,0.0,0.0,0.0,22.540395607451956
+ridge_price,3,validation,0.12016492843462956,0.008719449794374742,0.4977629044451749,0.0,11.949647402451525
+ridge_news,3,validation,0.0,0.0,0.0,0.0,11.815284645678048
+lstm_price,3,validation,0.0,0.0,0.0,0.0,11.815284645678048
+lstm_news,3,validation,0.0,0.0,0.0,0.0,11.815284645678048

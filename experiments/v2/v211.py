@@ -32,6 +32,9 @@ from experiments.v2.v28_rules import ES_LEN, classification_scores
 from experiments.v2.v29 import CorrectedFitter
 from scripts.common import TZ, current_completed_session, sessions
 from scripts.model_bundle import verify_bundle
+from scripts.ledger_integrity import (
+    append_plan, apply_append, record_ledger_sources, validate_ledger_sources,
+)
 
 V211 = OUT / "v211"
 LIVE = V211 / "daily"
@@ -409,6 +412,7 @@ def projected_label_end(signal_date):
 
 def score_matured(context):
     """Score a live signal only after the five-day label has printed in the price file."""
+    validate_ledger_sources(ROOT, V211)
     panel, _frames, _risk, _one, five, _excess = context
     index = panel.index
     files = sorted(LIVE.glob("*.csv"))
@@ -435,7 +439,9 @@ def score_matured(context):
                 "Predicted": float(row.Predicted_Return_Pct),
                 "Actual_5d_Pct": float(actual[row.Ticker]),
             })
-    table = pd.DataFrame(matured)
+    table = pd.DataFrame(matured, columns=["Signal_Date", "Ticker", "Predicted", "Actual_5d_Pct"])
+    score_path = V211 / "matured_scores.csv"
+    plan = append_plan(score_path, table, ("Signal_Date", "Ticker"))
     next_label_end = pending_labels[0]["label_end"] if pending_labels else None
     if table.empty:
         return {
@@ -446,7 +452,7 @@ def score_matured(context):
             "next_label_end": next_label_end,
             "metrics": None,
         }
-    table.to_csv(assert_v211(V211 / "matured_scores.csv"), index=False)
+    # Reject invalid predictions/labels before any realized output is written.
     metrics = classification_scores(table.Predicted, table.Actual_5d_Pct)
     days = table.groupby("Signal_Date")
     spearman = []
@@ -456,6 +462,8 @@ def score_matured(context):
     metrics["Cross_Section_Spearman"] = float(np.nanmean(spearman)) if spearman else None
     metrics["Matured_Signal_Days"] = int(table.Signal_Date.nunique())
     metrics["Label_Overlap_Sessions"] = LABEL_GAP - 1
+    added = apply_append(assert_v211(score_path), plan)
+    record_ledger_sources(ROOT, V211, panel, "score_matured", {"matured_scores.csv": added})
     return {
         "matured_signal_days": int(table.Signal_Date.nunique()),
         "pending_predictions": int(pending),
@@ -737,6 +745,7 @@ def _book_summary(result):
 
 
 def update_book(context):
+    validate_ledger_sources(ROOT, V211)
     files = sorted(LIVE.glob("*.csv"))
     if not files:
         return {"status": "no_live_signals", "first_fill_completed": False}
@@ -745,9 +754,15 @@ def update_book(context):
     result = build_live_book(panel, signals)
     if result["status"] != "updated":
         return _book_summary(result)
-    result["fills"].to_csv(assert_v211(V211 / "live_fills.csv"), index=False)
-    result["daily"].to_csv(assert_v211(V211 / "live_nav.csv"), index=False)
-    result["equal_daily"].to_csv(assert_v211(V211 / "equal_nav.csv"), index=False)
+    # Validate every realized table before writing any of them. Recomputed
+    # historical fills/NAV must agree; only newly available rows are appended.
+    tables = (("live_fills.csv", result["fills"], ("Book", "Execution_Date"), ()),
+              ("live_nav.csv", result["daily"], ("Date",), ("Liquidation_If_Closed",)),
+              ("equal_nav.csv", result["equal_daily"], ("Date",), ("Liquidation_If_Closed",)))
+    plans = [(name, append_plan(V211 / name, frame, keys, snapshot_columns=snapshots))
+             for name, frame, keys, snapshots in tables]
+    added = {name: apply_append(assert_v211(V211 / name), plan) for name, plan in plans}
+    record_ledger_sources(ROOT, V211, panel, "update_book", added)
     published = result["daily"]
     equal = result["equal_daily"]
     compared = pd.DataFrame([
@@ -857,6 +872,7 @@ def write_status(payload):
 def resolve_context():
     from experiments.v2.v211_market import load_market_context, market_files_ready
 
+    validate_ledger_sources(ROOT, V211)
     if market_files_ready():
         return load_market_context(), "v211_market"
     return load_context(), "frozen_555_snapshot"

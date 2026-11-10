@@ -1,0 +1,13 @@
+{
+  "historical_alpha_proven": false,
+  "all_history_exploratory": true,
+  "fallback_diagnostic_pair": true,
+  "news_point_in_time_evidence_complete": false,
+  "prospective_deployment_allowed": false,
+  "no_performance_guarantee": true,
+  "notes": [
+    "Historical last60 signals are exploratory holdout, not independent prospective evidence.",
+    "Payment dates, lot rights, intraday fills and quoted spreads require execution review.",
+    "A fallback diagnostic pair is reported even if all news candidates fail; it is never adopted."
+  ]
+}

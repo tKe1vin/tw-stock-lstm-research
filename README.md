@@ -2,7 +2,8 @@
 
 本專題研究新聞與市場風險資訊能否改善 LSTM 投資組合的風險調整後績效。2026-11-09 修訂以 **相同 444 預測核心**建立 555 主研究，控制模型、價格、日期、成交與成本，再分離動態配置、新聞與風控效果。既有凍結權重與已發布訊號保留原始 bytes。
 
-- [V3：大盤核心＋新聞超額配置設計（尚未訓練）](research/v3/design.md)
+- [V3：0050核心＋新聞超額模型](research/v3/design.md) · [實測與拒絕採用紀錄](reports/research_v3/2026-11-10/summary.md)
+- [130題逐題狀態](docs/audit_130_status.md) · [訓練關鍵修正與歷史限制](docs/audit_130_critical.md)
 - [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
 - [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
 - [修訂後配對研究實測](reports/research_revision/2026-11-06/paired/comparison.md)
@@ -32,6 +33,8 @@ GitHub Actions 維持台北週一至週五 **17:37** 執行、**21:37** 重試�
 
 延伸研究只訓練預先固定的價格 LSTM／情緒風控 LSTM 兩候選，先用驗證集選擇並保存權重，再計算測試預測。2026-03-23～11-02 的新聞候選 **16.18%**，可比風控等權 **16.83%**，理論大盤成本代理 **36.47%**。**尚未超越大盤；未因測試落後而重新調參。**該延伸沒有取代既有 V2 凍結模型。
 
+2026-11-10新增V3，依使用者指定改與可交易的**0050**比較。已取得獨立原價／公司行動資料，實作新聞與價格Ridge／LSTM配對、整數股及股利付款日帳本；三折固定驗證均未取得合格新聞候選，採用結果為B0／0050。這不是已完成勝過0050的模型，最後60訊號仍屬探索性留出。實測、模型與拒絕理由皆保留，未替換原每日系統。
+
 以上期間已被查看，歷史新聞也缺完整取得證據，全部屬探索性。較低 MDD、較高 Sharpe、新聞效果與交易成本的取捨都可作研究結果；不預設顯著或必然勝過大盤。
 
 ## 時點、來源與凍結保護
@@ -60,19 +63,23 @@ python -m scripts.run_all_daily --mode check
 python -m scripts.run_all_daily --mode full
 ```
 
+V3獨立入口預設唯讀：`python -m scripts.research_v3`。訓練與重播需依[資料契約](research/v3/data_contract.md)合法取得外部固定行情；公開Git與ZIP不含受限制的FinMind完整行情快照。
+
 單獨執行 555 前須先有同日成功的 444 與完整快照；缺資料會等待，不用昨日核心替代。`--force` 不得改寫 V2.11 已發訊號。
 
 ```bash
 python -m scripts.run_model --model 555 --mode full --legacy-555
 python -m scripts.run_model --model 444 --mode full --fixture reproducible
 python -m scripts.run_model --model 555 --mode full --fixture reproducible
-python -m scripts.paired_delivery --replay reports/research_revision/2026-11-06/paired/reproduction_manifest.json --output work/replayed_pair
-python -m scripts.research_extension --mode reproduce --output-dir reports/research_extension/2026-11-06
-python -m scripts.research_extension --mode forecast --output-dir reports/research_extension/2026-11-06 --as-of 2026-11-06
+python -m scripts.replay_paired_archive --manifest reports/research_revision/2026-11-06/paired/reproduction_manifest.json
+python -m scripts.replay_extension_archive --run reports/research_extension/2026-11-06
+python -m scripts.replay_extension_archive --run reports/research_extension/2026-11-06 --mode forecast --as-of 2026-11-06
 ```
 
 配對研究的原始預測、價格、情緒、協議及建議以內容雜湊永久壓縮保存於 `data/research_snapshots/`，可逐位元重算投資組合 CSV；這不等於宣稱神經網路重新訓練必然逐位元一致。原始模型訓練檔、權重與日誌在 Actions artifacts 保留 **90 天**。延伸模型另保存本次訓練權重、Scaler、輸入、原始／修正來源及重現驗證。
 
-ZIP 是舊交付版本。部分 v28 中間預測仍缺，不能宣稱舊歷史比較已完整重現；原研究價格已能以雜湊相同的 `data/examples/reproducible/prices.csv` 解析。`tests/legacy_delivery/` 保留舊快照測試，預設 CI 不執行。
+修正現行程式後，舊報告仍嚴格檢查原來源雜湊。上述歷史重播命令在暫存目錄使用固定Git版本，不修改舊manifest、不重訓；需要Git與該歷史commit。新V3使用自身保存模型與外部固定輸入重播。
+
+原 `TW_Stock_LSTM_Complete.zip` 是舊交付版本；新版交付與逐檔驗證見[2.1.0說明](docs/delivery_v2_1.md)。部分v28中間預測仍缺，不能宣稱舊歷史比較已完整重現；原研究價格已能以雜湊相同的 `data/examples/reproducible/prices.csv` 解析。`tests/legacy_delivery/` 保留舊快照測試，預設CI不執行。
 
 若先前555匯出失敗，`python -m scripts.repair_saved_555 --as-of 資料日 --mode check` 僅查驗保存核心與當時快照；`--mode repair` 僅接受失敗且沒有已發布建議的匯出，明標歷史重播並保留原失敗，不回填前瞻訊號或成交。

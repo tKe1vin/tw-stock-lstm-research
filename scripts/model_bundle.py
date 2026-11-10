@@ -22,6 +22,9 @@ INFERENCE_SOURCES = (
     "experiments/v2/v28_rules.py",
     "experiments/v2/books.py",
     "experiments/v2/v211.py",
+    "experiments/v2/v211_market.py",
+    "scripts/news_update.py",
+    "scripts/ledger_integrity.py",
     "scripts/common.py",
     "scripts/model_bundle.py",
 )

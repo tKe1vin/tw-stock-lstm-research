@@ -1,0 +1,22 @@
+{
+  "scope": "current checkout text files; binary models/docs and full Git history not exhaustively certified",
+  "files_scanned": 458,
+  "credential_match_files": [],
+  "machine_path_match_files": [
+    "experiments/results/v2/v211/market/fetch_audit.jsonl",
+    "experiments/results/v2/v211/market/news_scan_coverage.json",
+    "experiments/results/v2/v211/market/state.json",
+    "experiments/results/v2/v211/status.json",
+    "outputs/daily_summary/2026-11-09/summary.json",
+    "outputs/v211/2026-11-09/status.json",
+    "reports/daily/2026-11-09/paired/repair/original_day_status.json",
+    "reports/daily/2026-11-09/status.json",
+    "reports/latest/four_systems.json"
+  ],
+  "matched_values_disclosed": false,
+  "reachable_history_text_blobs_scanned": 537,
+  "history_credential_match_files": [],
+  "scanned_ref_scope": "all refs fetched in this checkout; public unreachable/deleted objects not certified",
+  "machine_path_findings": "Recorded GitHub Actions runner paths in historical audit/status outputs; not runtime source dependencies. Original evidence left intact.",
+  "pii_scope": "Original user-supplied proposal names retained intentionally; not a claim that every binary document is PII-free."
+}

@@ -206,6 +206,8 @@ def choose_model(validation_spearman):
     """Pick a model with validation rank correlation only. Portfolio ROI is not an input."""
     if set(validation_spearman) != set(MODELS):
         raise ValueError("驗證排序指標必須恰好涵蓋 A 到 D")
+    if not np.isfinite([float(validation_spearman[name]) for name in MODELS]).all():
+        raise ValueError("Validation model-selection scores must be finite")
     ranked = sorted(
         MODELS,
         key=lambda name: (float(validation_spearman[name]), TIE_BREAK.index(name) * -1),
@@ -215,8 +217,18 @@ def choose_model(validation_spearman):
 
 
 def rank_metrics(predicted, actual):
+    """Mean daily five-stock Spearman on complete finite cross-sections.
+
+    Ties use average ranks; a constant prediction/actual row contributes zero.
+    Top-k diagnostics retain deterministic stable input-column tie ordering.
+    """
     predicted = np.asarray(predicted, dtype=float)
     actual = np.asarray(actual, dtype=float)
+    if (predicted.ndim != 2 or actual.ndim != 2 or predicted.shape != actual.shape
+            or predicted.shape[0] == 0 or predicted.shape[1] != len(TICKERS)):
+        raise ValueError("Rank metrics require matching nonempty date-by-five-stock arrays")
+    if not np.isfinite(predicted).all() or not np.isfinite(actual).all():
+        raise ValueError("Rank predictions and actual returns must be finite")
     spearmans = []
     top1 = []
     top2 = []
@@ -230,7 +242,7 @@ def rank_metrics(predicted, actual):
         top1.append(float(pred_order[-1] == actual_order[-1]))
         top2.append(len(set(pred_order[-2:]).intersection(actual_order[-2:])) / 2.0)
     return {
-        "Cross_Section_Spearman": float(np.nanmean(spearmans)),
+        "Cross_Section_Spearman": float(np.mean(spearmans)),
         "Top1_Hit_Rate": float(np.mean(top1)),
         "Top2_Overlap": float(np.mean(top2)),
         "Days": int(len(predicted)),
@@ -238,12 +250,19 @@ def rank_metrics(predicted, actual):
 
 
 def flat_skill(predicted, actual):
-    pred = np.asarray(predicted, dtype=float).ravel()
-    act = np.asarray(actual, dtype=float).ravel()
-    mask = np.isfinite(pred) & np.isfinite(act)
-    pred, act = pred[mask], act[mask]
-    direction = pred[act != 0]
-    actual_sign = act[act != 0]
+    """Pooled diagnostics without dropping observations or treating zero as down.
+
+    Direction compares exact negative/zero/positive signs for all observations.
+    Pearson/Spearman here are pooled diagnostics, not daily cross-section ranks.
+    """
+    predicted = np.asarray(predicted, dtype=float)
+    actual = np.asarray(actual, dtype=float)
+    if (predicted.shape != actual.shape or predicted.ndim not in (1, 2)
+            or predicted.size == 0):
+        raise ValueError("Pooled metrics require matching nonempty one- or two-dimensional arrays")
+    if not np.isfinite(predicted).all() or not np.isfinite(actual).all():
+        raise ValueError("Pooled predictions and actual returns must be finite")
+    pred, act = predicted.ravel(), actual.ravel()
     pearson = float(pd.Series(pred).corr(pd.Series(act), method="pearson")) if len(pred) > 2 else 0.0
     spearman = float(pd.Series(pred).corr(pd.Series(act), method="spearman")) if len(pred) > 2 else 0.0
     if pearson != pearson:
@@ -252,7 +271,7 @@ def flat_skill(predicted, actual):
         spearman = 0.0
     error = pred - act
     return {
-        "Direction_Accuracy": float(np.mean(np.sign(direction) == np.sign(actual_sign))) if len(direction) else 0.0,
+        "Direction_Accuracy": float(np.mean(np.sign(pred) == np.sign(act))),
         "Pearson": pearson,
         "Spearman": spearman,
         "MAE": float(np.mean(np.abs(error))) if len(error) else 0.0,

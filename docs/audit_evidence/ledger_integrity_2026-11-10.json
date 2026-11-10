@@ -1,0 +1,30 @@
+{
+  "audit_scope": "V2.11 append-only committed source and realized-ledger guards; historical availability not authenticated",
+  "source_sha256": {
+    "scripts/ledger_integrity.py": "2055366c9dd745808126f54f350bfc14b29dcbcdef7b90050eefdc4f821b9a16",
+    "experiments/v2/v211.py": "823f913c71a88b10e45e8deed99df14c933ec48b9c4f8e1aebc80111a6b586f2",
+    "scripts/persist_daily_state.py": "6429595a8f25542c26713241b6bf35bad14d56ea0e1d3071283a5ddd083aa112",
+    "tests/test_ledger_integrity.py": "6e263afbc644184a6c4f8f06c138ada71216ef2ad958b9c4a5224f9b7a3c9ad4"
+  },
+  "tests": {
+    "passed": 32,
+    "command": "python -m pytest -q tests/test_ledger_integrity.py tests/test_persistence.py tests/test_execution_eligibility.py tests/test_automation.py"
+  },
+  "guards": [
+    "committed post-seed prices and sentiment byte-prefix immutable",
+    "market appends must use later dates",
+    "matured score/fill/NAV historical rows retained",
+    "validate all realized tables before book writes",
+    "finite classification before score writes",
+    "new output source/panel/signal hashes",
+    "no-Git portable checkpoint with explicit first-observation limitation"
+  ],
+  "protected_existing_artifact_changes": [],
+  "historical_availability_certified": false,
+  "no_git_first_observation": "legacy_first_observation_unverified",
+  "remaining_limits": [
+    "Local unsigned checkpoints cannot independently attest to history before their first observation.",
+    "Legacy publication/news availability evidence remains unproven.",
+    "Git persistence command itself requires Git; tracker source validation does not."
+  ]
+}

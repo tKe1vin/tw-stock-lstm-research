@@ -2,6 +2,8 @@
 
 The saved two-layer MSE model stays the control. Window length, depth, and
 retrain frequency are the only changes, and none of them is chosen by test ROI.
+The runnable fitter now resets Adam correctly. Historical V2.8 results produced
+by the learning-rate-zero bug remain historical evidence, not corrected results.
 Results stay under experiments/results/v2/v28.
 """
 from __future__ import annotations
@@ -56,7 +58,8 @@ from experiments.v2.v28_rules import (
     update_schedule,
 )
 
-ORIGIN = "retrained_walk_forward_v28"
+ORIGIN = "retrained_walk_forward_v28_optimizer_corrected"
+LEARNING_RATE = 0.001
 KEPT_ROOT_NAMES = (
     "prediction_quality.csv",
     "strategy_metrics.csv",
@@ -79,8 +82,31 @@ def _append(path, frame):
     return combined
 
 
+def _assert_corrected_training_cache(predictions_path, cost_path):
+    """Never resume corrected training with legacy zero-learning-rate fits.
+
+    Existing research exports are evidence: reject them rather than rewriting
+    their Origin or treating a cached legacy model as a corrected fit.
+    """
+    cached, costs = _read(predictions_path), _read(cost_path)
+    if len(cached) and ("Origin" not in cached or not cached.Origin.eq(ORIGIN).all()):
+        raise RuntimeError(
+            "Legacy or unverified V2.8 training cache cannot be mixed with the corrected optimizer; "
+            "preserve it and run corrected training in a separate new research directory"
+        )
+    if bool(len(cached)) != bool(len(costs)):
+        raise RuntimeError(
+            "Incomplete V2.8 training cache: predictions and fit-cost records must both be present; "
+            "preserve this evidence and use a separate new research directory"
+        )
+
+
 class Fitter:
-    """Reuse one compiled network per shape. From-scratch fits restore the seeded weights."""
+    """Reuse a network shape; every fit gets fresh Adam moments and learning rate.
+
+    ``previous`` carries model weights only. An independent fold/stock restores
+    the seeded initial weights. Neither path carries optimizer state.
+    """
 
     def __init__(self):
         import os
@@ -122,7 +148,7 @@ class Fitter:
             raise ValueError(layers)
         sequence.append(tf.keras.layers.Dense(1))
         model = tf.keras.Sequential(sequence)
-        model.compile(optimizer="adam", loss="mse")
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE), loss="mse")
         self.models[key] = model
         self.initial[key] = model.get_weights()
         return key, model
@@ -130,12 +156,15 @@ class Fitter:
     def fit(self, x_train, y_train, x_val, y_val, layers, units, previous=None):
         key, model = self._model(layers, units, x_train.shape[-1])
         model.set_weights(self.initial[key] if previous is None else previous)
-        # Kept so a rerun still matches the saved V2.8 files. zeros_like also
-        # sets Adam's learning_rate to 0 after the first fit, so later fits do
-        # not move. The correction is experiments/v2/v29.py and is not written here.
-        if getattr(model.optimizer, "built", False):
-            for variable in model.optimizer.variables:
-                variable.assign(self.tf.zeros_like(variable))
+        # Adam.variables includes learning_rate in current Keras. Zeroing every
+        # variable silently disables subsequent fits; a new optimizer resets
+        # iterations/moments while keeping the registered nonzero rate.
+        model.compile(
+            optimizer=self.tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+            loss="mse",
+        )
+        if not np.isclose(float(model.optimizer.learning_rate), LEARNING_RATE):
+            raise AssertionError("Adam learning rate differs from the registered rate")
         started = time.perf_counter()
         history = model.fit(
             x_train,
@@ -224,9 +253,10 @@ def _standard_fold(fitter, frames, index, one, five, excess, fold, fold_id, trai
 
 
 def train_fixed_models(folds, frames, index, one, five, excess):
-    fitter = Fitter()
     path = V28 / "fixed_predictions.csv"
     log_path = V28 / "fixed_cost.csv"
+    _assert_corrected_training_cache(path, log_path)
+    fitter = Fitter()
     done = set(_read(path).Model) if path.exists() else set()
     jobs = [(f"rolling_{window}", 2, 50, window) for window in WINDOWS]
     jobs.extend((name, spec["layers"], spec["units"], None) for name, spec in ARCHITECTURES.items())
@@ -273,9 +303,10 @@ def _carry_predict(fitter, frames, weights, train, positions, layers, units):
 
 
 def train_schedules(folds, frames, index, one, five, excess):
-    fitter = Fitter()
     path = V28 / "schedule_predictions.csv"
     log_path = V28 / "schedule_cost.csv"
+    _assert_corrected_training_cache(path, log_path)
+    fitter = Fitter()
     existing = _read(path)
     done = set(zip(existing.Model, existing.Fold)) if len(existing) else set()
     for every in (5, 1):

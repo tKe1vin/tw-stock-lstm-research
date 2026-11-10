@@ -1,0 +1,32 @@
+{
+  "audit_scope": "current_extension_and_v28_horizon_metric_helpers_not_every_archived_notebook",
+  "source_sha256": {
+    "scripts/research_extension.py": "144866f6a59ba0617f8f8299c0bfed6ce6bf2dae282e4717f910ca9283e30651",
+    "experiments/v2/v28_rules.py": "8fa422eb110b180122c10184a1f1c72ac4991258f9903a9039325887f02b9c65",
+    "experiments/horizon_experiment.py": "89b6e3daf586c0feb65aadb612fe6ed67738483c1216c11b4969c6e36936dc9a",
+    "tests/test_metrics_integrity.py": "bc4d8ef1bb1c1e015ec736bb50bb74be6afaf832fceef2bc0dcce83331cbe70e"
+  },
+  "validation_guard": {
+    "finite_cross_section_required": true,
+    "distinct_five_stocks_per_date": true,
+    "paired_candidate_dates_labels_folds_target_intervals": true,
+    "test_rows_ignored": true
+  },
+  "direction_definition": "exact negative/zero/positive sign equality across all observations",
+  "balanced_accuracy_definition": "mean recalls of actual positive and actual negative classes; neutral predictions incorrect for either; unavailable if a class absent",
+  "rank_definition": "mean daily five-stock Spearman; average ranks for ties; constant cross-section zero; no nonfinite sample deletion",
+  "pooled_diagnostics_definition": "same shape finite arrays; no observation filtering; Pearson/Spearman pooled not daily",
+  "retained_extension_validation_check": {
+    "rows": 600,
+    "price_lstm_score": 0.30999999999999994,
+    "sentiment_risk_lstm_score": 0.35999999999999993,
+    "selected": "sentiment_risk_lstm",
+    "same_saved_selection_and_scores": true
+  },
+  "tests": {
+    "passed": 75,
+    "command": "python -m pytest -q tests/test_metrics_integrity.py tests/test_research_extension.py tests/test_guard.py tests/test_causal_research.py tests/test_training_integrity.py"
+  },
+  "historical_reports_or_model_artifacts_modified": false,
+  "historical_replay": "Current source guard intentionally rejects old extension implementation hash. Replay original/corrected retained report at pinned b620 via explicit isolated archive helper; never update old manifest to conceal drift."
+}

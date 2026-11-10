@@ -130,21 +130,36 @@ def update_schedule(block, every):
 
 
 def classification_scores(predicted, actual):
+    """Ternary direction accuracy; neutral predictions never count as down.
+
+    Direction uses exact sign equality for every observation, including an
+    actual zero. Balanced accuracy averages recalls on actual positive and
+    negative observations only; a zero prediction is incorrect for either.
+    Return errors use the unchanged input units (five-day percentage points).
+    """
     pred = np.asarray(predicted, dtype=float)
     act = np.asarray(actual, dtype=float)
+    if pred.ndim != 1 or act.ndim != 1 or pred.shape != act.shape:
+        raise ValueError("Predictions and actual returns must be matching one-dimensional arrays")
+    if not np.isfinite(pred).all() or not np.isfinite(act).all():
+        raise ValueError("Predictions and actual returns must be finite")
     pred_up = pred > 0
+    pred_down = pred < 0
     up = act > 0
     down = act < 0
-    scored = up | down
-    direction = float((pred_up[scored] == up[scored]).mean()) if scored.any() else np.nan
+    direction = float((np.sign(pred) == np.sign(act)).mean()) if len(pred) else np.nan
     tpr = float(pred_up[up].mean()) if up.any() else np.nan
-    tnr = float((~pred_up)[down].mean()) if down.any() else np.nan
+    tnr = float(pred_down[down].mean()) if down.any() else np.nan
     balanced = float(0.5 * (tpr + tnr)) if np.isfinite(tpr) and np.isfinite(tnr) else np.nan
     return {
         "Direction_Accuracy": direction,
         "Balanced_Accuracy": balanced,
+        "True_Positive_Rate": tpr,
+        "True_Negative_Rate": tnr,
         "Positive_Rate": float(pred_up.mean()) if len(pred) else np.nan,
         "Up_Rate": float(up.mean()) if len(act) else np.nan,
+        "Prediction_Zero_Rate": float((pred == 0).mean()) if len(pred) else np.nan,
+        "Actual_Zero_Rate": float((act == 0).mean()) if len(act) else np.nan,
         "MAE": float(np.mean(np.abs(pred - act))) if len(pred) else np.nan,
         "RMSE": float(np.sqrt(np.mean((pred - act) ** 2))) if len(pred) else np.nan,
     }

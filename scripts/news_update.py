@@ -3,7 +3,8 @@
 Historical seed rows are preserved. Every new session is complete ONLY after all
 source calendar days have been fetched; no silent carry-forward of sentiment.
 
-The adjacent ``*_provenance.jsonl`` uses schema_version 1. Article observations
+The adjacent ``*_provenance.jsonl`` is append-only (new records use schema 2).
+Schema 1 observations retain their original, weaker evidence. Article observations
 record the locally observed API title/summary version (not full article text),
 first_seen_at, response fetched_at, content/raw-payload hashes and source revision.
 Scored rows additionally record available_at after scoring and cache_row_hash of
@@ -16,10 +17,12 @@ import argparse
 import hashlib
 import html
 import json
+import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from urllib.parse import urlsplit
 import numpy as np
 import pandas as pd
 import requests
@@ -33,7 +36,76 @@ NAMES={'2330.TW':'台積電','2317.TW':'鴻海','2603.TW':'長榮','2002.TW':'�
 CACHE_COLUMNS = ('news_id', 'ticker', 'publish_time', 'Date', 'Daily_Sentiment', 'Model_ID')
 PROVENANCE_FIELDS = ('first_seen_at', 'fetched_at', 'available_at', 'content_sha256',
                      'content_scope', 'raw_payload_sha256', 'source_revision',
-                     'source_revision_kind', 'cache_row_hash', 'provenance_status')
+                     'source_revision_kind', 'cache_row_hash', 'provenance_status',
+                     'model_revision', 'tokenizer_revision', 'scoring_config',
+                     'runtime_versions', 'scoring_provenance_status')
+SCORING_CONFIG = {'text_scope': 'api_title_summary', 'max_characters': 1600,
+                  'max_tokens': 256, 'formula': 'P(positive)-P(negative)',
+                  'round_decimals': 4}
+
+
+def scorer_provenance(scorer):
+    """Never infer a checkpoint from a mutable model name or a later download."""
+    evidence = scorer.provenance() if callable(getattr(scorer, 'provenance', None)) else {}
+    if not isinstance(evidence, dict):
+        raise ValueError('新聞評分器 provenance 必須是具名欄位')
+    evidence = dict(evidence)
+    model = evidence.get('model_revision')
+    tokenizer = evidence.get('tokenizer_revision')
+    versions = evidence.get('runtime_versions')
+    resolved = (isinstance(model, str) and bool(re.fullmatch(r'[0-9a-f]{40}', model))
+                and tokenizer == model and evidence.get('scoring_config') == SCORING_CONFIG
+                and isinstance(versions, dict)
+                and all(isinstance(versions.get(name), str) and bool(versions[name].strip())
+                        for name in ('torch', 'transformers')))
+    evidence['scoring_provenance_status'] = ('resolved_checkpoint_recorded' if resolved
+                                             else 'checkpoint_unverified_custom_scorer')
+    return evidence
+
+
+def validate_scored_provenance(record):
+    """Fail closed for malformed matching evidence; hashes are integrity, not attestation."""
+    if record.get('source') != API or record.get('schema_version') not in (1, 2):
+        raise ValueError('新聞來源或 provenance schema 無法確認')
+    if (not set(CACHE_COLUMNS).issubset(record) or record.get('ticker') not in TICKERS
+            or not str(record.get('news_id') or '').strip() or record.get('Model_ID') != MODEL_ID):
+        raise ValueError('新聞 scored provenance 識別欄位不完整或評分模型不一致')
+    try:
+        score = float(record['Daily_Sentiment'])
+    except (TypeError, ValueError) as exc:
+        raise ValueError('新聞情緒分數必須是有限數值') from exc
+    if not np.isfinite(score) or not -1 <= score <= 1:
+        raise ValueError('新聞情緒分數必須是 -1 到 1 的有限數值')
+    if record.get('cache_row_hash') != cache_row_hash(record):
+        raise ValueError('新聞 scored provenance 與快取內容雜湊不一致')
+    for field in ('content_sha256', 'raw_payload_sha256'):
+        if not re.fullmatch(r'[0-9a-f]{64}', str(record.get(field, ''))):
+            raise ValueError('新聞 provenance 缺少合法內容雜湊')
+    if record.get('content_scope') != 'api_title_summary':
+        raise ValueError('新聞內容範圍無法確認')
+    kind = record.get('source_revision_kind')
+    if kind not in ('provider_revision', 'observed_payload_hash') or not record.get('source_revision'):
+        raise ValueError('新聞版本證據無法確認')
+    if kind == 'observed_payload_hash' and record['source_revision'] != 'sha256:' + record['raw_payload_sha256']:
+        raise ValueError('新聞來源版本與 payload 雜湊不一致')
+    try:
+        times = [pd.Timestamp(record.get(key)) for key in
+                 ('publish_time', 'first_seen_at', 'fetched_at', 'available_at')]
+    except (TypeError, ValueError) as exc:
+        raise ValueError('新聞 provenance 時間格式無法確認') from exc
+    if any(pd.isna(value) or value.tzinfo is None for value in times):
+        raise ValueError('新聞 provenance 時間缺漏或沒有時區')
+    if not all(left <= right for left, right in zip(times, times[1:])):
+        raise ValueError('新聞發布、初見、取得及評分完成時間順序不正確')
+    if str(pd.Timestamp(record['Date']).date()) != str(to_signal_date(times[0]).date()):
+        raise ValueError('新聞訊號交易日與發布時間不一致')
+    if record.get('scoring_provenance_status') == 'resolved_checkpoint_recorded':
+        if scorer_provenance(type('RecordedScorer', (), {'provenance': lambda self: record})())[
+                'scoring_provenance_status'] != 'resolved_checkpoint_recorded':
+            raise ValueError('新聞 checkpoint 證據不完整')
+    elif record.get('schema_version') == 2 and record.get('scoring_provenance_status') not in (
+            'checkpoint_unverified_custom_scorer', 'checkpoint_unverified_legacy'):
+        raise ValueError('新聞評分 checkpoint 驗證狀態不明')
 
 
 def observation_time(clock=None):
@@ -72,7 +144,7 @@ def article_provenance(article, fetched_at):
     acquired = pd.Timestamp(fetched)
     if observed.tzinfo is None or acquired.tzinfo is None or observed > acquired:
         raise ValueError('新聞觀測與取得時間必須帶時區且依時序記錄')
-    if published.tzinfo is None or published > acquired:
+    if published.tzinfo is None or published > observed:
         raise ValueError('新聞發布時間晚於取得時間或缺少時區')
     return {
         'first_seen_at': first_seen, 'fetched_at': fetched,
@@ -102,16 +174,25 @@ def append_provenance(cache_file, records):
             version = (row.get('news_id'), row.get('content_sha256'), row.get('source_revision'))
             if row.get('first_seen_at'):
                 first_observed.setdefault(version, row['first_seen_at'])
-    with path.open('a', encoding='utf-8') as handle:
-        for record in records:
-            record = {'schema_version': 1, 'source': API, **record}
-            version = (record.get('news_id'), record.get('content_sha256'), record.get('source_revision'))
-            if record.get('first_seen_at'):
-                record['first_seen_at'] = first_observed.setdefault(version, record['first_seen_at'])
-            key = record_key(record)
-            if key not in known:
-                handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + '\n')
-                known.add(key)
+    pending = []
+    for record in records:
+        record = {'schema_version': 2, 'source': API, **record}
+        if record.get('record_type') == 'scored_cache_row':
+            if not record.get('scoring_provenance_status'):
+                record['scoring_provenance_status'] = 'checkpoint_unverified_custom_scorer'
+        version = (record.get('news_id'), record.get('content_sha256'), record.get('source_revision'))
+        if record.get('first_seen_at'):
+            record['first_seen_at'] = first_observed.setdefault(version, record['first_seen_at'])
+        key = record_key(record)
+        if key not in known:
+            if record.get('record_type') == 'scored_cache_row':
+                validate_scored_provenance(record)
+            pending.append(json.dumps(record, ensure_ascii=False, sort_keys=True) + '\n')
+            known.add(key)
+    # Validate the whole batch before appending any bytes.
+    if pending:
+        with path.open('a', encoding='utf-8') as handle:
+            handle.writelines(pending)
 
 
 def load_news_cache(cache_file):
@@ -126,6 +207,7 @@ def load_news_cache(cache_file):
         for line in sidecar.read_text(encoding='utf-8').splitlines():
             row = json.loads(line)
             if row.get('record_type') == 'scored_cache_row':
+                validate_scored_provenance(row)
                 metadata.setdefault(row['cache_row_hash'], row)
     joined = []
     for row in frame.to_dict('records'):
@@ -134,6 +216,8 @@ def load_news_cache(cache_file):
         row.update({field: evidence.get(field) if evidence else None for field in PROVENANCE_FIELDS})
         row['cache_row_hash'] = digest
         row['provenance_status'] = 'observed_at_recorded_time' if evidence else 'retrospective_unverified'
+        row['scoring_provenance_status'] = (evidence.get('scoring_provenance_status', 'checkpoint_unverified_legacy')
+                                            if evidence else 'checkpoint_unverified_legacy')
         joined.append(row)
     return pd.DataFrame(joined, columns=[*CACHE_COLUMNS, *PROVENANCE_FIELDS])
 
@@ -160,7 +244,7 @@ def to_signal_date(when):
     else:t=t.tz_convert('Asia/Taipei')
     day=pd.Timestamp(t.date())
     # An article after 13:30 is not available for the same day's signal.
-    if (t.hour,t.minute,t.second)>(13,30,0):
+    if t > day.tz_localize(TZ) + pd.Timedelta(hours=13, minutes=30):
         day+=pd.Timedelta(days=1)
     matches=sessions(day,day+pd.Timedelta(days=25))
     if not len(matches):raise RuntimeError('找不到後續台股交易日')
@@ -191,7 +275,15 @@ def fetch_day(day, session=None, *, clock=None):
     for page in range(1,41):
         res=http.get(API,params={'limit':50,'page':page,'startAt':int(start.timestamp()),
                                  'endAt':int(end.timestamp())},
-                     headers={'User-Agent':'Mozilla/5.0 (compatible; university research project)'},timeout=40)
+                     headers={'User-Agent':'Mozilla/5.0 (compatible; university research project)'},
+                     timeout=(10,40), allow_redirects=False)
+        # A fixed public endpoint may not redirect credentials, queries or bodies
+        # to an unreviewed provider. Do not log provider response bodies/headers.
+        if 300 <= getattr(res, 'status_code', 200) < 400:
+            raise ValueError('新聞來源要求重新導向，拒絕未審核的來源變更')
+        response_origin = urlsplit(getattr(res, 'url', API))
+        if response_origin.scheme != 'https' or response_origin.netloc != urlsplit(API).netloc:
+            raise ValueError('新聞回覆來源不在允許清單')
         res.raise_for_status()
         payload=res.json()
         fetched_at = observation_time(clock)
@@ -223,15 +315,32 @@ def fetch_day(day, session=None, *, clock=None):
     return list({r['news_id']:r for r in articles}.values())
 
 class SentimentScorer:
-    def __init__(self):
+    def __init__(self, revision=None):
         import torch
-        from transformers import AutoTokenizer, AutoModelForSequenceClassification
+        import transformers
+        from transformers import AutoConfig, AutoTokenizer, AutoModelForSequenceClassification
         self.torch=torch
-        self.tokenizer=AutoTokenizer.from_pretrained(MODEL_ID)
-        self.model=AutoModelForSequenceClassification.from_pretrained(MODEL_ID).eval().cpu()
+        config=AutoConfig.from_pretrained(MODEL_ID,revision=revision or 'main',trust_remote_code=False)
+        resolved=getattr(config,'_commit_hash',None)
+        if not isinstance(resolved,str) or not re.fullmatch(r'[0-9a-f]{40}',resolved):
+            raise ValueError('無法確認新聞模型的確切 Hugging Face checkpoint，停止評分')
+        if revision and re.fullmatch(r'[0-9a-f]{40}',revision) and revision != resolved:
+            raise ValueError('新聞模型版本與指定 checkpoint 不一致')
+        # Resolve once; tokenizer and weights must refer to the same immutable revision.
+        self.tokenizer=AutoTokenizer.from_pretrained(MODEL_ID,revision=resolved,trust_remote_code=False)
+        self.model=AutoModelForSequenceClassification.from_pretrained(
+            MODEL_ID,revision=resolved,trust_remote_code=False).eval().cpu()
+        if getattr(self.model.config,'_commit_hash',None) != resolved:
+            raise ValueError('新聞權重與已解析的 checkpoint 不一致')
+        self._provenance={'model_revision':resolved,'tokenizer_revision':resolved,
+            'scoring_config':dict(SCORING_CONFIG),
+            'runtime_versions':{'torch':torch.__version__,'transformers':transformers.__version__}}
         labels=self.model.config.id2label
         if str(labels.get(0,'')).lower()!='negative' or str(labels.get(1,'')).lower()!='positive':
             raise ValueError(f'模型標籤不可確認，不能假設 0=negative 1=positive: {labels}')
+    def provenance(self):
+        return {**self._provenance, 'scoring_config': dict(self._provenance['scoring_config']),
+                'runtime_versions': dict(self._provenance['runtime_versions'])}
     def score(self,text):
         torch=self.torch
         input_data=self.tokenizer(text,return_tensors='pt',truncation=True,max_length=256)
@@ -299,6 +408,7 @@ def update(as_of,feature_path=None,fetch=fetch_day,scorer_factory=SentimentScore
                 scores[r['news_id']]=scorer.score(r['text'][:1600])
             r['Daily_Sentiment']=scores[r['news_id']]
             r['Model_ID']=MODEL_ID
+            r.update(scorer_provenance(scorer))
             r['available_at']=observation_time(clock)
             r['cache_row_hash']=cache_row_hash(r)
             r['provenance_status']='observed_at_recorded_time'

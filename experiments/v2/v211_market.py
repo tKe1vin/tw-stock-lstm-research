@@ -397,7 +397,7 @@ def extend_sentiment(as_of, now, report, *, clock=None):
     from scripts.news_update import (MODEL_ID, fetch_day, matches, to_signal_date, SentimentScorer,
                                     article_provenance, observation_time, load_news_cache,
                                     append_provenance, append_news_cache, provenance_path, cache_row_hash,
-                                    PROVENANCE_FIELDS)
+                                    PROVENANCE_FIELDS, scorer_provenance)
 
     manifest = _read_json(MANIFEST)
     existing = pd.read_csv(SENTIMENT)
@@ -475,6 +475,7 @@ def extend_sentiment(as_of, now, report, *, clock=None):
                 scores[row["news_id"]] = scorer.score(row["text"][:1600])
             row["Daily_Sentiment"] = scores[row["news_id"]]
             row["Model_ID"] = MODEL_ID
+            row.update(scorer_provenance(scorer))
             del row["text"]
             row["available_at"] = observation_time(clock)
             row["cache_row_hash"] = cache_row_hash(row)
@@ -500,12 +501,16 @@ def extend_sentiment(as_of, now, report, *, clock=None):
     def session_evidence(day):
         part = old[old.Date.astype(str) == str(day.date())]
         verified = not len(part) or bool((part.provenance_status == "observed_at_recorded_time").all())
+        scoring_verified = not len(part) or bool((part.scoring_provenance_status == "resolved_checkpoint_recorded").all())
         # Later retrieval cannot prove that an earlier historical decision had the articles.
         timely = pd.Timestamp(completed_at).date() <= day.date()
         return {"source_start": str(start.date()), "source_end": str(as_of.date()),
                 "completed_at": completed_at, "available_at": completed_at,
                 "timestamp_kind": "observed_completion",
                 "provenance_status": "observed_at_recorded_time" if verified and timely else "retrospective_unverified",
+                "scoring_provenance_status": ("resolved_checkpoint_recorded" if len(part) and scoring_verified
+                                              else "not_applicable_no_articles" if not len(part)
+                                              else "checkpoint_unverified_legacy_or_custom_scorer"),
                 "news_provenance_path": str(provenance_file),
                 "unverified_article_rows": int((part.provenance_status != "observed_at_recorded_time").sum()) if len(part) else 0}
     scan_state.setdefault("signal_sessions", {}).update({
@@ -524,6 +529,7 @@ def extend_sentiment(as_of, now, report, *, clock=None):
     report["appended_sentiment_dates"] = [str(pd.Timestamp(day).date()) for day in missing]
     report["sentiment_fetched_at"] = completed_at
     report["news_provenance_status"] = scan_state["signal_sessions"][str(as_of.date())]["provenance_status"]
+    report["news_scoring_provenance_status"] = scan_state["signal_sessions"][str(as_of.date())]["scoring_provenance_status"]
     report["news_provenance_path"] = str(provenance_file)
     report["new_articles"] = len(new)
     report["news_source_start"] = str(start.date())
@@ -610,6 +616,7 @@ def inspect_market(now=None):
         report["fetched_at_kind"] = stored.get("fetched_at_kind", "unverified_legacy_record")
         evidence = _read_json(SCAN_COVERAGE).get("signal_sessions", {}).get(str(completed.date()), {})
         report["news_provenance_status"] = evidence.get("provenance_status", "retrospective_unverified")
+        report["news_scoring_provenance_status"] = evidence.get("scoring_provenance_status", "checkpoint_unverified_legacy")
         from scripts.news_update import provenance_path
         report["news_provenance_path"] = str(provenance_path(CACHE))
         report["news_available_at"] = evidence.get("available_at")

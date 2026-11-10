@@ -7,7 +7,7 @@
 | 欄位 | 意義 |
 | --- | --- |
 | Date | 交易日 |
-| Close | yfinance `auto_adjust=False` 的未調整收盤價 |
+| Close | yfinance `auto_adjust=False` 回傳的 Close；此選項本身不證明歷史為名目原價，也不認證股利／分割處理 |
 | ticker | `2330.TW`、`2317.TW`、`2603.TW`、`2002.TW`、`2891.TW` 或 `^TWII` |
 
 可重現測試資料另封存於 data/examples/reproducible/，截止 2026-11-04。GitHub 正式匯入基準截至 2026-11-05。每日新增資料使用 V2.11 市場帳本，經驗證後複製為共用快照。
@@ -26,7 +26,7 @@
 | Source_Status | `observed_article` 或 `verified_no_matching_article` |
 | Scoring_Model | 評分模型識別 |
 
-13:30 以後的新聞歸到下一個交易日。抓取未完成時，這一天保持未就緒，不用前一日分數填補。
+嚴格晚於13:30:00的新聞歸到下一個交易日，13:30:00本身可歸當日。抓取未完成時，這一天保持未就緒，不用前一日分數填補。新逐篇sidecar另記錄實際可用時間、來源與精確模型／Tokenizer checkpoint；舊列不因欄位新增而補成已驗證。
 
 ## 555 V2 預測日期
 
@@ -43,7 +43,11 @@
 
 ## V2.11 訊號
 
-`experiments/results/v2/v211/daily/2026-11-05.csv` 的 `Created_At` 是原始發布時間。`Execution_Price` 與 `Actual_5d_Pct` 在發布時留空。成交與標籤寫在帳本的其他檔案，不回寫這份訊號。
+`experiments/results/v2/v211/daily/2026-11-05.csv` 的 `Created_At` 是開發者匯入檔記錄的時間，缺可獨立查證的進場前公開證據。`Execution_Price` 與 `Actual_5d_Pct` 在該檔留空。成交與標籤寫在帳本的其他檔案，不回寫這份訊號。
+
+## V3獨立資料
+
+V3不沿用舊Close作已認證的原價。新契約使用明確名目OHLCV、Tradable、Stock_Splits、Dividends、Return_of_Capital及付款日，見[資料契約](research/v3/data_contract.md)。含息研究指數與實際可用現金帳本分開；FinMind完整行情只在授權本機快照，公開結果保留雜湊與彙總，clone不包含全部輸入。
 
 ## 正式 444 與 555
 

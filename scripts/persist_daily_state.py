@@ -46,6 +46,7 @@ BOOK_FILES = {
     "signal_registry.json", "status.json", "matured_scores.csv",
     "live_fills.csv", "live_nav.csv", "equal_nav.csv", "live_book.csv",
     "LEDGER_ORIGIN.json", "signal_audit.json",
+    "ledger_integrity.json", "ledger_source_audit.jsonl",
 }
 COMPACT_EXPORTS = {
     "status.json", "unified_signal.csv", "unified_signal.metadata.json",
@@ -137,6 +138,8 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
             raise ValueError(f"Immutable artifact changed or missing: {name}")
     for book in BOOK_ROOTS:
         base = root / book
+        from scripts.ledger_integrity import validate_ledger_sources
+        validate_ledger_sources(root, base)
         registry_path = base / "signal_registry.json"
         daily = base / "daily"
         paths = sorted(daily.glob("*.csv"))

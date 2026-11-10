@@ -1,0 +1,2885 @@
+{
+  "schema": "retained-nav-concentration-v1",
+  "reviewed_on": "2026-11-10",
+  "scope": "available retained net NAV paths; not missing original v28 exports",
+  "code_sha256": {
+    "scripts/concentration_audit.py": "12a4fddbd7fb747a96562cbc5a64ed4558a355468ed358bbf7b454788b0fdd21"
+  },
+  "method_fixed": {
+    "tail_days": 5,
+    "chronological_block_sessions": 20,
+    "last_short_block_included": true,
+    "entry_cost_included": true
+  },
+  "input_sha256": {
+    "reports/research_revision/2026-11-06/paired/nav.csv": "14e45ceab521bae396a0c4da67d58e667e1ee78357f6d7ecd1633c98d7e80200",
+    "reports/research_extension/2026-11-06/nav_price_lstm.csv": "600f2364cd1f480f56e0e28496ff7df01de4acf333d5f4f835add11facda60db",
+    "reports/research_extension/2026-11-06/nav_sentiment_risk_lstm.csv": "211094db03b20552f0c39fb37dfd44d5787498a30cac2d646b98afff14b002cb",
+    "reports/research_extension/2026-11-06/nav_matched_risk_equal.csv": "c3080c42826a3961555d5bd5842f57580357ea7553a0e7d94208dff93fcdacfe",
+    "reports/research_extension/2026-11-06/nav_full_exposure_buy_hold.csv": "aa18dd649128883a4eb3c6f3564a411a0b6b540c1a3426967f55ce759f51d845",
+    "local_v3_run/holdout_B0_benchmark/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb",
+    "local_v3_run/holdout_B1_equal/nav.csv": "75f0200b3cdc460327b62cc7a6dab1023c3b3756464033a62e30d2c9d96269aa",
+    "local_v3_run/holdout_ridge_price/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb",
+    "local_v3_run/holdout_ridge_news/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb"
+  },
+  "studies": {
+    "shared_core_paired": {
+      "initial_capital": 100000,
+      "paths": {
+        "dynamic_news_no_risk": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 1.4429677171866226,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.131893361890349,
+              "log_wealth_contribution": 0.040488115062859154
+            },
+            {
+              "date": "2026-05-25",
+              "return_pct": 2.9659806070400974,
+              "log_wealth_contribution": 0.029228462316776244
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 2.6943924993582558,
+              "log_wealth_contribution": 0.02658732867052745
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.1070136159310637,
+              "log_wealth_contribution": 0.02085123041707163
+            },
+            {
+              "date": "2026-10-12",
+              "return_pct": 1.676827046249385,
+              "log_wealth_contribution": 0.016629235117555374
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-17",
+              "return_pct": -2.4341658134681587,
+              "log_wealth_contribution": -0.024642813418419476
+            },
+            {
+              "date": "2026-05-15",
+              "return_pct": -1.8902392837152449,
+              "log_wealth_contribution": -0.01908332674875201
+            },
+            {
+              "date": "2026-06-10",
+              "return_pct": -1.6177762008673935,
+              "log_wealth_contribution": -0.01631005069734193
+            },
+            {
+              "date": "2026-11-06",
+              "return_pct": -1.4869598668480144,
+              "log_wealth_contribution": -0.014981259433853221
+            },
+            {
+              "date": "2026-03-31",
+              "return_pct": -1.3802826962369563,
+              "log_wealth_contribution": -0.013898971716570192
+            }
+          ],
+          "wealth_return_without_best_five_pct": -11.25985547680822,
+          "wealth_return_without_worst_five_pct": 10.876078545495545,
+          "best_five_share_of_positive_log_returns": 0.37647240759555023,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.020710522603753466,
+              "block_return_pct": 2.092647372065801,
+              "wealth_return_without_block_pct": -0.6363628249461393
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03782917153626467,
+              "block_return_pct": 3.855380317320467,
+              "wealth_return_without_block_pct": -2.3228576052227066
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": -0.028942734727274856,
+              "block_return_pct": -2.8527905511808824,
+              "wealth_return_without_block_pct": 4.4219059844747015
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.003548674104941335,
+              "block_return_pct": -0.3542385002514227,
+              "wealth_return_without_block_pct": 1.8035952461887501
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.024298221407805003,
+              "block_return_pct": 2.4595828743898047,
+              "wealth_return_without_block_pct": -0.9922109076410162
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.018147618517189556,
+              "block_return_pct": -1.798394209621711,
+              "wealth_return_without_block_pct": 3.3007219186693986
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.015426644531910085,
+              "block_return_pct": 1.5546249455408452,
+              "wealth_return_without_block_pct": -0.10994795009493599
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.033298972570356085,
+              "block_return_pct": -3.275066466383345,
+              "wealth_return_without_block_pct": 4.877784880493322
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -2.3228576052227066,
+            4.877784880493322
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.38497268502061743,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "dynamic_news_risk555": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": -2.927470536901294,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-05-25",
+              "return_pct": 2.9659806070401196,
+              "log_wealth_contribution": 0.02922846231677646
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.0643766822928233,
+              "log_wealth_contribution": 0.020433572152652155
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 1.7397727477932223,
+              "log_wealth_contribution": 0.017248119747587356
+            },
+            {
+              "date": "2026-10-12",
+              "return_pct": 1.6768270462493629,
+              "log_wealth_contribution": 0.01662923511755516
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 1.6597656600470412,
+              "log_wealth_contribution": 0.01646142089370805
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-17",
+              "return_pct": -2.434165813468181,
+              "log_wealth_contribution": -0.0246428134184197
+            },
+            {
+              "date": "2026-11-06",
+              "return_pct": -1.4869598668480477,
+              "log_wealth_contribution": -0.01498125943385356
+            },
+            {
+              "date": "2026-05-15",
+              "return_pct": -1.2132398907715003,
+              "log_wealth_contribution": -0.012206597205622755
+            },
+            {
+              "date": "2026-03-31",
+              "return_pct": -1.191595348777752,
+              "log_wealth_contribution": -0.011987517532225288
+            },
+            {
+              "date": "2026-06-26",
+              "return_pct": -1.1570437122477628,
+              "log_wealth_contribution": -0.011637895483403571
+            }
+          ],
+          "wealth_return_without_best_five_pct": -12.1652142446463,
+          "wealth_return_without_worst_five_pct": 4.680673191972518,
+          "best_five_share_of_positive_log_returns": 0.3564104766622036,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0009429755816183273,
+              "block_return_pct": -0.09425311198610686,
+              "wealth_return_without_block_pct": -2.8358903398129742
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.028110464919564364,
+              "block_return_pct": 2.8509292342714416,
+              "wealth_return_without_block_pct": -5.618228064824608
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": -0.02723869541670084,
+              "block_return_pct": -2.687106761614277,
+              "wealth_return_without_block_pct": -0.24700095464041133
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.010628888390381314,
+              "block_return_pct": -1.057260135555573,
+              "wealth_return_without_block_pct": -1.8901946761409532
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.019945708228079187,
+              "block_return_pct": 2.014595299183351,
+              "wealth_return_without_block_pct": -4.8444693836120205
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.021085046189638756,
+              "block_return_pct": -2.0864310731125357,
+              "wealth_return_without_block_pct": -0.8589610949803766
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.015426644531911317,
+              "block_return_pct": 1.5546249455409702,
+              "wealth_return_without_block_pct": -4.413482384328438
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.03329897257035665,
+              "block_return_pct": -3.2750664663834,
+              "wealth_return_without_block_pct": 0.3593653846878058
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -5.618228064824608,
+            0.3593653846878058
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.44280430433095846,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "dynamic_no_news": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 2.5648518450416278,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.161620780871211,
+              "log_wealth_contribution": 0.040773552843339674
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.121568450144129,
+              "log_wealth_contribution": 0.020993765160156688
+            },
+            {
+              "date": "2026-05-25",
+              "return_pct": 1.9764446653850465,
+              "log_wealth_contribution": 0.019571665973578914
+            },
+            {
+              "date": "2026-10-12",
+              "return_pct": 1.872597031189538,
+              "log_wealth_contribution": 0.018552797870841378
+            },
+            {
+              "date": "2026-05-20",
+              "return_pct": 1.822514149835297,
+              "log_wealth_contribution": 0.01806105428334849
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-17",
+              "return_pct": -2.300680561771673,
+              "log_wealth_contribution": -0.023275592795465094
+            },
+            {
+              "date": "2026-11-06",
+              "return_pct": -1.4869598668480144,
+              "log_wealth_contribution": -0.014981259433853221
+            },
+            {
+              "date": "2026-03-31",
+              "return_pct": -1.3451202927977635,
+              "log_wealth_contribution": -0.013542489895349124
+            },
+            {
+              "date": "2026-05-15",
+              "return_pct": -1.2348618371393116,
+              "log_wealth_contribution": -0.01242549610402128
+            },
+            {
+              "date": "2026-06-26",
+              "return_pct": -1.1605815941041264,
+              "log_wealth_contribution": -0.011673689082728995
+            }
+          ],
+          "wealth_return_without_best_five_pct": -8.846721988450035,
+          "wealth_return_without_worst_five_pct": 10.652407797772266,
+          "best_five_share_of_positive_log_returns": 0.3723100308100173,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.017202792521982084,
+              "block_return_pct": 1.7351612706743755,
+              "wealth_return_without_block_pct": 0.8155396462780407
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03919356181025988,
+              "block_return_pct": 3.9971762986595882,
+              "wealth_return_without_block_pct": -1.3772724458446877
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": -0.029261419003043528,
+              "block_return_pct": -2.8837449066718697,
+              "wealth_return_without_block_pct": 5.610385971408626
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": 0.002694710971338478,
+              "block_return_pct": 0.26983449684054567,
+              "wealth_return_without_block_pct": 2.2888412648904857
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.025745811028969147,
+              "block_return_pct": 2.608009707800123,
+              "wealth_return_without_block_pct": -0.042060910138884494
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.01530654044918426,
+              "block_return_pct": -1.518999077409903,
+              "wealth_return_without_block_pct": 4.1468414051372156
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.018355169136794636,
+              "block_return_pct": 1.8524660680981069,
+              "wealth_return_without_block_pct": 0.6994290903739362
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.03329897257035564,
+              "block_return_pct": -3.275066466383302,
+              "wealth_return_without_block_pct": 6.037655543485351
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -1.3772724458446877,
+            6.037655543485351
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.3798118511169866,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "dynamic_no_news_risk": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": -1.5263712336081385,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.0777456034302366,
+              "log_wealth_contribution": 0.020564548758624866
+            },
+            {
+              "date": "2026-05-25",
+              "return_pct": 1.9764446653850465,
+              "log_wealth_contribution": 0.019571665973578914
+            },
+            {
+              "date": "2026-10-12",
+              "return_pct": 1.8725970311895601,
+              "log_wealth_contribution": 0.018552797870841596
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 1.7678808654624456,
+              "log_wealth_contribution": 0.01752435621681987
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 1.4624085982875679,
+              "log_wealth_contribution": 0.014518185256491355
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-17",
+              "return_pct": -2.300680561771684,
+              "log_wealth_contribution": -0.02327559279546521
+            },
+            {
+              "date": "2026-11-06",
+              "return_pct": -1.4869598668480144,
+              "log_wealth_contribution": -0.014981259433853221
+            },
+            {
+              "date": "2026-03-31",
+              "return_pct": -1.186773412182096,
+              "log_wealth_contribution": -0.011938717848037069
+            },
+            {
+              "date": "2026-06-26",
+              "return_pct": -1.1811665348358646,
+              "log_wealth_contribution": -0.01188197728331055
+            },
+            {
+              "date": "2026-05-15",
+              "return_pct": -1.0737111818145517,
+              "log_wealth_contribution": -0.010795170566085232
+            }
+          ],
+          "wealth_return_without_best_five_pct": -10.067694158973495,
+          "wealth_return_without_worst_five_pct": 5.917607274155031,
+          "best_five_share_of_positive_log_returns": 0.34868473620141327,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0021210039839761703,
+              "block_return_pct": 0.21232549040483512,
+              "wealth_return_without_block_pct": -1.735012849471746
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.027099303778972017,
+              "block_return_pct": 2.7469829334426166,
+              "wealth_return_without_block_pct": -4.159104282233714
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": -0.02886996084827558,
+              "block_return_pct": -2.845720514661466,
+              "wealth_return_without_block_pct": 1.3579939947497928
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0058533775692653535,
+              "block_return_pct": -0.5836279930691732,
+              "wealth_return_without_block_pct": -0.9482776543819581
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.021400710293341584,
+              "block_return_pct": 2.1631347824528118,
+              "wealth_return_without_block_pct": -3.611386850958931
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.016335278120824314,
+              "block_return_pct": -1.620258099584226,
+              "wealth_return_without_block_pct": 0.09543312897804106
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.01835516913679418,
+              "block_return_pct": 1.8524660680980607,
+              "wealth_return_without_block_pct": -3.317383890780931
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.03329897257035664,
+              "block_return_pct": -3.2750664663833993,
+              "wealth_return_without_block_pct": 1.8079053341168791
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -4.159104282233714,
+            1.8079053341168791
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.3928791207770496,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "equal_rebalanced_reference": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 19.113950691480646,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-07-31",
+              "return_pct": 4.683157122598902,
+              "log_wealth_contribution": 0.045768050968760556
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.161620780871211,
+              "log_wealth_contribution": 0.040773552843339674
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 3.859801841147825,
+              "log_wealth_contribution": 0.03787174448429938
+            },
+            {
+              "date": "2026-05-29",
+              "return_pct": 3.3519757387614035,
+              "log_wealth_contribution": 0.03297021692610656
+            },
+            {
+              "date": "2026-07-21",
+              "return_pct": 3.12727052318138,
+              "log_wealth_contribution": 0.03079367561886493
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-06",
+              "return_pct": -4.045552833197085,
+              "log_wealth_contribution": -0.041296615814260626
+            },
+            {
+              "date": "2026-06-08",
+              "return_pct": -3.3723592600480856,
+              "log_wealth_contribution": -0.03430534967437699
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -2.809888752325629,
+              "log_wealth_contribution": -0.02850121583220692
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -2.5801156235246037,
+              "log_wealth_contribution": -0.026139844466533384
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -2.3185454871931577,
+              "log_wealth_contribution": -0.02345846570675522
+            }
+          ],
+          "wealth_return_without_best_five_pct": -1.3179206653269178,
+          "wealth_return_without_worst_five_pct": 38.90386779446203,
+          "best_five_share_of_positive_log_returns": 0.2272489284129988,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.07130142948778154,
+              "block_return_pct": 7.390488368491707,
+              "wealth_return_without_block_pct": 10.916667296233841
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.07763610790445855,
+              "block_return_pct": 8.072931825135738,
+              "wealth_return_without_block_pct": 10.216266626512464
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": 0.014111831022514117,
+              "block_return_pct": 1.421187294756953,
+              "wealth_return_without_block_pct": 17.444839553400037
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.004345600975279463,
+              "block_return_pct": -0.4336172513749545,
+              "wealth_return_without_block_pct": 19.63269871137861
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.048837351445485656,
+              "block_return_pct": 5.00495478088602,
+              "wealth_return_without_block_pct": 13.436504915445074
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": 0.006288295935946686,
+              "block_return_pct": 0.630810877673275,
+              "wealth_return_without_block_pct": 18.367277032354895
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.035033637583683906,
+              "block_return_pct": 3.565454513014442,
+              "wealth_return_without_block_pct": 15.01320710808286
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.07395263462175188,
+              "block_return_pct": -7.12843182309215,
+              "wealth_return_without_block_pct": 28.256637666098833
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            10.216266626512464,
+            28.256637666098833
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.3066092207677704,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "market_price_reference": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 22.090673132284515,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-07-31",
+              "return_pct": 7.979428588197601,
+              "log_wealth_contribution": 0.07677054695805705
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 4.608988490900345,
+              "log_wealth_contribution": 0.04505929398616146
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.576586467412502,
+              "log_wealth_contribution": 0.04474950184343423
+            },
+            {
+              "date": "2026-05-04",
+              "return_pct": 4.568881942059089,
+              "log_wealth_contribution": 0.044675825608271304
+            },
+            {
+              "date": "2026-07-21",
+              "return_pct": 4.200670223388481,
+              "log_wealth_contribution": 0.04114837539675121
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-07-17",
+              "return_pct": -6.47388975765828,
+              "log_wealth_contribution": -0.0669295347487825
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -4.654221760046429,
+              "log_wealth_contribution": -0.0476601313775466
+            },
+            {
+              "date": "2026-11-06",
+              "return_pct": -4.5053296361746265,
+              "log_wealth_contribution": -0.04609974776734975
+            },
+            {
+              "date": "2026-07-29",
+              "return_pct": -3.759743710600294,
+              "log_wealth_contribution": -0.038322451301526055
+            },
+            {
+              "date": "2026-06-26",
+              "return_pct": -3.6395859356203264,
+              "log_wealth_contribution": -0.03707471119399394
+            }
+          ],
+          "wealth_return_without_best_five_pct": -5.143953034165459,
+          "wealth_return_without_worst_five_pct": 54.60145808769781,
+          "best_five_share_of_positive_log_returns": 0.21543360981126244,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.19505195176769283,
+              "block_return_pct": 21.53741256838576,
+              "wealth_return_without_block_pct": 0.45521831690093606
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.11315839053083238,
+              "block_return_pct": 11.980928608994091,
+              "wealth_return_without_block_pct": 9.028094916582452
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04416617476276765,
+              "block_return_pct": 4.515601901226141,
+              "wealth_return_without_block_pct": 16.815739383740933
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.05786106980388603,
+              "block_return_pct": -5.621894198354277,
+              "wealth_return_without_block_pct": 29.363343431454574
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.035320156571264305,
+              "block_return_pct": 3.595132233602014,
+              "wealth_return_without_block_pct": 17.853677581081655
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04235165927277909,
+              "block_return_pct": 4.3261286756684285,
+              "wealth_return_without_block_pct": 17.027895774646183
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.006229106560962941,
+              "block_return_pct": -0.6209745897426553,
+              "wealth_return_without_block_pct": 22.853562538240592
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.16636435145254147,
+              "block_return_pct": -15.326233211969202,
+              "wealth_return_without_block_pct": 44.1894907521025
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            0.45521831690093606,
+            44.1894907521025
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.453558209259768,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "risk_matched_equal_reference": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 7.124321880311893,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.340206900024766,
+              "log_wealth_contribution": 0.023132439079450652
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.0777456034302366,
+              "log_wealth_contribution": 0.020564548758624866
+            },
+            {
+              "date": "2026-10-12",
+              "return_pct": 1.7680616597441023,
+              "log_wealth_contribution": 0.01752613275102227
+            },
+            {
+              "date": "2026-07-21",
+              "return_pct": 1.5617754074054524,
+              "log_wealth_contribution": 0.015497052060353244
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 1.2817123537894881,
+              "log_wealth_contribution": 0.012735679391524294
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-06",
+              "return_pct": -1.6182211332788299,
+              "log_wealth_contribution": -0.01631457319541484
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -1.5298052714450838,
+              "log_wealth_contribution": -0.015416275188395142
+            },
+            {
+              "date": "2026-03-31",
+              "return_pct": -0.8907607369205595,
+              "log_wealth_contribution": -0.00894751728171484
+            },
+            {
+              "date": "2026-06-10",
+              "return_pct": -0.8673099043268739,
+              "log_wealth_contribution": -0.008710929262430247
+            },
+            {
+              "date": "2026-07-07",
+              "return_pct": -0.8549484676250052,
+              "log_wealth_contribution": -0.008586241169693412
+            }
+          ],
+          "wealth_return_without_best_five_pct": -2.0424526329170045,
+          "wealth_return_without_worst_five_pct": 13.51847316304994,
+          "best_five_share_of_positive_log_returns": 0.3039378988068547,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03267955621229422,
+              "block_return_pct": 3.3219397450724046,
+              "wealth_return_without_block_pct": 3.6801304201422824
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.029368272156817445,
+              "block_return_pct": 2.9803772706926237,
+              "wealth_return_without_block_pct": 4.0240138164638495
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": -0.006802050919024921,
+              "block_return_pct": -0.6778969334361913,
+              "wealth_return_without_block_pct": 7.855470809472473
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.00017920244115648227,
+              "block_return_pct": -0.01791863853581178,
+              "wealth_return_without_block_pct": 7.143520540472083
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.034946585007329965,
+              "block_return_pct": 3.556439265783759,
+              "wealth_return_without_block_pct": 3.4453508056326188
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.002756624395865038,
+              "block_return_pct": -0.27528283956851224,
+              "wealth_return_without_block_pct": 7.420030791339663
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.013637537087782132,
+              "block_return_pct": 1.3730952465546633,
+              "wealth_return_without_block_pct": 5.67332645784306
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.03207421197047812,
+              "block_return_pct": -3.156529003576092,
+              "wealth_return_without_block_pct": 10.615946308107462
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            3.4453508056326188,
+            10.615946308107462
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.3158814868642401,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        },
+        "static_equal444": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": 18.322406819159205,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-07-31",
+              "return_pct": 5.00936553474185,
+              "log_wealth_contribution": 0.04887935576071376
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.16381241670567,
+              "log_wealth_contribution": 0.04079459334522079
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 3.8432082072061835,
+              "log_wealth_contribution": 0.03771196216845252
+            },
+            {
+              "date": "2026-05-29",
+              "return_pct": 3.6794852157731706,
+              "log_wealth_contribution": 0.03613408147790234
+            },
+            {
+              "date": "2026-07-21",
+              "return_pct": 3.2051348366818555,
+              "log_wealth_contribution": 0.03154842199097168
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-06",
+              "return_pct": -4.05912860681199,
+              "log_wealth_contribution": -0.04143810726636511
+            },
+            {
+              "date": "2026-06-08",
+              "return_pct": -3.421333988308084,
+              "log_wealth_contribution": -0.03481231790054257
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -3.093858795579796,
+              "log_wealth_contribution": -0.03142729237698773
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -2.7117563585713156,
+              "log_wealth_contribution": -0.027492029980764495
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -2.5551918541558805,
+              "log_wealth_contribution": -0.025884038561604976
+            }
+          ],
+          "wealth_return_without_best_five_pct": -2.646883460905308,
+          "wealth_return_without_worst_five_pct": 38.999028777044266,
+          "best_five_share_of_positive_log_returns": 0.23258905898144988,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.07472956979234896,
+              "block_return_pct": 7.759269786051118,
+              "wealth_return_without_block_pct": 9.802532120049158
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.07747969463889602,
+              "block_return_pct": 8.056029106889191,
+              "wealth_return_without_block_pct": 9.500976296393882
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": 0.01765994890617677,
+              "block_return_pct": 1.78168078168188,
+              "wealth_return_without_block_pct": 16.25118185359564
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.01266861338116879,
+              "block_return_pct": -1.2588704300364428,
+              "wealth_return_without_block_pct": 19.83092287325033
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04404569691021232,
+              "block_return_pct": 4.503010844437524,
+              "wealth_return_without_block_pct": 13.223921361742525
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": 0.008125945202133977,
+              "block_return_pct": 0.8159050304175667,
+              "wealth_return_without_block_pct": 17.364821337922507
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.032667230863004985,
+              "block_return_pct": 3.320666273923809,
+              "wealth_return_without_block_pct": 14.519593307173196
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -0.07379649911518832,
+              "block_return_pct": -7.113930141665269,
+              "wealth_return_without_block_pct": 27.3844474199616
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            9.500976296393882,
+            27.3844474199616
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.3041901643584002,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10
+        }
+      },
+      "relative_pairs": {
+        "news_risk_vs_same_risk_no_news": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": -1.422816769164411,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-05-25",
+              "return_pct": 0.970357365273955,
+              "log_wealth_contribution": 0.009656796343197641
+            },
+            {
+              "date": "2026-10-21",
+              "return_pct": 0.30429615758578166,
+              "log_wealth_contribution": 0.003038341139116379
+            },
+            {
+              "date": "2026-08-19",
+              "return_pct": 0.28011837351691327,
+              "log_wealth_contribution": 0.002797267731269797
+            },
+            {
+              "date": "2026-06-09",
+              "return_pct": 0.26224859490371344,
+              "log_wealth_contribution": 0.0026190532329507486
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 0.19451249431783335,
+              "log_wealth_contribution": 0.0019432356372167691
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-08-18",
+              "return_pct": -0.36601606287446353,
+              "log_wealth_contribution": -0.0036668754064427375
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": -0.2880996946853731,
+              "log_wealth_contribution": -0.0028851550067164463
+            },
+            {
+              "date": "2026-05-26",
+              "return_pct": -0.27026921628574563,
+              "log_wealth_contribution": -0.002706351029334485
+            },
+            {
+              "date": "2026-10-13",
+              "return_pct": -0.25422382597678483,
+              "log_wealth_contribution": -0.0025454752347241097
+            },
+            {
+              "date": "2026-09-15",
+              "return_pct": -0.24817030003810858,
+              "log_wealth_contribution": -0.002484787529585854
+            }
+          ],
+          "wealth_return_without_best_five_pct": -3.3800604624022927,
+          "wealth_return_without_worst_five_pct": -0.004171347666588239,
+          "best_five_share_of_positive_log_returns": 0.5500312849981269,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": -0.003063979565594243,
+              "block_return_pct": -0.30592903706268243,
+              "wealth_return_without_block_pct": -1.120315101303213
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": 0.001011161140592767,
+              "block_return_pct": 0.10116725363722107,
+              "wealth_return_without_block_pct": -1.5224438082126932
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0016312654315750186,
+              "block_return_pct": 0.16325966687978197,
+              "wealth_return_without_block_pct": -1.583491233531259
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.00477551082111573,
+              "block_return_pct": -0.4764126198986196,
+              "wealth_return_without_block_pct": -0.9509345213323911
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0014550020652622903,
+              "block_return_pct": -0.1453944062951392,
+              "wealth_return_without_block_pct": -1.2792823678728786
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0047497680688140505,
+              "block_return_pct": -0.473850575863628,
+              "wealth_return_without_block_pct": -0.9534842840716253
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0029285246048824714,
+              "block_return_pct": -0.2924240659601853,
+              "wealth_return_without_block_pct": -1.1337079380527928
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": 2.2204460492503116e-16,
+              "block_return_pct": 2.2204460492503118e-14,
+              "wealth_return_without_block_pct": -1.4228167691644327
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -1.583491233531259,
+            -0.9509345213323911
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.6173361442685724,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        },
+        "news_no_risk_vs_no_news_no_risk": {
+          "sessions": 150,
+          "first_date": "2026-03-30",
+          "last_date": "2026-11-06",
+          "wealth_return_pct": -1.0938290337023442,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-05-25",
+              "return_pct": 0.9703573652739328,
+              "log_wealth_contribution": 0.009656796343197422
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": 0.9156937771850115,
+              "log_wealth_contribution": 0.009115267207177943
+            },
+            {
+              "date": "2026-05-21",
+              "return_pct": 0.32034166236747375,
+              "log_wealth_contribution": 0.0031982966160733336
+            },
+            {
+              "date": "2026-10-21",
+              "return_pct": 0.30429615758580386,
+              "log_wealth_contribution": 0.0030383411391166
+            },
+            {
+              "date": "2026-06-09",
+              "return_pct": 0.2801194401946816,
+              "log_wealth_contribution": 0.0027972783682512843
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-05-15",
+              "return_pct": -0.6635716395143709,
+              "log_wealth_contribution": -0.006657830644730678
+            },
+            {
+              "date": "2026-06-10",
+              "return_pct": -0.6125302788562381,
+              "log_wealth_contribution": -0.00614413941510755
+            },
+            {
+              "date": "2026-08-18",
+              "return_pct": -0.3660160628744302,
+              "log_wealth_contribution": -0.003666875406442403
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": -0.2880996946853953,
+              "log_wealth_contribution": -0.0028851550067166692
+            },
+            {
+              "date": "2026-05-26",
+              "return_pct": -0.27026921628574563,
+              "log_wealth_contribution": -0.002706351029334485
+            }
+          ],
+          "wealth_return_without_best_five_pct": -3.806128191570332,
+          "wealth_return_without_worst_five_pct": 1.112320612384315,
+          "best_five_share_of_positive_log_returns": 0.5286110233196598,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-30",
+              "last_date": "2026-04-28",
+              "sessions": 20,
+              "log_wealth_contribution": 0.003507730081771439,
+              "block_return_pct": 0.35138893665319054,
+              "wealth_return_without_block_pct": -1.440157416523481
+            },
+            {
+              "first_date": "2026-04-29",
+              "last_date": "2026-05-27",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0013643902739950069,
+              "block_return_pct": -0.1363459916756681,
+              "wealth_return_without_block_pct": -0.9587903141886468
+            },
+            {
+              "first_date": "2026-05-28",
+              "last_date": "2026-06-25",
+              "sessions": 20,
+              "log_wealth_contribution": 0.00031868427576887417,
+              "block_return_pct": 0.031873506099736,
+              "wealth_return_without_block_pct": -1.1253438532603683
+            },
+            {
+              "first_date": "2026-06-26",
+              "last_date": "2026-07-24",
+              "sessions": 20,
+              "log_wealth_contribution": -0.006243385076279678,
+              "block_return_pct": -0.622393564548687,
+              "wealth_return_without_block_pct": -0.4743880297216339
+            },
+            {
+              "first_date": "2026-07-27",
+              "last_date": "2026-08-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0014475896211638484,
+              "block_return_pct": -0.14465423686997506,
+              "wealth_return_without_block_pct": -0.950549807402336
+            },
+            {
+              "first_date": "2026-08-24",
+              "last_date": "2026-09-18",
+              "sessions": 20,
+              "log_wealth_contribution": -0.002841078068005034,
+              "block_return_pct": -0.2837046025064245,
+              "wealth_return_without_block_pct": -0.8124293305989411
+            },
+            {
+              "first_date": "2026-09-21",
+              "last_date": "2026-10-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0029285246048842513,
+              "block_return_pct": -0.29242406596036274,
+              "wealth_return_without_block_pct": -0.8037553417928257
+            },
+            {
+              "first_date": "2026-10-22",
+              "last_date": "2026-11-06",
+              "sessions": 10,
+              "log_wealth_contribution": -4.440892098500626e-16,
+              "block_return_pct": -4.440892098500625e-14,
+              "wealth_return_without_block_pct": -1.0938290337023002
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -1.440157416523481,
+            -0.4743880297216339
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.9167146456209384,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 10,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        }
+      }
+    },
+    "retained_lstm_extension": {
+      "initial_capital": 100000,
+      "paths": {
+        "price_lstm": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": 17.45636730044056,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-10-12",
+              "return_pct": 2.3897524869483266,
+              "log_wealth_contribution": 0.023616448239997045
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.2650799272657896,
+              "log_wealth_contribution": 0.02239807901182808
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.1648670217817356,
+              "log_wealth_contribution": 0.021417665769964168
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 1.9940954130863053,
+              "log_wealth_contribution": 0.019744737513601576
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 1.7630095415215097,
+              "log_wealth_contribution": 0.017476488063419417
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-08",
+              "return_pct": -1.6098290604047771,
+              "log_wealth_contribution": -0.01622927574435638
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -1.4586344887166813,
+              "log_wealth_contribution": -0.014693771536957044
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -1.2141026120478626,
+              "log_wealth_contribution": -0.012215330410786835
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -1.176745921688871,
+              "log_wealth_contribution": -0.011837243763211918
+            },
+            {
+              "date": "2026-09-02",
+              "return_pct": -1.1023067957944388,
+              "log_wealth_contribution": -0.011084272159195599
+            }
+          ],
+          "wealth_return_without_best_five_pct": 5.785504750275103,
+          "wealth_return_without_worst_five_pct": 25.477544730231337,
+          "best_five_share_of_positive_log_returns": 0.20794461490265811,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.029410641032230483,
+              "block_return_pct": 2.9847405258996487,
+              "wealth_return_without_block_pct": 14.052204919525375
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": 0.02760528943607942,
+              "block_return_pct": 2.7989845880542257,
+              "wealth_return_without_block_pct": 14.258295226477946
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04342399016337095,
+              "block_return_pct": 4.438060809559783,
+              "wealth_return_without_block_pct": 12.465097867547865
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.026110064500911613,
+              "block_return_pct": -2.577214419518332,
+              "wealth_return_without_block_pct": 20.56354845592975
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.031173101062858803,
+              "block_return_pct": 3.1664070578165093,
+              "wealth_return_without_block_pct": 13.851369501135844
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": 0.008594595278386383,
+              "block_return_pct": 0.8631634849717332,
+              "wealth_return_without_block_pct": 16.4512030380062
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04614194696183462,
+              "block_return_pct": 4.722305053760616,
+              "wealth_return_without_block_pct": 12.159837620211606
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": 0.0006572370738031604,
+              "block_return_pct": 0.0657453101413277,
+              "wealth_return_without_block_pct": 17.379195983999484
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            12.159837620211606,
+            20.56354845592975
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.24673940580226056,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11
+        },
+        "sentiment_risk_lstm": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": 16.181955912121033,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-10-12",
+              "return_pct": 2.4533638663435164,
+              "log_wealth_contribution": 0.024237522382710545
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.16768793590969,
+              "log_wealth_contribution": 0.021445276780150162
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 2.1215699106974073,
+              "log_wealth_contribution": 0.020993779462260442
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.017737152407806,
+              "log_wealth_contribution": 0.019976505829488254
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 1.7948134777617142,
+              "log_wealth_contribution": 0.017788968674847264
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-08",
+              "return_pct": -1.6392435839468367,
+              "log_wealth_contribution": -0.016528278388527246
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -1.3026356856174148,
+              "log_wealth_contribution": -0.013111943913495657
+            },
+            {
+              "date": "2026-06-17",
+              "return_pct": -1.273734508709945,
+              "log_wealth_contribution": -0.012819160550710022
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -1.267479441726238,
+              "log_wealth_contribution": -0.012755804879271537
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -1.1507314775698108,
+              "log_wealth_contribution": -0.011574036273096661
+            }
+          ],
+          "wealth_return_without_best_five_pct": 4.659842333698953,
+          "wealth_return_without_worst_five_pct": 24.206657561262602,
+          "best_five_share_of_positive_log_returns": 0.2127353767508986,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.022307170117894612,
+              "block_return_pct": 2.255783544529922,
+              "wealth_return_without_block_pct": 13.618958150691393
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": 0.02694208166009416,
+              "block_return_pct": 2.7308301049017514,
+              "wealth_return_without_block_pct": 13.093562851077815
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03674529032347798,
+              "block_return_pct": 3.7428744042847546,
+              "wealth_return_without_block_pct": 11.990299651194668
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.024921033208717157,
+              "block_return_pct": -2.461306783643165,
+              "wealth_return_without_block_pct": 19.113709729953403
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03202945651062628,
+              "block_return_pct": 3.254792011594016,
+              "wealth_return_without_block_pct": 12.519674533919437
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": 0.008311487688006387,
+              "block_return_pct": 0.8346123995046011,
+              "wealth_return_without_block_pct": 15.220312893960042
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04579146745764966,
+              "block_return_pct": 4.685608463285323,
+              "wealth_return_without_block_pct": 10.981784046149604
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": 0.002781441073373877,
+              "block_return_pct": 0.27853128694882445,
+              "wealth_return_without_block_pct": 15.859251647458086
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            10.981784046149604,
+            19.113709729953403
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.26180257100788157,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11
+        },
+        "matched_risk_equal": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": 16.833361375756052,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-10-12",
+              "return_pct": 2.5590895507008105,
+              "log_wealth_contribution": 0.025268929909109124
+            },
+            {
+              "date": "2026-07-31",
+              "return_pct": 2.239856860582079,
+              "log_wealth_contribution": 0.022151404606722887
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 2.063208163297059,
+              "log_wealth_contribution": 0.020422123244395476
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 2.010325653929068,
+              "log_wealth_contribution": 0.01990385407384195
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 1.8184537347210483,
+              "log_wealth_contribution": 0.018021176107979684
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-08",
+              "return_pct": -1.6706465645779378,
+              "log_wealth_contribution": -0.0168475926735377
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -1.4119604884993753,
+              "log_wealth_contribution": -0.014220234866118096
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -1.2878558708150023,
+              "log_wealth_contribution": -0.012962206295013589
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -1.2698220474984367,
+              "log_wealth_contribution": -0.012779531950662499
+            },
+            {
+              "date": "2026-09-02",
+              "return_pct": -1.1061402451570945,
+              "log_wealth_contribution": -0.011123034677673114
+            }
+          ],
+          "wealth_return_without_best_five_pct": 5.1072407988542,
+          "wealth_return_without_worst_five_pct": 25.04594856650742,
+          "best_five_share_of_positive_log_returns": 0.21074074769778062,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.025399087640668807,
+              "block_return_pct": 2.572439277913815,
+              "wealth_return_without_block_pct": 13.903268946547263
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": 0.025950543460884296,
+              "block_return_pct": 2.629019045734614,
+              "wealth_return_without_block_pct": 13.840473641954576
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.039844513374267254,
+              "block_return_pct": 4.064895461779859,
+              "wealth_return_without_block_pct": 12.26971483257358
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.029675634612083803,
+              "block_return_pct": -2.9239636452333766,
+              "wealth_return_without_block_pct": 20.352422454482824
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.03301166933161516,
+              "block_return_pct": 3.356260015566017,
+              "wealth_return_without_block_pct": 13.039463074767133
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": 0.008093426617140062,
+              "block_return_pct": 0.81262669314483,
+              "wealth_return_without_block_pct": 15.891595336936714
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04638062618129609,
+              "block_return_pct": 4.74730307492647,
+              "wealth_return_without_block_pct": 11.538300219705267
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": 0.00657423984536361,
+              "block_return_pct": 0.6595897595203345,
+              "wealth_return_without_block_pct": 16.067790118035933
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            11.538300219705267,
+            20.352422454482824
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.25036220286703836,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11
+        },
+        "full_exposure_buy_hold": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": 27.01718091222025,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-07-31",
+              "return_pct": 4.975427713654779,
+              "log_wealth_contribution": 0.048556115007347175
+            },
+            {
+              "date": "2026-04-01",
+              "return_pct": 4.15843616733329,
+              "log_wealth_contribution": 0.0407429786049795
+            },
+            {
+              "date": "2026-06-03",
+              "return_pct": 3.862407819535485,
+              "log_wealth_contribution": 0.037896835478585
+            },
+            {
+              "date": "2026-05-29",
+              "return_pct": 3.6651366770461324,
+              "log_wealth_contribution": 0.0359956786718015
+            },
+            {
+              "date": "2026-07-21",
+              "return_pct": 3.194902957668422,
+              "log_wealth_contribution": 0.03144927589457406
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-08",
+              "return_pct": -3.4158457466162973,
+              "log_wealth_contribution": -0.034755492868833754
+            },
+            {
+              "date": "2026-07-17",
+              "return_pct": -3.0724195398549092,
+              "log_wealth_contribution": -0.031206079518583084
+            },
+            {
+              "date": "2026-07-28",
+              "return_pct": -2.699684206497832,
+              "log_wealth_contribution": -0.02736795123611447
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": -2.552854898470247,
+              "log_wealth_contribution": -0.025860056497216927
+            },
+            {
+              "date": "2026-06-24",
+              "return_pct": -2.0866505341590957,
+              "log_wealth_contribution": -0.021087287567365182
+            }
+          ],
+          "wealth_return_without_best_five_pct": 4.551678098486402,
+          "wealth_return_without_worst_five_pct": 46.14499243331199,
+          "best_five_share_of_positive_log_returns": 0.22765231564760358,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04979067653292188,
+              "block_return_pct": 5.105106369509683,
+              "wealth_return_without_block_pct": 20.84777352841072
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05238833820338284,
+              "block_return_pct": 5.378488799496827,
+              "wealth_return_without_block_pct": 20.534259277427356
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.08193136261820247,
+              "block_return_pct": 8.538130954148706,
+              "wealth_return_without_block_pct": 17.025399088434565
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.06962205145385168,
+              "block_return_pct": -6.725371660304429,
+              "wealth_return_without_block_pct": 36.17548863302692
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.06570212090365125,
+              "block_return_pct": 6.790856214500594,
+              "wealth_return_without_block_pct": 18.940127848673647
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": 0.007574528773027053,
+              "block_return_pct": 0.7603288082976924,
+              "wealth_return_without_block_pct": 26.058720147566934
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.044258457999436215,
+              "block_return_pct": 4.525247384303302,
+              "wealth_return_without_block_pct": 21.518182535576173
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": 0.007128740517228517,
+              "block_return_pct": 0.7154210474844362,
+              "wealth_return_without_block_pct": 26.11492817205747
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            17.025399088434565,
+            36.17548863302692
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.26534391746213193,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11
+        }
+      },
+      "relative_pairs": {
+        "news_vs_price": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": -1.0850083461714375,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-05-20",
+              "return_pct": 0.31158608939712007,
+              "log_wealth_contribution": 0.003111016659448037
+            },
+            {
+              "date": "2026-07-03",
+              "return_pct": 0.267729965119079,
+              "log_wealth_contribution": 0.0026737220685641733
+            },
+            {
+              "date": "2026-09-11",
+              "return_pct": 0.2673645724436957,
+              "log_wealth_contribution": 0.00267007789170599
+            },
+            {
+              "date": "2026-09-09",
+              "return_pct": 0.22623876348726313,
+              "log_wealth_contribution": 0.002259832289363057
+            },
+            {
+              "date": "2026-11-02",
+              "return_pct": 0.16874942097901968,
+              "log_wealth_contribution": 0.0016860719912017855
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-06-17",
+              "return_pct": -0.4565559613064596,
+              "log_wealth_contribution": -0.004576013611392014
+            },
+            {
+              "date": "2026-09-04",
+              "return_pct": -0.3312606829204978,
+              "log_wealth_contribution": -0.0033181056582046176
+            },
+            {
+              "date": "2026-08-26",
+              "return_pct": -0.25450773925829173,
+              "log_wealth_contribution": -0.002548321607738174
+            },
+            {
+              "date": "2026-04-08",
+              "return_pct": -0.23879787634989436,
+              "log_wealth_contribution": -0.0023908345320353516
+            },
+            {
+              "date": "2026-06-22",
+              "return_pct": -0.19751824520738426,
+              "log_wealth_contribution": -0.001977135697367681
+            }
+          ],
+          "wealth_return_without_best_five_pct": -2.3040514222668507,
+          "wealth_return_without_worst_five_pct": 0.3908655167331561,
+          "best_five_share_of_positive_log_returns": 0.26392829595901124,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.007103470914335778,
+              "block_return_pct": -0.7078300898242215,
+              "wealth_return_without_block_pct": -0.3798670697683702
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0006632077759857204,
+              "block_return_pct": -0.06629879023186513,
+              "wealth_return_without_block_pct": -1.0193853961250035
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.006678699839892796,
+              "block_return_pct": -0.6656446891930192,
+              "wealth_return_without_block_pct": -0.4221738346881827
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0011890312921941624,
+              "block_return_pct": 0.11897384701588726,
+              "wealth_return_without_block_pct": -1.2025514714394072
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0008563554477675576,
+              "block_return_pct": 0.08567222247837114,
+              "wealth_return_without_block_pct": -1.1696784791009116
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": -0.00028310759037988246,
+              "block_return_pct": -0.028306751920759068,
+              "wealth_return_without_block_pct": -1.0570007968440414
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0003504795041850368,
+              "block_return_pct": -0.03504180934182245,
+              "wealth_return_without_block_pct": -1.0503345930751717
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": 0.002124203999570845,
+              "block_return_pct": 0.21264617192227564,
+              "wealth_return_without_block_pct": -1.29490096077045
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -1.29490096077045,
+            -0.3798670697683702
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.509451438346436,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        },
+        "news_vs_same_risk_equal": {
+          "sessions": 151,
+          "first_date": "2026-03-23",
+          "last_date": "2026-11-02",
+          "wealth_return_pct": -0.5575509049509678,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-05-20",
+              "return_pct": 0.19187138775684787,
+              "log_wealth_contribution": 0.0019168754972714054
+            },
+            {
+              "date": "2026-09-03",
+              "return_pct": 0.16459975962583862,
+              "log_wealth_contribution": 0.0016446444268871337
+            },
+            {
+              "date": "2026-09-11",
+              "return_pct": 0.1354039816354291,
+              "log_wealth_contribution": 0.0013531239311123226
+            },
+            {
+              "date": "2026-06-04",
+              "return_pct": 0.12062225795432813,
+              "log_wealth_contribution": 0.0012054956775659144
+            },
+            {
+              "date": "2026-06-23",
+              "return_pct": 0.11789693878625496,
+              "log_wealth_contribution": 0.0011782749492148048
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-09-04",
+              "return_pct": -0.2939374095624725,
+              "log_wealth_contribution": -0.0029437025396868706
+            },
+            {
+              "date": "2026-05-29",
+              "return_pct": -0.2750929177139927,
+              "log_wealth_contribution": -0.002754719936478456
+            },
+            {
+              "date": "2026-06-17",
+              "return_pct": -0.25073863546012376,
+              "log_wealth_contribution": -0.0025105351123028497
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": -0.20307312832141822,
+              "log_wealth_contribution": -0.002032796013735286
+            },
+            {
+              "date": "2026-10-16",
+              "return_pct": -0.13328635596414617,
+              "log_wealth_contribution": -0.0013337526123542223
+            }
+          ],
+          "wealth_return_without_best_five_pct": -1.280681053878461,
+          "wealth_return_without_worst_five_pct": 0.6002338268902352,
+          "best_five_share_of_positive_log_returns": 0.19683247921139424,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-03-23",
+              "last_date": "2026-04-21",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0030919175227741586,
+              "block_return_pct": -0.30871424684161947,
+              "wealth_return_without_block_pct": -0.24960723119318867
+            },
+            {
+              "first_date": "2026-04-22",
+              "last_date": "2026-05-20",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0009915381992094468,
+              "block_return_pct": 0.0992029935721441,
+              "wealth_return_without_block_pct": -0.6561030246817103
+            },
+            {
+              "first_date": "2026-05-21",
+              "last_date": "2026-06-17",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0030992230507894012,
+              "block_return_pct": -0.30944254166227236,
+              "wealth_return_without_block_pct": -0.2488784992424021
+            },
+            {
+              "first_date": "2026-06-18",
+              "last_date": "2026-07-17",
+              "sessions": 20,
+              "log_wealth_contribution": 0.004754601403366617,
+              "block_return_pct": 0.47659224558717894,
+              "wealth_return_without_block_pct": -1.0292378826010247
+            },
+            {
+              "first_date": "2026-07-20",
+              "last_date": "2026-08-14",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0009822128209892686,
+              "block_return_pct": -0.09817306078679691,
+              "wealth_return_without_block_pct": -0.45982927263551093
+            },
+            {
+              "first_date": "2026-08-17",
+              "last_date": "2026-09-11",
+              "sessions": 20,
+              "log_wealth_contribution": 0.00021806107086589786,
+              "block_return_pct": 0.021808484790946256,
+              "wealth_return_without_block_pct": -0.5792330677864218
+            },
+            {
+              "first_date": "2026-09-14",
+              "last_date": "2026-10-14",
+              "sessions": 20,
+              "log_wealth_contribution": -0.0005891587236464034,
+              "block_return_pct": -0.05889852037241774,
+              "wealth_return_without_block_pct": -0.4989462565411064
+            },
+            {
+              "first_date": "2026-10-15",
+              "last_date": "2026-11-02",
+              "sessions": 11,
+              "log_wealth_contribution": -0.003792798771989617,
+              "block_return_pct": -0.3785615195550289,
+              "wealth_return_without_block_pct": -0.17966954515626013
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -1.0292378826010247,
+            -0.17966954515626013
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.7971900450195146,
+          "complete_blocks": 7,
+          "last_partial_block_sessions": 11,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        }
+      }
+    },
+    "v3_exploratory_holdout": {
+      "initial_capital": 1000000,
+      "selected": "B0_benchmark",
+      "news_adopted": false,
+      "paths": {
+        "B0_benchmark": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": -0.5767343726534443,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-08-05",
+              "return_pct": 3.0938234083619287,
+              "log_wealth_contribution": 0.030469294494945197
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": 2.7925509366342416,
+              "log_wealth_contribution": 0.02754270270160453
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 2.0705864603238977,
+              "log_wealth_contribution": 0.02049441207872255
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 1.9230752799703987,
+              "log_wealth_contribution": 0.019048178849649204
+            },
+            {
+              "date": "2026-09-07",
+              "return_pct": 1.8535665539921364,
+              "log_wealth_contribution": 0.01836597378386252
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": -3.6446971209243006,
+              "log_wealth_contribution": -0.037127754976683164
+            },
+            {
+              "date": "2026-10-15",
+              "return_pct": -3.6283156595597776,
+              "log_wealth_contribution": -0.036957758427260484
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": -2.144520323314325,
+              "log_wealth_contribution": -0.02167849293028504
+            },
+            {
+              "date": "2026-10-13",
+              "return_pct": -2.090590675848536,
+              "log_wealth_contribution": -0.021127529485253774
+            },
+            {
+              "date": "2026-08-19",
+              "return_pct": -1.7159184338688793,
+              "log_wealth_contribution": -0.017308109220544488
+            }
+          ],
+          "wealth_return_without_best_five_pct": -11.459012091808424,
+          "wealth_return_without_worst_five_pct": 13.702545907424016,
+          "best_five_share_of_positive_log_returns": 0.38138868707726054,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05178653037953852,
+              "block_return_pct": 5.315090279248587,
+              "wealth_return_without_block_pct": -5.594473343069396
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05315034806995293,
+              "block_return_pct": 5.4588188499447705,
+              "wealth_return_without_block_pct": -5.723137513218389
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": -0.07359316254899945,
+              "block_return_pct": -7.095041086820802,
+              "wealth_return_without_block_pct": 7.0161020363388715
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": -0.037127754976683164,
+              "block_return_pct": -3.6446971209243006,
+              "wealth_return_without_block_pct": 3.1840102792485627
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -5.723137513218389,
+            7.0161020363388715
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.50649827644278,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1
+        },
+        "B1_equal": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": 1.1166666126601308,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-08-05",
+              "return_pct": 2.811631162059336,
+              "log_wealth_contribution": 0.027728304232518024
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": 2.2953639139724924,
+              "log_wealth_contribution": 0.02269416740858041
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 2.0127535620021675,
+              "log_wealth_contribution": 0.01992765440155531
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 1.6212027274096208,
+              "log_wealth_contribution": 0.016082015645829575
+            },
+            {
+              "date": "2026-09-07",
+              "return_pct": 1.4804292593098012,
+              "log_wealth_contribution": 0.014695778723300386
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": -3.320682633496963,
+              "log_wealth_contribution": -0.033770690929670166
+            },
+            {
+              "date": "2026-10-15",
+              "return_pct": -3.0745068390096386,
+              "log_wealth_contribution": -0.031227614376048277
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": -1.680262935444654,
+              "log_wealth_contribution": -0.01694539501627859
+            },
+            {
+              "date": "2026-10-13",
+              "return_pct": -1.5695423195571934,
+              "log_wealth_contribution": -0.015819900551393366
+            },
+            {
+              "date": "2026-08-19",
+              "return_pct": -1.5349874688867948,
+              "log_wealth_contribution": -0.015468903639295484
+            }
+          ],
+          "wealth_return_without_best_five_pct": -8.60899639609992,
+          "wealth_return_without_worst_five_pct": 13.239774590917937,
+          "best_five_share_of_positive_log_returns": 0.36203440001950626,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04780986697583123,
+              "block_return_pct": 4.897119229775967,
+              "wealth_return_without_block_pct": -3.6039622869287737
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.04772382843236004,
+              "block_return_pct": 4.888094422669311,
+              "wealth_return_without_block_pct": -3.5956681554451677
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": -0.050658225280516556,
+              "block_return_pct": -4.939649273419104,
+              "wealth_return_without_block_pct": 6.3710220294671815
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": -0.033770690929670166,
+              "block_return_pct": -3.320682633496963,
+              "wealth_return_without_block_pct": 4.589760630327459
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -3.6039622869287737,
+            6.3710220294671815
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.5004503046967019,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1
+        },
+        "ridge_price": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": -0.5767343726534443,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-08-05",
+              "return_pct": 3.0938234083619287,
+              "log_wealth_contribution": 0.030469294494945197
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": 2.7925509366342416,
+              "log_wealth_contribution": 0.02754270270160453
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 2.0705864603238977,
+              "log_wealth_contribution": 0.02049441207872255
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 1.9230752799703987,
+              "log_wealth_contribution": 0.019048178849649204
+            },
+            {
+              "date": "2026-09-07",
+              "return_pct": 1.8535665539921364,
+              "log_wealth_contribution": 0.01836597378386252
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": -3.6446971209243006,
+              "log_wealth_contribution": -0.037127754976683164
+            },
+            {
+              "date": "2026-10-15",
+              "return_pct": -3.6283156595597776,
+              "log_wealth_contribution": -0.036957758427260484
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": -2.144520323314325,
+              "log_wealth_contribution": -0.02167849293028504
+            },
+            {
+              "date": "2026-10-13",
+              "return_pct": -2.090590675848536,
+              "log_wealth_contribution": -0.021127529485253774
+            },
+            {
+              "date": "2026-08-19",
+              "return_pct": -1.7159184338688793,
+              "log_wealth_contribution": -0.017308109220544488
+            }
+          ],
+          "wealth_return_without_best_five_pct": -11.459012091808424,
+          "wealth_return_without_worst_five_pct": 13.702545907424016,
+          "best_five_share_of_positive_log_returns": 0.38138868707726054,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05178653037953852,
+              "block_return_pct": 5.315090279248587,
+              "wealth_return_without_block_pct": -5.594473343069396
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05315034806995293,
+              "block_return_pct": 5.4588188499447705,
+              "wealth_return_without_block_pct": -5.723137513218389
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": -0.07359316254899945,
+              "block_return_pct": -7.095041086820802,
+              "wealth_return_without_block_pct": 7.0161020363388715
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": -0.037127754976683164,
+              "block_return_pct": -3.6446971209243006,
+              "wealth_return_without_block_pct": 3.1840102792485627
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -5.723137513218389,
+            7.0161020363388715
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.50649827644278,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1
+        },
+        "ridge_news": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": -0.5767343726534443,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-08-05",
+              "return_pct": 3.0938234083619287,
+              "log_wealth_contribution": 0.030469294494945197
+            },
+            {
+              "date": "2026-10-05",
+              "return_pct": 2.7925509366342416,
+              "log_wealth_contribution": 0.02754270270160453
+            },
+            {
+              "date": "2026-09-01",
+              "return_pct": 2.0705864603238977,
+              "log_wealth_contribution": 0.02049441207872255
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 1.9230752799703987,
+              "log_wealth_contribution": 0.019048178849649204
+            },
+            {
+              "date": "2026-09-07",
+              "return_pct": 1.8535665539921364,
+              "log_wealth_contribution": 0.01836597378386252
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": -3.6446971209243006,
+              "log_wealth_contribution": -0.037127754976683164
+            },
+            {
+              "date": "2026-10-15",
+              "return_pct": -3.6283156595597776,
+              "log_wealth_contribution": -0.036957758427260484
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": -2.144520323314325,
+              "log_wealth_contribution": -0.02167849293028504
+            },
+            {
+              "date": "2026-10-13",
+              "return_pct": -2.090590675848536,
+              "log_wealth_contribution": -0.021127529485253774
+            },
+            {
+              "date": "2026-08-19",
+              "return_pct": -1.7159184338688793,
+              "log_wealth_contribution": -0.017308109220544488
+            }
+          ],
+          "wealth_return_without_best_five_pct": -11.459012091808424,
+          "wealth_return_without_worst_five_pct": 13.702545907424016,
+          "best_five_share_of_positive_log_returns": 0.38138868707726054,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05178653037953852,
+              "block_return_pct": 5.315090279248587,
+              "wealth_return_without_block_pct": -5.594473343069396
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.05315034806995293,
+              "block_return_pct": 5.4588188499447705,
+              "wealth_return_without_block_pct": -5.723137513218389
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": -0.07359316254899945,
+              "block_return_pct": -7.095041086820802,
+              "wealth_return_without_block_pct": 7.0161020363388715
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": -0.037127754976683164,
+              "block_return_pct": -3.6446971209243006,
+              "wealth_return_without_block_pct": 3.1840102792485627
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            -5.723137513218389,
+            7.0161020363388715
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": 0.50649827644278,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1
+        }
+      },
+      "relative_pairs": {
+        "news_vs_0050": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": 0.0,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-11-02",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-29",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-08-04",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-05",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-06",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-07",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-10",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            }
+          ],
+          "wealth_return_without_best_five_pct": 0.0,
+          "wealth_return_without_worst_five_pct": 0.0,
+          "best_five_share_of_positive_log_returns": null,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            0.0,
+            0.0
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": null,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        },
+        "news_vs_price": {
+          "sessions": 61,
+          "first_date": "2026-08-04",
+          "last_date": "2026-11-03",
+          "wealth_return_pct": 0.0,
+          "top_five_best_sessions": [
+            {
+              "date": "2026-11-03",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-11-02",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-30",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-29",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-10-28",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            }
+          ],
+          "top_five_worst_sessions": [
+            {
+              "date": "2026-08-04",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-05",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-06",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-07",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            },
+            {
+              "date": "2026-08-10",
+              "return_pct": 0.0,
+              "log_wealth_contribution": 0.0
+            }
+          ],
+          "wealth_return_without_best_five_pct": 0.0,
+          "wealth_return_without_worst_five_pct": 0.0,
+          "best_five_share_of_positive_log_returns": null,
+          "fixed_block_sessions": 20,
+          "blocks": [
+            {
+              "first_date": "2026-08-04",
+              "last_date": "2026-08-31",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-09-01",
+              "last_date": "2026-09-30",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-10-01",
+              "last_date": "2026-11-02",
+              "sessions": 20,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            },
+            {
+              "first_date": "2026-11-03",
+              "last_date": "2026-11-03",
+              "sessions": 1,
+              "log_wealth_contribution": 0.0,
+              "block_return_pct": 0.0,
+              "wealth_return_without_block_pct": 0.0
+            }
+          ],
+          "leave_one_block_out_return_range_pct": [
+            0.0,
+            0.0
+          ],
+          "largest_positive_block_share_of_positive_block_log_returns": null,
+          "complete_blocks": 3,
+          "last_partial_block_sessions": 1,
+          "return_interpretation": "relative wealth: strategy wealth / control wealth - 1"
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Descriptive realized-return deletion, not refitted or re-traded strategies.",
+    "No model or parameter is selected using these diagnostics.",
+    "No confidence interval, independent alpha or causal attribution is claimed.",
+    "Missing original v28 prediction/portfolio exports remain unassessed.",
+    "New V3 provider raw prices are neither read by this diagnostic nor redistributed."
+  ]
+}

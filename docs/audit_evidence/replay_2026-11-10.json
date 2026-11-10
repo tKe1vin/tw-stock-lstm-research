@@ -1,0 +1,212 @@
+{
+  "frozen_v2_inference": {
+    "method": "retained/current Keras networks; direct inference on immutable NPZ and scaler",
+    "retained_ref": "b62034e4fa850933a632c8db6321b309ebad85f9",
+    "retained_v28_sha256": "2ffa8d4088a5bebc92f9b11c0274d1f46a4f067698a5ff8abe30549d47561361",
+    "current_v28_sha256": "508d0ee42bcd6b329f308753d4a01d5c12a9a98bfd42681eeab99b9128b265e4",
+    "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "card_sha256": "277220d082d40d10943fa2495990a20f420e6c366e455737ea224ff9953d20ab",
+    "prices_sha256": "b85a500aba31ca1f3c5e8d63b4c1a302aef6e60fe19ad0acb23d665172d9db7a",
+    "sentiment_sha256": "254d50ca3adcea6c35e946e10de2a380dc67fafb94d6ff2adae08f6a4beb2d32",
+    "tensorflow": "2.20.0",
+    "prediction_rows": [
+      {
+        "signal_date": "2026-11-05",
+        "ticker": "2330.TW",
+        "retained_source_prediction": 0.6773304343223572,
+        "current_source_prediction": 0.6773304343223572,
+        "published_prediction": 0.6773304343223572,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-06",
+        "ticker": "2330.TW",
+        "retained_source_prediction": 0.6650473475456238,
+        "current_source_prediction": 0.6650473475456238,
+        "published_prediction": 0.6650473475456238,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-09",
+        "ticker": "2330.TW",
+        "retained_source_prediction": 0.6525507569313049,
+        "current_source_prediction": 0.6525507569313049,
+        "published_prediction": 0.6525506377220154,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 1.1920928955078125e-07
+      },
+      {
+        "signal_date": "2026-11-05",
+        "ticker": "2317.TW",
+        "retained_source_prediction": 0.281711220741272,
+        "current_source_prediction": 0.281711220741272,
+        "published_prediction": 0.281711220741272,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-06",
+        "ticker": "2317.TW",
+        "retained_source_prediction": 0.27271777391433716,
+        "current_source_prediction": 0.27271777391433716,
+        "published_prediction": 0.2727177739143371,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 5.551115123125783e-17
+      },
+      {
+        "signal_date": "2026-11-09",
+        "ticker": "2317.TW",
+        "retained_source_prediction": 0.2666228711605072,
+        "current_source_prediction": 0.2666228711605072,
+        "published_prediction": 0.2666228711605072,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-05",
+        "ticker": "2603.TW",
+        "retained_source_prediction": 0.06079547852277756,
+        "current_source_prediction": 0.06079547852277756,
+        "published_prediction": 0.0607954785227775,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 5.551115123125783e-17
+      },
+      {
+        "signal_date": "2026-11-06",
+        "ticker": "2603.TW",
+        "retained_source_prediction": 0.06532149016857147,
+        "current_source_prediction": 0.06532149016857147,
+        "published_prediction": 0.0653214901685714,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 6.938893903907228e-17
+      },
+      {
+        "signal_date": "2026-11-09",
+        "ticker": "2603.TW",
+        "retained_source_prediction": 0.07589597254991531,
+        "current_source_prediction": 0.07589597254991531,
+        "published_prediction": 0.0758959576487541,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 1.4901161207725444e-08
+      },
+      {
+        "signal_date": "2026-11-05",
+        "ticker": "2002.TW",
+        "retained_source_prediction": -0.09427261352539062,
+        "current_source_prediction": -0.09427261352539062,
+        "published_prediction": -0.0942726135253906,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 2.7755575615628914e-17
+      },
+      {
+        "signal_date": "2026-11-06",
+        "ticker": "2002.TW",
+        "retained_source_prediction": -0.07120273262262344,
+        "current_source_prediction": -0.07120273262262344,
+        "published_prediction": -0.0712027326226234,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 4.163336342344337e-17
+      },
+      {
+        "signal_date": "2026-11-09",
+        "ticker": "2002.TW",
+        "retained_source_prediction": -0.04341530799865723,
+        "current_source_prediction": -0.04341530799865723,
+        "published_prediction": -0.043415330350399,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 2.2351741776893697e-08
+      },
+      {
+        "signal_date": "2026-11-05",
+        "ticker": "2891.TW",
+        "retained_source_prediction": 0.6314851641654968,
+        "current_source_prediction": 0.6314851641654968,
+        "published_prediction": 0.6314851641654968,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-06",
+        "ticker": "2891.TW",
+        "retained_source_prediction": 0.6272761821746826,
+        "current_source_prediction": 0.6272761821746826,
+        "published_prediction": 0.6272761821746826,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      },
+      {
+        "signal_date": "2026-11-09",
+        "ticker": "2891.TW",
+        "retained_source_prediction": 0.6245033144950867,
+        "current_source_prediction": 0.6245033144950867,
+        "published_prediction": 0.6245033144950867,
+        "source_change_delta_percentage_points": 0.0,
+        "published_delta_percentage_points": 0.0
+      }
+    ],
+    "scaler_max_absolute_errors": {
+      "2330.TW": 0.0,
+      "2317.TW": 0.0,
+      "2603.TW": 0.0,
+      "2002.TW": 0.0,
+      "2891.TW": 0.0
+    },
+    "maximum_source_change_delta_percentage_points": 0.0,
+    "maximum_published_delta_percentage_points": 1.1920928955078125e-07,
+    "production_bundle_modified": false,
+    "trained_or_published": false
+  },
+  "extension_book_replay": {
+    "reproduced": true,
+    "maximum_deltas": {
+      "ROI_Pct": 0.0,
+      "Sharpe": 4.440892098500626e-16,
+      "MDD_Pct": 1.7763568394002505e-15,
+      "Total_Transaction_Cost": 0.0
+    },
+    "tensorflow_used": false,
+    "historical_alpha_proven": false,
+    "implementation_commit": "b62034e4fa850933a632c8db6321b309ebad85f9",
+    "isolated_archive": true,
+    "current_source_guard_bypassed": false,
+    "retained_files_changed": false
+  },
+  "paired_book_replay": {
+    "status": "replayed",
+    "implementation_commit": "b62034e4fa850933a632c8db6321b309ebad85f9",
+    "output_csv_hashes_matched": true,
+    "fit_used": false,
+    "verified_runtime_sources": [
+      "scripts/paired_research.py",
+      "scripts/common.py",
+      "scripts/reproducibility.py",
+      "scripts/paired_analysis.py",
+      "scripts/baseline_adapter.py"
+    ],
+    "isolated_archive": true,
+    "retained_files_changed": false
+  },
+  "v3_book_replay": {
+    "reproduced": true,
+    "fit_used": false,
+    "selection_used": false,
+    "maximum_deltas": {
+      "ridge_news": {
+        "ROI_Pct": 0.0,
+        "Relative_Wealth_Excess_Pct": 0.0,
+        "Tracking_Error_Annualized": 0.0
+      },
+      "ridge_price": {
+        "ROI_Pct": 0.0,
+        "Relative_Wealth_Excess_Pct": 0.0,
+        "Tracking_Error_Annualized": 0.0
+      }
+    },
+    "historical_alpha_proven": false
+  },
+  "extension_forecast_max_delta_percentage_points": 0.0,
+  "production_models_retrained": false,
+  "historical_files_rewritten": false
+}

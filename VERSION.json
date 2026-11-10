@@ -1,7 +1,7 @@
 {
   "package": "TW_Stock_LSTM_Complete",
-  "package_version": "2.0.0",
-  "built_at": "2026-11-06T13:11:06.678323+08:00",
+  "package_version": "2.1.0",
+  "built_at": "2026-11-10T15:21:35.204981+08:00",
   "model_555_v2": "rolling_selected_fold16_window756_carried",
   "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
   "imported_signal_sha256": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
@@ -12,5 +12,8 @@
   "python": "3.12",
   "baseline_imported_through": "2026-11-05",
   "research_method_revision": "paired-444-core-allocation-v1",
-  "previous_delivery_version": "1.1.0"
+  "previous_delivery_version": "2.0.0",
+  "research_v3_protocol": "sentiment_0050_v3_2",
+  "research_v3_selected": "B0_benchmark",
+  "research_v3_production_replaced": false
 }

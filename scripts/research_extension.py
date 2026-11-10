@@ -128,13 +128,39 @@ def scaled_windows(frame, features, split, step):
     return windows, scaler, fit_rows
 
 
-def validation_score(predictions):
-    """No test rows, test ROI, or test labels contribute to model selection."""
-    part = predictions[predictions.Split == "validation"]
-    scores = []
+def _validation_rows(predictions):
+    """Validate the full cross-section before correlation can drop any rows."""
+    required = {"Split", "Signal_Date", "Ticker", "Predicted", "Actual_5d_Pct"}
+    if not required.issubset(predictions.columns):
+        raise ValueError("Missing validation prediction columns")
+    part = predictions.loc[predictions.Split.eq("validation")].copy()
+    if part.empty:
+        raise ValueError("No validation observations")
+    part["Signal_Date"] = pd.to_datetime(part.Signal_Date, errors="raise")
+    if (part.Signal_Date.isna().any() or part.Signal_Date.dt.tz is not None
+            or not part.Signal_Date.eq(part.Signal_Date.dt.normalize()).all()):
+        raise ValueError("Validation signal dates must be nonmissing local dates")
+    if part.duplicated(["Signal_Date", "Ticker"]).any():
+        raise ValueError("Duplicate validation stock/signal observations")
+    numeric = part[["Predicted", "Actual_5d_Pct"]].to_numpy(dtype=float)
+    if not np.isfinite(numeric).all():
+        raise ValueError("Validation predictions and labels must be finite")
+    part[["Predicted", "Actual_5d_Pct"]] = numeric
     for _date, day in part.groupby("Signal_Date", sort=True):
         if len(day) != len(TICKERS) or set(day.Ticker) != set(TICKERS):
             raise ValueError("Validation requires five distinct stocks per signal")
+    return part.sort_values(["Signal_Date", "Ticker"]).reset_index(drop=True)
+
+
+def validation_score(predictions):
+    """Mean daily five-stock Spearman; finite ties use average ranks.
+
+    A constant prediction or label cross-section contributes zero. Test rows,
+    including invalid test values, never enter validation or selection.
+    """
+    part = _validation_rows(predictions)
+    scores = []
+    for _date, day in part.groupby("Signal_Date", sort=True):
         if day.Predicted.std() < 1e-12 or day.Actual_5d_Pct.std() < 1e-12:
             scores.append(0.0)
         else:
@@ -145,10 +171,28 @@ def validation_score(predictions):
 
 
 def choose_candidate(validation, config):
-    scores = {name: validation_score(validation[validation.Model == name])
-              for name in config["candidate_order"]}
+    if not {"Model", "Split"}.issubset(validation.columns):
+        raise ValueError("Missing candidate model identities")
+    names = config["candidate_order"]
+    if len(names) != 2 or len(set(names)) != 2:
+        raise ValueError("Selection requires the two distinct registered candidates")
+    margin = float(config["minimum_validation_improvement"])
+    if not np.isfinite(margin) or margin < 0:
+        raise ValueError("Validation improvement margin must be finite and nonnegative")
+    observed = validation.loc[validation.Split.eq("validation"), "Model"]
+    if set(observed) != set(names):
+        raise ValueError("Validation must contain exactly the registered candidates")
+    parts = {name: _validation_rows(validation[validation.Model.eq(name)]) for name in names}
+    control_rows, fusion_rows = (parts[name] for name in names)
+    if not control_rows[["Signal_Date", "Ticker"]].equals(fusion_rows[["Signal_Date", "Ticker"]]):
+        raise ValueError("Candidate validation stock/signal dates differ")
+    paired_columns = ["Actual_5d_Pct"] + [name for name in ("Fold", "Execution_Date", "Label_End")
+                                           if name in validation.columns]
+    if not control_rows[paired_columns].equals(fusion_rows[paired_columns]):
+        raise ValueError("Candidate validation labels or target intervals differ")
+    scores = {name: validation_score(parts[name]) for name in names}
     control, fusion = config["candidate_order"]
-    selected = fusion if scores[fusion] > scores[control] + config["minimum_validation_improvement"] else control
+    selected = fusion if scores[fusion] > scores[control] + margin else control
     return {"selected": selected, "selection_metric": config["selection_metric"],
             "validation_scores": scores, "minimum_improvement": config["minimum_validation_improvement"],
             "test_used_for_selection": False,

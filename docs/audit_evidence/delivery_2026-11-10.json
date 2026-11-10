@@ -1,0 +1,32 @@
+{
+  "reviewed_on": "2026-11-10",
+  "python": "3.12.14",
+  "runtime_versions": {
+    "numpy": "2.0.2",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "tensorflow-cpu": "2.20.0",
+    "pytest": "8.4.2"
+  },
+  "git_version": "git version 2.52.0",
+  "checkout_tests": {
+    "passed": 326,
+    "seconds": 18.12
+  },
+  "clean_extracted_tests": {
+    "passed": 326,
+    "seconds": 17.83,
+    "newly_installed_dependencies": false,
+    "environment": "existing Python3.12 CPU virtual environment; separate extracted source directory without .git"
+  },
+  "clean_extracted_package_manifest_verified": true,
+  "frozen_models_loaded": 5,
+  "v3_default_check_read_only": true,
+  "provider_full_inputs_redistributed": false,
+  "old_complete_zip_unchanged": true,
+  "original_protected_artifacts_changed": [],
+  "notes": [
+    "This is not a claim of installation on the group leader hardware.",
+    "The final archive is a versioned snapshot; future daily state changes do not rewrite it."
+  ]
+}

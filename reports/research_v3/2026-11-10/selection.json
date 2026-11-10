@@ -1,0 +1,34 @@
+{
+  "selected": "B0_benchmark",
+  "assessments": [
+    {
+      "candidate": "ridge_news",
+      "paired_control": "ridge_price",
+      "compound_validation_excess": -0.00812828433570778,
+      "paired_control_excess": -0.003614149493531893,
+      "compound_stress_excess": 0.0,
+      "rejection_reasons": [
+        "insufficient_positive_folds",
+        "nonpositive_validation_excess",
+        "news_does_not_beat_same_family_control",
+        "nonpositive_slippage_stress_excess"
+      ]
+    },
+    {
+      "candidate": "lstm_news",
+      "paired_control": "lstm_price",
+      "compound_validation_excess": 0.0,
+      "paired_control_excess": 0.0,
+      "compound_stress_excess": 0.0,
+      "rejection_reasons": [
+        "insufficient_positive_folds",
+        "nonpositive_validation_excess",
+        "news_does_not_beat_same_family_control",
+        "nonpositive_slippage_stress_excess"
+      ]
+    }
+  ],
+  "holdout_used_for_selection": false,
+  "prospective_deployment_allowed": false,
+  "historical_alpha_proven": false
+}

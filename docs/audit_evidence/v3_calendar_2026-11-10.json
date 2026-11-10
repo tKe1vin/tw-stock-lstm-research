@@ -1,0 +1,23 @@
+{
+  "rows": 8508,
+  "sessions": 1418,
+  "tickers": [
+    "0050.TW",
+    "2002.TW",
+    "2317.TW",
+    "2330.TW",
+    "2603.TW",
+    "2891.TW"
+  ],
+  "start": "2021-01-04",
+  "end": "2026-11-09",
+  "explicit_suspension_rows": 13,
+  "cash_events_missing_payment_dates": 0,
+  "point_in_time_certified": false,
+  "calendar_basis": "explicit expected sessions",
+  "reviewed_calendar_exception": {
+    "date": "2022-02-04",
+    "reason": "Lunar New Year market holiday; official last2022-01-26/reopen02-07",
+    "source": "https://www.cna.com.tw/news/afe/202201260247.aspx"
+  }
+}
