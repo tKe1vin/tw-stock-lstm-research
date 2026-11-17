@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "weight_ok": true,
+  "bundle_ok": true,
+  "card_ok": true,
+  "signal_registry_ok": true,
+  "prediction_contract_ok": true,
+  "signal_date": "2026-11-05",
+  "predictions": {
+    "2330.TW": 0.6773304343223572,
+    "2317.TW": 0.281711220741272,
+    "2603.TW": 0.06079547852277756,
+    "2002.TW": -0.09427261352539062,
+    "2891.TW": 0.6314851641654968
+  },
+  "expected": {
+    "2330.TW": 0.6773304343223572,
+    "2317.TW": 0.281711220741272,
+    "2603.TW": 0.06079547852277756,
+    "2002.TW": -0.09427261352539062,
+    "2891.TW": 0.6314851641654968
+  },
+  "max_abs_diff": 0.0,
+  "matched": true,
+  "blockers": [],
+  "published_signal_sha256": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
+  "context_source": "v211_market"
+}

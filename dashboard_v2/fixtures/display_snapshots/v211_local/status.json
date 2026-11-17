@@ -1,0 +1,101 @@
+{
+  "ok": true,
+  "error": null,
+  "demo_flag": "SYNTHETIC_DEMO",
+  "fixture_kind": "SYNTHETIC_DEMO",
+  "data_updated_through_latest_completed_session": true,
+  "official_555_replacement": false,
+  "tracker_downloads_data": false,
+  "first_fill_completed": true,
+  "scorable_signal_days": 2,
+  "labels_matured_today": [],
+  "immature_predictions": 30,
+  "next_label_date": "2026-11-17",
+  "data": {
+    "prices_through": "2026-11-16",
+    "price_names_on_last_day": [
+      "2330.TW",
+      "2317.TW",
+      "2603.TW",
+      "2002.TW",
+      "2891.TW",
+      "^TWII"
+    ],
+    "official_sentiment_through": "2026-11-04",
+    "official_sentiment_missing_since_october": 0,
+    "last_day_features_complete": true,
+    "incomplete_tickers": [],
+    "frozen_window": 756,
+    "frozen_window_source": "SYNTHETIC_DEMO",
+    "weights_present_before_run": true,
+    "context_source": "SYNTHETIC_DEMO",
+    "tracker_downloads_data": false
+  },
+  "scoring": {
+    "matured_signal_days": 2,
+    "pending_predictions": 30,
+    "matured_today": [
+      "2026-11-06"
+    ],
+    "pending_labels": [
+      {
+        "signal": "2026-11-09",
+        "label_end": "2026-11-17"
+      },
+      {
+        "signal": "2026-11-10",
+        "label_end": "2026-11-18"
+      },
+      {
+        "signal": "2026-11-11",
+        "label_end": "2026-11-19"
+      },
+      {
+        "signal": "2026-11-12",
+        "label_end": "2026-11-20"
+      },
+      {
+        "signal": "2026-11-13",
+        "label_end": "2026-11-23"
+      },
+      {
+        "signal": "2026-11-16",
+        "label_end": "2026-11-24"
+      }
+    ],
+    "next_label_end": "2026-11-17",
+    "metrics": {
+      "Direction_Accuracy": 0.8,
+      "MAE": 1.0,
+      "RMSE": 1.2,
+      "Matured_Signal_Days": 2,
+      "Demo_Flag": "SYNTHETIC_DEMO"
+    }
+  },
+  "book": {
+    "status": "updated",
+    "first_fill_completed": true,
+    "signals": 8,
+    "rebalance_is_every": 5,
+    "prediction_is": "daily",
+    "fill_price": "next_session_close",
+    "sessions": 7,
+    "open_nav": 102800.0,
+    "cash_weight": 0.5,
+    "entry_cost": 0.0
+  },
+  "model_version": "rolling_selected_fold16_window756_carried",
+  "model_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "weights_reused": true,
+  "signal": {
+    "publish": false,
+    "reason": "already_written",
+    "completed_session": "2026-11-16",
+    "path": "dashboard_v2/fixtures/display_snapshots/v211_local/daily/2026-11-16.csv",
+    "created_at": "2026-11-16T12:00:00+08:00",
+    "reread_rows": 5
+  },
+  "signal_published": false,
+  "rebalance_today": false,
+  "note": "SYNTHETIC_DEMO fixture; not official performance"
+}

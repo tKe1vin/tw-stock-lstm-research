@@ -1,0 +1,27 @@
+{
+  "scope": "V2_ONLY",
+  "dashboard_tests_passed": 30,
+  "inference_ok": true,
+  "fixtures": "SYNTHETIC_DEMO",
+  "main_already_has": [
+    "experiments/v2/v211*.py",
+    "experiments/v2/v28*.py",
+    "experiments/v2/v29.py",
+    "experiments/results/v2/v211/weights",
+    "models/model_555_v2",
+    "docs/research_protocol_v2.md"
+  ],
+  "branch_adds": [
+    "dashboard_v2/",
+    "streamlit_v2_app.py",
+    "docs/v2_integration/"
+  ],
+  "not_ported_by_design": [
+    "v26.py",
+    "v27.py",
+    "v29b*.py",
+    "v29c*.py",
+    "v210.py",
+    "full Ridge forward-evidence"
+  ]
+}

@@ -1,0 +1,50 @@
+name: V2 additive delivery review
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'review/v2-delivery-*']
+    paths:
+      - 'dashboard_v2/**'
+      - 'streamlit_v2_app.py'
+      - 'docs/v2_integration/**'
+      - 'dashboard/**'
+      - 'experiments/v2/**'
+      - '.github/workflows/v2-delivery-review.yml'
+  pull_request:
+    paths:
+      - 'dashboard_v2/**'
+      - 'streamlit_v2_app.py'
+      - 'docs/v2_integration/**'
+      - 'dashboard/**'
+      - 'experiments/v2/**'
+      - '.github/workflows/v2-delivery-review.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-delivery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dashboard-and-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Taipei
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: dashboard/requirements.txt
+      - name: Install lightweight presentation dependencies
+        run: python -m pip install -r dashboard/requirements.txt 'pytest>=8,<9'
+      - name: Check current portal and additive V2 UI and inference contracts
+        run: >-
+          python -m pytest -q tests/test_dashboard*.py tests/test_news_display*.py
+          dashboard_v2/tests docs/v2_integration/tests
+          docs/v2_integration/v2_improvement_notes/tests

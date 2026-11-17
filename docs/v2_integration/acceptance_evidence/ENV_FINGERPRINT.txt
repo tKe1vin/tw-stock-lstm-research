@@ -1,0 +1,9 @@
+﻿python=3.12.10
+venv_integration=.venv-integration (local, gitignored)
+venv_tf_verify=.venv-tf-verify (local, gitignored; tensorflow_cpu==2.20.0)
+HEAD_base=3e64240e04aa0af1f5f606f4254aeaaa0cf3f26e
+branch=research/v2-integration-20261117
+TW_V211_LOCAL=(unset for DEMO tests)
+TW_RIDGE_ROOT=(unset for DEMO tests)
+TW_GITHUB_REVIEW_ROOT=(unset for DEMO tests)
+note=Absolute machine paths intentionally omitted from this fingerprint.
