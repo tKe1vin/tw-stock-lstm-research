@@ -1,0 +1,22 @@
+{
+  "model": "444",
+  "mode": "full",
+  "status": "success",
+  "training_executed": true,
+  "forecast_produced": true,
+  "completed_session": "2026-11-16",
+  "run_date": "2026-11-17",
+  "output_day": "2026-11-16",
+  "delayed_run": true,
+  "fixture": "live_snapshot",
+  "price_reason": "ready",
+  "sentiment_reason": "not_used",
+  "execution_assumption": "lstm-evaluation-v1; not the 555 V2 next-close research book",
+  "archived_diagnostic_history": [],
+  "native_output_dir": "outputs/444/2026-11-16",
+  "daily_native_dir": "outputs/444/2026-11-16/native",
+  "unified_csv": "outputs/444/2026-11-16/unified_signal.csv",
+  "forecast_timing": "future_entry",
+  "recommendation_execution_status": "delayed_research_target_only_no_order",
+  "generated_at": "2026-11-17T13:15:11.701006+08:00"
+}

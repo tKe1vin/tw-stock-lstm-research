@@ -1,0 +1,21 @@
+{
+  "model": "v211",
+  "mode": "full",
+  "ledger_mode": "imported_research",
+  "status": "maintenance_only",
+  "exit_code": 2,
+  "completed_session": "2026-11-16",
+  "run_date": "2026-11-17",
+  "imported_signal_sha256_before": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
+  "imported_signal_sha256_after": "37591d21300977b9486212fc86fe257bb050db47177fa2f41bd7a8904919f659",
+  "imported_signal_unchanged": true,
+  "imported_signal_created_at": "2026-11-05T23:23:09.114628+08:00",
+  "signal_origin": "developer_original_2026-11-05",
+  "official_555_replacement": false,
+  "stdout_tail": "{\"scoring\": {\"matured_signal_days\": 2, \"pending_predictions\": 10, \"matured_today\": [\"2026-11-06\"], \"pending_labels\": [{\"signal\": \"2026-11-09\", \"label_end\": \"2026-11-17\"}, {\"signal\": \"2026-11-10\", \"label_end\": \"2026-11-18\"}], \"next_label_end\": \"2026-11-17\", \"metrics\": {\"Direction_Accuracy\": 0.8, \"Balanced_Accuracy\": 0.75, \"True_Positive_Rate\": 1.0, \"True_Negative_Rate\": 0.5, \"Positive_Rate\": 0.8, \"Up_Rate\": 0.6, \"Prediction_Zero_Rate\": 0.0, \"Actual_Zero_Rate\": 0.0, \"MAE\": 4.664739983784387, \"RMSE\": 5.588065432542863, \"Cross_Section_Spearman\": 0.4999999999999999, \"Matured_Signal_Days\": 2, \"Label_Overlap_Sessions\": 5}}, \"book\": {\"status\": \"updated\", \"first_fill_completed\": true, \"signals\": 4, \"rebalance_is_every\": 5, \"prediction_is\": \"daily\", \"fill_price\": \"next_session_close\", \"sessions\": 7, \"open_nav\": 100531.52835680573, \"cash_weight\": 0.4970022955127756, \"entry_cost\": 71.19927051975466}, \"as_of\": \"2026-11-17\"}\n",
+  "delayed_run": true,
+  "signal_published": false,
+  "maintenance_successful": true,
+  "reason": "delayed_session_maintenance_only",
+  "output_day": "2026-11-16"
+}
