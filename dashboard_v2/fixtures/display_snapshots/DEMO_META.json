@@ -1,0 +1,8 @@
+{
+  "demo_flag": "SYNTHETIC_DEMO",
+  "fixture_kind": "SYNTHETIC_DEMO",
+  "not_official_performance": true,
+  "expected_weight_sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+  "ridge_first_day_prediction_sha256": "bfe618e328c7fa16b931c516142dc3e6a9e3a0076fac13d578f7f37fbca84de3",
+  "local_1110_file_sha256": "d4c1bbb3c387028ac2f7d54f8e38bab625f61966d79a269399eaa5ade7b73199"
+}

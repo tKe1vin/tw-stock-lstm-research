@@ -5,6 +5,7 @@
 - [V3：0050核心＋新聞超額模型](research/v3/design.md) · [實測與拒絕採用紀錄](reports/research_v3/2026-11-10/summary.md)
 - [V3.3：20交易日／Ridge與HGB新聞模型](research/v3_3/design.md) · [11/17實測](reports/research_v3_3/2026-11-17/summary.md)
 - [Streamlit完整專案展示與啟動方式](docs/streamlit_demo.md) · [V3下一輪研究討論](docs/v3_next_research.md)
+- [V2整合與首輪優化](docs/unified_v2_v3_20261117.md) · [V3.4固定成本配置實驗](reports/research_v3_4/2026-11-17/summary.md)
 - [130題逐題狀態](docs/audit_130_status.md) · [訓練關鍵修正與歷史限制](docs/audit_130_critical.md)
 - [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
 - [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
@@ -21,7 +22,9 @@ python -m pip install -r dashboard/requirements.txt
 python -m streamlit run dashboard/app.py
 ```
 
-開啟終端顯示的網址（預設 `http://localhost:8501`）。側欄提供**專案總覽、模型與結果、研究日誌、新聞與情緒、V3研究、文件與重現**六個入口。可查看444／555共同核心回測、四系統逐日預測與狀態、V2.11帳本、累積／逐日日誌及真正執行紀錄；新聞可依日期、股票、標題／ID及情緒篩選，追溯原文、分數與取得時間。企畫書、協議、審查、Notebook下載也整合在頁面中。
+開啟終端顯示的網址（預設 `http://localhost:8501`）。側欄提供**專案總覽、模型與結果、研究日誌、新聞與情緒、V2研究、V3研究、文件與重現**七個入口。V2預設讀取正式保存的V2.11訊號／帳本，整合每日檢討、隔日策略、歷史實驗與成熟預測診斷；合成DEMO須明確切換，不替代缺少的Ridge私人資料。V3保留各版歷史結果，另展示固定預測下的V3.4成本配置實驗。
+
+原444／555共同核心回測、四系統逐日預測、累積／逐日日誌、真正執行紀錄、新聞來源與時間、企畫書／Notebook下載均保留；入口仍為 `dashboard/app.py`，每日同步與五分鐘重新讀取不變。
 
 網站只讀已保存資料，不需TensorFlow或行情金鑰。新聞展示標題另外保存實際取得時間，不會認證舊新聞當時已可用；網站不抓全文、不補造截圖或舊訊號。V3.3新聞候選淨報酬13.00%、0050為15.90%，**尚未勝出或採用**。不同協議／期間不混排ROI。[資料來源、限制與部署設定](docs/streamlit_demo.md)。
 

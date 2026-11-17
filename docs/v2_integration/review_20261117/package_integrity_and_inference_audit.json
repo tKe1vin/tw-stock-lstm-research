@@ -1,0 +1,39 @@
+{
+  "recorded_at": "2026-11-17T07:27:40.854978+00:00",
+  "zip_sha256": "a16fbd30f1ec8321daac22e2f8fb0cf38d147500bdae3b5701595c91972bbecc",
+  "manifest_rows": 129,
+  "manifest_mismatches": [],
+  "unlisted_files": [
+    "PACKAGE_MANIFEST.csv",
+    "PACKAGE_SHA256.txt"
+  ],
+  "sha256_text_manifest_mismatches": [],
+  "original_inference_reproduced": {
+    "signal_date": "2026-11-05",
+    "max_abs_diff": 0.0,
+    "ok": true,
+    "network_blocked": true,
+    "protected_file_count": 398,
+    "unchanged": true
+  },
+  "original_negative_probe": {
+    "case": "published CSV contains one of the five genuine expected rows",
+    "comparison_predictions": "five recorded genuine predictions; compare-stage stub only",
+    "incorrect_ok": true,
+    "expected_count": 1,
+    "actual_count": 5
+  },
+  "candidate_fix": {
+    "script": "docs/v2_integration/verify_v211_inference.py",
+    "regression_tests": "docs/v2_integration/tests/test_verify_inference_contract.py",
+    "tests_passed": 15,
+    "script_sha256": "751255d8bc46bb48b321f12bc9a4a2e50361c56cf17875f6fa45931dd610605f"
+  },
+  "limitations": [
+    "No complete real Ridge ledger or receipts delivered",
+    "Synthetic DEMO and source-conflict pair cannot prove formal prospective alpha",
+    "Frozen inference agreement does not prove original publication availability",
+    "Default main pytest.ini excludes dashboard_v2 and docs tests",
+    "Archived v2_improvement_notes imports research.v2_improvement which is absent from current main"
+  ]
+}

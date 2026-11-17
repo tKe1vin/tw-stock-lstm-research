@@ -1,0 +1,46 @@
+{
+  "experiment": "V3.4 single incremental-cost allocation replay",
+  "registered_at": "2026-11-17T16:12:06.929823+08:00",
+  "source_run_manifest_sha256": "6a9ac1527df634b9e3a1817e9c4d915c1638a35db17b70e95e6dbbcbbd932e06",
+  "input_sha256": {
+    "registered_config.json": "68fc03a1f0f9efe2f8707ed449e9721887f9233db04e3687c15d32c59111203f",
+    "splits.json": "b51eb68b678bbbcfe42950e3cc7f4c136dc1c6f9203ba388fc2a5a122405e3ef",
+    "validation_predictions.csv": "a9051047135db3e99cdfde9257eae99d65fbd440670622ae064c207a43ac02cd",
+    "holdout_ridge_price_predictions.csv": "c0c9a45ab17f5f4f90b09d75b8cafc50ec36b234882223933c697400ebc3c8ac",
+    "holdout_ridge_news_predictions.csv": "6149e550875a628adc2a2ef4aaeb1981ca283f5372e844f5afb118ae0323f188",
+    "inputs/bars.csv": "38338735c0c7278b03f0cecd6ce3795d979634497c7a11423091e6bb0e650ea8",
+    "inputs/bars.metadata.json": "0f1566b6d2ca3c0b83ef6dd6676a12d531808c24ed0f98a685cc4797e1c935c3"
+  },
+  "source_sha256": {
+    "research/v3_3/portfolio.py": "ca5e59e04453c48f678b27d5c250b10f801d2e2daf1da79d20f10f9635ff55e2",
+    "research/v3_4/portfolio.py": "e687a8392e795d7f02819e5cae91ddd8d3711e7ebda7cf5b50090104b9190a82",
+    "research/v3_4/allocator.py": "b40c512afc43369392b3019b75d9b3cc9787a17624cd1d8d8ec3cbda1baf9505",
+    "research/v3_4/run.py": "38a718c82a7fc1f5b84226c2aac9f3e42174796bf91fb071b16a5114905ffc37",
+    "research/v3_4/design.md": "b3f82039e6375fee52e0cdf2a6c8d46da7094583b4b8938a5c3aa222c4bb07b0"
+  },
+  "allocators": [
+    "legacy",
+    "incremental"
+  ],
+  "forecasts": [
+    "ridge_price",
+    "ridge_news"
+  ],
+  "validation_folds": [
+    1,
+    2,
+    3
+  ],
+  "holdout_used_for_selection": false,
+  "historical_alpha_proven": false,
+  "no_retraining": true,
+  "decision_cost_multiplier": 1.5,
+  "slippage_bps": [
+    5,
+    15
+  ],
+  "target": "i+1 close to i+21 close excess versus0050",
+  "private_provider_data_published": false,
+  "selected": "B0_benchmark",
+  "statement": "Historical exploratory fixed allocator comparison; no adoption or threshold search"
+}

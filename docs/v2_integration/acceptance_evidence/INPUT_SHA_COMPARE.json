@@ -1,0 +1,19 @@
+{
+  "scope": "V2_ONLY",
+  "note": "V3 dashboard asset compare removed from V2 delivery evidence.",
+  "frozen_weight": {
+    "path": "experiments/results/v2/v211/weights/weights.npz",
+    "sha256": "53a1467fdba66e7f22a45e5f2fbc1cb78fc99825b15d516b3e7153d7bfc28144",
+    "matched_expected": true
+  },
+  "inference_replay": {
+    "signal_date": "2026-11-05",
+    "max_abs_diff": 0.0,
+    "ok": true,
+    "script": "docs/v2_integration/verify_v211_inference.py"
+  },
+  "fixtures": {
+    "kind": "SYNTHETIC_DEMO",
+    "security_audit_issues": 0
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "status": "research_complete_tracker_deferred",
+  "delayed_run": true,
+  "output_day": "2026-11-16",
+  "completed_session": "2026-11-16",
+  "steps": {
+    "v211": {
+      "status": "maintenance_only",
+      "maintenance_only": true,
+      "reason": "delayed_session_maintenance_only",
+      "signal_published": false
+    }
+  },
+  "demo_flag": "SYNTHETIC_DEMO"
+}

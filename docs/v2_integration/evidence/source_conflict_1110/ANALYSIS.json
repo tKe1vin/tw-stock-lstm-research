@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-11-17T00:00:00+08:00",
+  "status": "SOURCE_CONFLICT",
+  "demo_flag": "SYNTHETIC_DEMO",
+  "signal": {
+    "local_sha256": "d4c1bbb3c387028ac2f7d54f8e38bab625f61966d79a269399eaa5ade7b73199",
+    "github_sha256": "3258312dfd38d723e4a091dab4efd32211cc27b740f76b9978e5c8ce5ef7a195",
+    "same_model_sha": true,
+    "same_price_sha": true,
+    "same_sentiment_sha": false
+  },
+  "replay": {
+    "can_replay_local_with_frozen_sentiment": false,
+    "can_replay_github_with_frozen_sentiment": true,
+    "note": "SYNTHETIC_DEMO integrity tags; preserves ORIGINAL_INPUT_UNAVAILABLE + PARTIALLY_REPRODUCIBLE scenario"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "v3_4_cost_replay_v1",
+  "historical_alpha_proven": false,
+  "no_retraining": true,
+  "holdout_used_for_selection": false,
+  "raw_provider_data_included": false,
+  "legacy_replay_verified": true,
+  "source_run_manifest_sha256": "6a9ac1527df634b9e3a1817e9c4d915c1638a35db17b70e95e6dbbcbbd932e06",
+  "files_sha256": {
+    "summary.md": "a14d2ab18f5b7a61fea583bb05c5b5f6fc9f1d17e8cdec4f23ab40afa3f78c05",
+    "comparison_metrics.csv": "d61cef8acc75c3d1bc7eba3174ef8cb0b8760ee12673b61e9a5152c6a0d918af",
+    "registration.json": "f407399b839b448e479a15f34e561ca2c6d11f2efdac88354a76ee54297bd672",
+    "rule_checks.json": "2bbe7bca06aa7bfd0a9d38a2f270cd747482c02fd3cdb81f022257e404455f93"
+  }
+}

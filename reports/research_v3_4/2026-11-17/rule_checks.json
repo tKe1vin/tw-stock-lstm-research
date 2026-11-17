@@ -1,0 +1,20 @@
+[
+  {
+    "Allocator": "legacy",
+    "Positive_Folds": 1,
+    "Compound_News_Relative_Pct": -3.8087450302022985,
+    "Compound_Price_Relative_Pct": -2.148631870297979,
+    "Stress_Compound_News_Relative_Pct": -3.2176874821267964,
+    "Maximum_Tracking_Error": 0.0378706879372366,
+    "Historical_Rule_Check_Passed": false
+  },
+  {
+    "Allocator": "incremental",
+    "Positive_Folds": 1,
+    "Compound_News_Relative_Pct": -6.453654210384974,
+    "Compound_Price_Relative_Pct": -3.1047101238729002,
+    "Stress_Compound_News_Relative_Pct": -5.510723754989777,
+    "Maximum_Tracking_Error": 0.0378706879372366,
+    "Historical_Rule_Check_Passed": false
+  }
+]

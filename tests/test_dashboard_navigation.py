@@ -15,7 +15,7 @@ from dashboard import data
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "dashboard/app.py"
-PAGES = ["專案總覽", "模型與結果", "研究日誌", "新聞與情緒", "V3研究", "文件與重現"]
+PAGES = ["專案總覽", "模型與結果", "研究日誌", "新聞與情緒", "V2研究", "V3研究", "文件與重現"]
 
 
 def project_app():
@@ -31,7 +31,7 @@ def retained_evidence():
             for path in paths}
 
 
-def test_project_overview_is_default_and_all_six_sections_render():
+def test_project_overview_is_default_and_all_seven_sections_render():
     at = project_app()
     assert not at.exception
     navigation = at.radio(key="project_page")
@@ -54,7 +54,7 @@ def test_v3_integrity_failure_isolated_from_other_project_evidence(monkeypatch):
     monkeypatch.setattr(data, "load_study", reject)
     at = project_app()
     assert not at.exception and not at.error
-    for page in ("研究日誌", "新聞與情緒", "文件與重現"):
+    for page in ("研究日誌", "新聞與情緒", "V2研究", "文件與重現"):
         at.radio(key="project_page").set_value(page).run()
         assert not at.exception and not at.error
     at.radio(key="project_page").set_value("V3研究").run()

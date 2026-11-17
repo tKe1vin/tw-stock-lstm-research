@@ -1,0 +1,23 @@
+{
+  "synced_at": "2026-11-17T00:00:00+08:00",
+  "status": "ok",
+  "public_note": "SYNTHETIC_DEMO fixture manifest; not formal performance",
+  "demo_flag": "SYNTHETIC_DEMO",
+  "items": [
+    {
+      "source": "v211_local",
+      "status": "synthetic",
+      "src": "SYNTHETIC_DEMO/v211_local",
+      "dst": "FIXTURE_SNAPSHOTS/v211_local",
+      "sha256": "demo",
+      "bytes": 0
+    }
+  ],
+  "conflicts": [
+    {
+      "status": "SOURCE_CONFLICT",
+      "signal_date": "2026-11-10",
+      "note": "SYNTHETIC_DEMO conflict between local and github fixtures"
+    }
+  ]
+}

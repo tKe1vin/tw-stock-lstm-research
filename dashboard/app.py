@@ -205,11 +205,14 @@ def next_steps():
     for experiment in notes["experiments"]:
         with st.container(border=True):
             st.markdown(f"### {experiment['label']}")
-            st.caption("下一輪設計，尚未實作或取得結果")
+            st.caption("下一輪設計，尚未實作或取得結果" if experiment.get("not_implemented", True)
+                       else "已完成探索性實驗；未通過採用門檻")
             st.write(experiment["finding"])
             st.markdown("**要檢驗的假設**　" + experiment["hypothesis"])
             st.markdown("**具體實驗**　" + experiment["next_experiment"])
             st.markdown("**未通過時**　" + experiment["fallback"])
+            if experiment.get("result_source"):
+                st.link_button("查看已保存實驗結果", GITHUB + experiment["result_source"])
     st.link_button("閱讀完整研究討論", GITHUB + "docs/v3_next_research.md")
 
 
@@ -224,12 +227,15 @@ def render_v3(version):
     st.title("新聞訊號，值得加碼嗎？")
     st.markdown(f'<div class="subline">{study["label"]}　／　留出期 {study["period_start"]} — {study["period_end"]}<br>以0050為基準，分開檢驗模型、新聞與交易成本。</div>', unsafe_allow_html=True)
     st.warning("探索性結果｜新聞候選尚未通過採用門檻，維持0050基準；每日模型未被替換。", icon="🧪")
-    tabs = st.tabs(["結果總覽", "配對驗證", "成本與風險", "每日運作", "下一輪研究"])
+    tabs = st.tabs(["結果總覽", "配對驗證", "成本與風險", "每日運作", "下一輪研究", "優化實驗"])
     with tabs[0]: overview(study)
     with tabs[1]: validation(study)
     with tabs[2]: costs(study)
     with tabs[3]: daily()
     with tabs[4]: next_steps()
+    with tabs[5]:
+        from dashboard.optimization import render_cost_experiment
+        render_cost_experiment()
     with st.expander("下載與研究來源"):
         a, b, c = st.columns(3)
         a.download_button("下載留出期指標 CSV", study["metrics"].to_csv(index=False).encode("utf-8-sig"),
@@ -264,6 +270,7 @@ def project_overview():
         ("模型與結果", "比較444／555共同核心、各模型每日預測、V2.11帳本，以及原修訂與延伸研究。"),
         ("研究日誌", "依資料日閱讀444／555報告、搜尋累積日誌，或按真正執行日追蹤成功與失敗。"),
         ("新聞與情緒", "查看保存的文章、情緒分數、股票關聯、原文連結、來源掃描與取得時間。"),
+        ("V2研究", "查看凍結五日模型、真實保存帳本、每日檢討、隔日策略與優化診斷。"),
         ("V3研究", "檢視V3.2／V3.3與0050的配對驗證、留出績效、成本及下一輪設計。"),
         ("文件與重現", "閱讀企畫書、研究協議、130題審查與重現說明，下載文件及原始Notebook。"),
     ]
@@ -285,7 +292,8 @@ DOCUMENTS = {
     "審查與重現": {"130題逐題狀態": "docs/audit_130_status.md", "關鍵修正與歷史限制": "docs/audit_130_critical.md",
                  "驗證紀錄": "VALIDATION.md", "交付與重現說明": "docs/delivery_v2_1.md",
                  "每日恢復說明": "docs/daily_recovery_2026-11-17.md", "Streamlit使用說明": "docs/streamlit_demo.md"},
-    "下一輪研究": {"V3下一輪討論": "docs/v3_next_research.md"},
+    "下一輪研究": {"V2下一輪診斷與設計": "docs/v2_next_research.md", "V3下一輪討論": "docs/v3_next_research.md",
+                 "V3.4固定成本配置設計": "research/v3_4/design.md"},
 }
 
 
@@ -329,7 +337,7 @@ def main():
     with st.sidebar:
         st.markdown("### TW RESEARCH")
         st.caption("台股LSTM・新聞情緒・動態配置")
-        page = st.radio("專案導覽", ["專案總覽", "模型與結果", "研究日誌", "新聞與情緒", "V3研究", "文件與重現"], key="project_page")
+        page = st.radio("專案導覽", ["專案總覽", "模型與結果", "研究日誌", "新聞與情緒", "V2研究", "V3研究", "文件與重現"], key="project_page")
         if page == "V3研究":
             version = st.selectbox("研究版本", list(STUDIES), key="study_version",
                                   format_func=lambda x: {"v3.3": "V3.3｜20日・Ridge / HGB", "v3.2": "V3.2｜5日・Ridge / LSTM"}[x])
@@ -352,6 +360,9 @@ def main():
     elif page == "新聞與情緒":
         from dashboard.news import render_news
         render_news()
+    elif page == "V2研究":
+        from dashboard.v2 import render_v2
+        render_v2()
     elif page == "V3研究":
         render_v3(version)
     else:
