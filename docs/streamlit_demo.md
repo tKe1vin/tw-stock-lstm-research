@@ -17,6 +17,22 @@ python -m streamlit run dashboard/app.py
 
 若使用 Streamlit Community Cloud，選擇本 repository、`main` 分支與 `dashboard/app.py` 入口，**Advanced settings明確選Python 3.12**；套件清單位於同目錄 `dashboard/requirements.txt`。Python3.14會讓本版NumPy嘗試原始碼編譯，不能沿用該預設。GitHub更新後由Streamlit同步部署，必要時在Manage app選Reboot app；網站內「重新讀取保存報告」只讀目前checkout，不會Git pull。部署應保留完整checkout的報告與展示快照；不需上傳私人行情快取或金鑰。
 
+## 每日自動更新
+
+不需要每天手動執行或Reboot：
+
+1. GitHub Actions排定台北週一至週五17:37、21:37執行四系統，每日09:17另作重試；實際開始時間可能延遲。
+2. 流程取得來源、執行444／555、保存合法的凍結模型預測／帳本進度、追加日誌與新聞展示標題，再自動commit至`main`。來源未齊會保留實際等待／部分結果，不補造當日成功。
+3. Community Cloud連接`main`，自動同步新commit。網站已加入每300秒觸發的Streamlit fragment，對整頁重新執行，讓**已開啟的頁面**讀到同步後的報告。頁面閒置關閉不影響GitHub每日流程，之後開啟可讀部署的最新資料。
+
+側欄顯示「本頁讀取」時間；總覽另外顯示**資料截止交易日、真正執行日及模型生成時間**。前者不是新的模型執行或資料取得證據。讀取計時器只重新載入本機部署報告，不訓練、不抓行情、不修改研究檔案，也不會自行Git pull。本機執行的使用者仍須自行更新checkout；Cloud同步則由平台管理。
+
+最近核實的遠端流程是2026-11-17台北14:52～14:54的成功執行（Actions44034396282）：四系統步驟、展示標題步驟與狀態保存均成功，新增627dcfb實際執行紀錄。當時最新完成的保存研究仍是11/16，444／555合法重用，V2.11僅維護；不能因此稱為新的11/17績效。
+
+V3.2／V3.3曲線屬封存研究，本機讀取時間更新不會每天重新訓練或替換其歷史結果。休市／來源等待期間顯示最近完成交易日，並保留等待原因。
+
+同步依據：[Community Cloud官方說明](https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app/edit-your-app)明示會自動複製已提交的所有檔案變更；5分鐘計時器補上已開頁面的重新讀取。這個間隔不代表GitHub作業或Cloud同步保證在5分鐘內完成。自動讀取補強驗證：全套452項通過；瀏覽器以獨立2秒測試間隔驗證兩次整頁刷新、導航狀態保留及無頁面錯誤，正式間隔仍為300秒。
+
 ## 展示內容與目前結論
 
 側欄提供六個研究入口：

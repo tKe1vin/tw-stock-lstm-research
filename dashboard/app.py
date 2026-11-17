@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -15,6 +16,7 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.data import DataIntegrityError, STUDIES, load_daily_status, load_study
+from dashboard.refresh import automatic_refresh
 
 GITHUB = "https://github.com/tKe1vin/tw-stock-lstm-research/blob/main/"
 COLORS = {"0050 基準": "#7b8799", "新聞 Ridge": "#2563eb",
@@ -334,7 +336,8 @@ def main():
             st.caption("版本期間不同，請於各自期間比較，不將跨版本ROI排序視為改善。")
         st.divider()
         st.markdown("**展示模式**　保存結果・唯讀")
-        st.caption("閱讀保存報告，不需模型套件或行情金鑰。更新程式與資料由GitHub同步。")
+        st.caption("每日流程更新新聞、模型與日誌，再由GitHub同步到網站。以頁面資料日期確認最新進度。")
+        automatic_refresh(uuid4().hex)
         if st.button("重新讀取保存報告", width="stretch"):
             st.rerun()
         st.page_link("https://github.com/tKe1vin/tw-stock-lstm-research", label="GitHub完整專案", icon="↗️")
