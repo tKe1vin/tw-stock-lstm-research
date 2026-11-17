@@ -24,7 +24,8 @@ def build_paired_report(baseline_dir, prices, sentiment, destination, *, root=RO
                "sentiment": sentiment, "baseline_protocol": protocol_path,
                "core_recommendation": baseline_dir / "next_day_recommendation.csv"}
     result = run_paired_research(sources["predictions"], prices, sentiment, protocol)
-    recommendation = paired_daily_recommendation(sources["core_recommendation"], prices, sentiment, protocol)
+    recommendation = paired_daily_recommendation(sources["core_recommendation"], prices, sentiment, protocol,
+                                                  allow_delayed_research=True)
     now = now or datetime.now(TZ)
     day = str(pd.Timestamp(recommendation.Signal_Date.iloc[0]).date())
     recommendation["Created_At"] = now.astimezone(TZ).isoformat()

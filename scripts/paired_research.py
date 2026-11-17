@@ -156,7 +156,9 @@ def allocation_weights(predictions, sentiments=None, *, use_news=False, risk_off
     return weights
 
 
-def _sentiment_table(sentiment, dates, tickers, cfg, decision_at=None):
+def _sentiment_table(sentiment, dates, tickers, cfg, decision_at=None, *, allow_delayed_decision=False):
+    if allow_delayed_decision and len(dates) != 1:
+        raise ValueError("Delayed research decisions require one current daily signal")
     raw = _frame(sentiment)
     if not {"Date", "ticker", "Daily_Sentiment"}.issubset(raw.columns):
         raise ValueError("News requires Date, ticker, Daily_Sentiment")
@@ -184,7 +186,8 @@ def _sentiment_table(sentiment, dates, tickers, cfg, decision_at=None):
             if stamp.tzinfo is None:
                 raise ValueError("Decision timestamps must contain a timezone")
             label = pd.Timestamp(day).normalize().tz_localize(None)
-            if stamp.tz_convert("Asia/Taipei").date() != label.date():
+            local_date = stamp.tz_convert("Asia/Taipei").date()
+            if local_date != label.date() and not (allow_delayed_decision and local_date > label.date()):
                 raise ValueError("Decision timestamp must be on its signal date")
             decision_map[label] = stamp.tz_convert("UTC")
     for column in (publication, acquired):
@@ -217,6 +220,8 @@ def _sentiment_table(sentiment, dates, tickers, cfg, decision_at=None):
         "aggregate_timestamp_columns_complete": bool(complete),
         "recorded_decision_times": {str(day.date()): value.isoformat() for day, value in decision_map.items()},
         "decision_time_evidence_complete": all(day in decision_map for day in dates),
+        "delayed_daily_research": bool(allow_delayed_decision and any(
+            value.tz_convert("Asia/Taipei").date() > day.date() for day, value in decision_map.items())),
         "unknown_decision_policy": "Check acquisition no later than signal-day end; this is not evidence it existed at the actual decision",
         "news_point_in_time_verified": False,
         "reason": "Aggregate timestamps do not prove per-article membership, retrieval or immutable historical scoring; exploratory unless separately audited",
@@ -473,7 +478,7 @@ def run_paired_research(predictions, prices, sentiment, baseline_protocol=None, 
             "fills": pd.DataFrame(fill_rows)}
 
 
-def paired_daily_recommendation(recommendation, prices, sentiment, baseline_protocol=None, config=None, tickers=TICKERS, decision_at=None):
+def paired_daily_recommendation(recommendation, prices, sentiment, baseline_protocol=None, config=None, tickers=TICKERS, decision_at=None, *, allow_delayed_research=False):
     """Use today's 444 forecast as the shared core; return all arms, without orders.
 
     Target_Date may lie beyond the last observed close. Prices must include the
@@ -511,7 +516,8 @@ def paired_daily_recommendation(recommendation, prices, sentiment, baseline_prot
         if created.nunique() != 1:
             raise ValueError("Daily core needs one shared Created_At decision timestamp")
         decision_at = created.iloc[0]
-    news, evidence, news_raw = _sentiment_table(sentiment, pd.DatetimeIndex([signal]), tickers, cfg, decision_at)
+    news, evidence, news_raw = _sentiment_table(sentiment, pd.DatetimeIndex([signal]), tickers, cfg, decision_at,
+                                             allow_delayed_decision=allow_delayed_research)
     risk = market_risk(panel, cfg).loc[signal]
     if not np.isfinite([risk.Market_Vol_20d, risk.Risk_Threshold_Pct]).all():
         raise ValueError("Daily risk warm-up incomplete")

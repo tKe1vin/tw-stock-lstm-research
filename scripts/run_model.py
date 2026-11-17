@@ -769,7 +769,8 @@ def run_paired_555(mode: str) -> int:
         return 2
     protocol = json.loads((baseline / "evaluation_protocol.json").read_text(encoding="utf-8"))
     result = run_paired_research(baseline / "test_predictions.csv", price, sentiment, protocol)
-    recommendation = paired_daily_recommendation(baseline / "next_day_recommendation.csv", price, sentiment, protocol)
+    recommendation = paired_daily_recommendation(baseline / "next_day_recommendation.csv", price, sentiment, protocol,
+                                                  allow_delayed_research=True)
     out = ROOT / "outputs/555" / str(output_day.date())
     native = out / "native"
     export = export_paired_native(result, recommendation, baseline, native, completed, datetime.now(TZ))
