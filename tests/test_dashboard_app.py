@@ -18,7 +18,8 @@ APP = ROOT / "dashboard/app.py"
 
 
 def app():
-    return AppTest.from_file(str(APP), default_timeout=30).run()
+    at = AppTest.from_file(str(APP), default_timeout=30).run()
+    return at.radio(key="project_page").set_value("V3研究").run()
 
 
 def values(at):
@@ -28,7 +29,7 @@ def values(at):
 def protected_snapshot():
     """Presentation interactions may not write any retained research evidence."""
     paths = []
-    for folder in ("dashboard/assets", "reports", "data", "models", "experiments/results/v2/v211"):
+    for folder in ("dashboard/assets", "reports", "data", "models", "outputs", "experiments/results/v2/v211"):
         paths.extend(path for path in (ROOT / folder).rglob("*")
                      if path.is_file() and "__pycache__" not in path.parts)
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()

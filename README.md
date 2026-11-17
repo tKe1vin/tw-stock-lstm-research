@@ -4,7 +4,7 @@
 
 - [V3：0050核心＋新聞超額模型](research/v3/design.md) · [實測與拒絕採用紀錄](reports/research_v3/2026-11-10/summary.md)
 - [V3.3：20交易日／Ridge與HGB新聞模型](research/v3_3/design.md) · [11/17實測](reports/research_v3_3/2026-11-17/summary.md)
-- [Streamlit初步結果展示與啟動方式](docs/streamlit_demo.md) · [V3下一輪研究討論](docs/v3_next_research.md)
+- [Streamlit完整專案展示與啟動方式](docs/streamlit_demo.md) · [V3下一輪研究討論](docs/v3_next_research.md)
 - [130題逐題狀態](docs/audit_130_status.md) · [訓練關鍵修正與歷史限制](docs/audit_130_critical.md)
 - [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
 - [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
@@ -12,7 +12,7 @@
 - [固定設定的多變量 LSTM 延伸](reports/research_extension/2026-11-06/summary.md)
 - [每日狀態](reports/latest/summary.md) · [驗證紀錄](VALIDATION.md)
 
-## Streamlit 初步結果展示
+## Streamlit 完整專案展示
 
 ```bash
 python3.12 -m venv .venv-dashboard
@@ -21,7 +21,9 @@ python -m pip install -r dashboard/requirements.txt
 python -m streamlit run dashboard/app.py
 ```
 
-開啟終端顯示的網址（預設 `http://localhost:8501`）。展示頁提供 V3.3／V3.2 各自期間的淨值、相對0050、回撤、新聞／價格配對驗證、成本與每日日誌；只讀封存資料，不需TensorFlow或行情金鑰。V3.3新聞候選淨報酬13.00%、0050為15.90%，**尚未勝出或採用**。不同版本期間不同，不以跨版ROI排序宣稱改善。[資料來源、限制與部署設定](docs/streamlit_demo.md)。
+開啟終端顯示的網址（預設 `http://localhost:8501`）。側欄提供**專案總覽、模型與結果、研究日誌、新聞與情緒、V3研究、文件與重現**六個入口。可查看444／555共同核心回測、四系統逐日預測與狀態、V2.11帳本、累積／逐日日誌及真正執行紀錄；新聞可依日期、股票、標題／ID及情緒篩選，追溯原文、分數與取得時間。企畫書、協議、審查、Notebook下載也整合在頁面中。
+
+網站只讀已保存資料，不需TensorFlow或行情金鑰。新聞展示標題另外保存實際取得時間，不會認證舊新聞當時已可用；網站不抓全文、不補造截圖或舊訊號。V3.3新聞候選淨報酬13.00%、0050為15.90%，**尚未勝出或採用**。不同協議／期間不混排ROI。[資料來源、限制與部署設定](docs/streamlit_demo.md)。
 
 ## 每日功能
 

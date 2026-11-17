@@ -1,4 +1,4 @@
-"""Read-only Streamlit presentation of retained, exploratory research evidence."""
+"""Read-only project portal for retained models, journals and news evidence."""
 from __future__ import annotations
 
 import json
@@ -211,21 +211,7 @@ def next_steps():
     st.link_button("閱讀完整研究討論", GITHUB + "docs/v3_next_research.md")
 
 
-def main():
-    st.set_page_config(page_title="台股研究｜新聞 × 0050", page_icon="📊", layout="wide")
-    st.markdown(CSS, unsafe_allow_html=True)
-    with st.sidebar:
-        st.markdown("### TW RESEARCH")
-        st.caption("新聞情緒 × 成本後超額報酬")
-        version = st.selectbox("研究版本", list(STUDIES), key="study_version",
-                              format_func=lambda x: {"v3.3": "V3.3｜20日・Ridge / HGB", "v3.2": "V3.2｜5日・Ridge / LSTM"}[x])
-        st.caption("版本使用不同留出期間，請在各自期間內比較，不將ROI增減視為跨版本改善。")
-        st.divider()
-        st.markdown("**展示模式**　封存結果・唯讀")
-        st.caption("操作只切換展示，不會訓練模型、抓取行情或重選測試贏家。")
-        if st.button("重新讀取保存報告", width="stretch"):
-            st.rerun()
-        st.page_link("https://github.com/tKe1vin/tw-stock-lstm-research", label="GitHub研究資料", icon="↗️")
+def render_v3(version):
     try:
         study = load_study(version)
     except (DataIntegrityError, OSError, ValueError, KeyError) as exc:
@@ -251,7 +237,123 @@ def main():
         c.link_button("查看原始研究報告", GITHUB + study["report_dir"] + "/summary.md", width="stretch")
         st.caption("圖表為保存帳本衍生的淨值指數。完整行情與新聞原文未隨展示散布；雜湊用於檔案完整性，不等於歷史新聞可用時點的證明。")
         st.json(study["provenance"], expanded=False)
-    st.markdown('<div class="app-footer">TW STOCK RESEARCH　·　固定研究版本與真實保存結果　·　不提供下單功能</div>', unsafe_allow_html=True)
+
+
+def _navigate(page):
+    st.session_state["project_page"] = page
+
+
+def project_overview():
+    st.markdown('<div class="eyebrow">TAIWAN EQUITY · PROJECT RESEARCH PORTAL</div>', unsafe_allow_html=True)
+    st.title("台股研究，從模型到每一天")
+    st.markdown('<div class="subline">444價格預測 × 555動態配置 × 新聞情緒 × 0050延伸研究<br>模型結果、研究日誌與新聞來源，在同一個入口追溯。</div>', unsafe_allow_html=True)
+    from dashboard.journals import available_dates
+    a, b = st.columns(2)
+    a.metric("研究系統", "4 套")
+    b.metric("保存逐日報告的日期", f"{len(available_dates(root=ROOT))} 天")
+    try:
+        daily()
+    except (DataIntegrityError, OSError, ValueError, KeyError) as exc:
+        st.warning("最新狀態無法確認；其他保存資料仍可由側欄查看。")
+        st.caption(str(exc))
+    st.divider()
+    st.subheader("從這裡開始")
+    items = [
+        ("模型與結果", "比較444／555共同核心、各模型每日預測、V2.11帳本，以及原修訂與延伸研究。"),
+        ("研究日誌", "依資料日閱讀444／555報告、搜尋累積日誌，或按真正執行日追蹤成功與失敗。"),
+        ("新聞與情緒", "查看保存的文章、情緒分數、股票關聯、原文連結、來源掃描與取得時間。"),
+        ("V3研究", "檢視V3.2／V3.3與0050的配對驗證、留出績效、成本及下一輪設計。"),
+        ("文件與重現", "閱讀企畫書、研究協議、130題審查與重現說明，下載文件及原始Notebook。"),
+    ]
+    for start in range(0, len(items), 2):
+        for col, (name, text) in zip(st.columns(2), items[start:start + 2]):
+            with col:
+                with st.container(border=True):
+                    st.markdown("### " + name)
+                    st.write(text)
+                    st.button("開啟" + name, key="open_" + name, on_click=_navigate, args=(name,))
+    st.caption("本頁顯示目前部署checkout保存的研究，資料更新取決於GitHub每日流程及Streamlit同步；重新整理不會在網站內執行模型訓練或抓取新聞。")
+
+
+DOCUMENTS = {
+    "企畫與主題": {"修訂企畫書": "docs/proposal_revised.md", "專案說明": "README.md"},
+    "研究協議": {"444／555配對協議": "docs/research_protocol_v2.md", "P0十項改善": "docs/p0_remediation.md",
+                 "V2.11帳本協議": "research/v211/research_protocol.md", "V3研究設計": "research/v3/design.md",
+                 "V3.3研究設計": "research/v3_3/design.md", "V3資料契約": "research/v3/data_contract.md"},
+    "審查與重現": {"130題逐題狀態": "docs/audit_130_status.md", "關鍵修正與歷史限制": "docs/audit_130_critical.md",
+                 "驗證紀錄": "VALIDATION.md", "交付與重現說明": "docs/delivery_v2_1.md",
+                 "每日恢復說明": "docs/daily_recovery_2026-11-17.md", "Streamlit使用說明": "docs/streamlit_demo.md"},
+    "下一輪研究": {"V3下一輪討論": "docs/v3_next_research.md"},
+}
+
+
+def documents():
+    from dashboard.journals import display_markdown
+    st.header("專題文件與重現入口")
+    st.caption("文件直接來自本次部署的GitHub版本；歷史限制與原協議保留。")
+    group = st.selectbox("文件分類", list(DOCUMENTS), key="docs_group")
+    label = st.selectbox("閱讀文件", list(DOCUMENTS[group]), key="docs_document_" + group)
+    relative = DOCUMENTS[group][label]
+    path = ROOT / relative
+    if path.is_file():
+        text = path.read_text(encoding="utf-8-sig")
+        a, b = st.columns(2)
+        a.link_button("在GitHub查看原檔", GITHUB + relative)
+        b.download_button("下載這份文件", text, file_name=path.name, mime="text/markdown", key="docs_download")
+        with st.container(border=True):
+            st.markdown(display_markdown(text, relative), unsafe_allow_html=False)
+    else:
+        st.info("此checkout沒有保存這份文件。")
+    st.divider()
+    st.subheader("企畫書與模型Notebook")
+    files = {
+        "修訂企畫書 Word": "docs/proposal_revised.docx", "444原始Notebook": "models/model_444/444.ipynb",
+        "555原六特徵Notebook": "models/model_555/555.ipynb", "555 V2凍結研究Notebook": "models/model_555_v2/555_V2.ipynb",
+        "444研究Notebook": "notebooks/444_baseline.ipynb", "555多變量延伸Notebook": "notebooks/555_multivariate.ipynb",
+    }
+    for label, relative in files.items():
+        a, b = st.columns([3, 1])
+        a.link_button(label, GITHUB + relative)
+        path = ROOT / relative
+        if path.is_file():
+            b.download_button("下載", path.read_bytes(), file_name=path.name,
+                              mime="application/octet-stream", key="docs_file_" + relative)
+    st.caption("下載Notebook不會在網站執行訓練。主研究555共用444預測；原六特徵Notebook保留為獨立歷史／延伸研究。完整來源程式、原交付壓縮檔與版本紀錄可由GitHub專案查看。")
+
+
+def main():
+    st.set_page_config(page_title="台股專題｜模型・日誌・新聞", page_icon="📊", layout="wide")
+    st.markdown(CSS, unsafe_allow_html=True)
+    with st.sidebar:
+        st.markdown("### TW RESEARCH")
+        st.caption("台股LSTM・新聞情緒・動態配置")
+        page = st.radio("專案導覽", ["專案總覽", "模型與結果", "研究日誌", "新聞與情緒", "V3研究", "文件與重現"], key="project_page")
+        if page == "V3研究":
+            version = st.selectbox("研究版本", list(STUDIES), key="study_version",
+                                  format_func=lambda x: {"v3.3": "V3.3｜20日・Ridge / HGB", "v3.2": "V3.2｜5日・Ridge / LSTM"}[x])
+            st.caption("版本期間不同，請於各自期間比較，不將跨版本ROI排序視為改善。")
+        st.divider()
+        st.markdown("**展示模式**　保存結果・唯讀")
+        st.caption("閱讀保存報告，不需模型套件或行情金鑰。更新程式與資料由GitHub同步。")
+        if st.button("重新讀取保存報告", width="stretch"):
+            st.rerun()
+        st.page_link("https://github.com/tKe1vin/tw-stock-lstm-research", label="GitHub完整專案", icon="↗️")
+    if page == "專案總覽":
+        project_overview()
+    elif page == "模型與結果":
+        from dashboard.project import render_project
+        render_project()
+    elif page == "研究日誌":
+        from dashboard.journals import render_journals
+        render_journals()
+    elif page == "新聞與情緒":
+        from dashboard.news import render_news
+        render_news()
+    elif page == "V3研究":
+        render_v3(version)
+    else:
+        documents()
+    st.markdown('<div class="app-footer">TW STOCK RESEARCH　·　來源、日期與協議可追溯　·　研究模擬，無券商下單功能</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

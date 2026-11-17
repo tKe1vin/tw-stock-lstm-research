@@ -95,6 +95,13 @@ jobs:
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"
           # Persist valid partial results first. The final step reports waiting/failure.
           exit 0
+      - name: Capture display-only news titles for the project website
+        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          mkdir -p logs
+          python -m scripts.capture_news_display --capture --limit 50 > logs/news-display-capture.json
       - name: Persist validated state, including partial progress
         id: persist
         if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')

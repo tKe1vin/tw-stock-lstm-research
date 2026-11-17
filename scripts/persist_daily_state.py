@@ -37,6 +37,7 @@ DATA_FILES = {
     "data/news_scored_cache.csv",
     "data/news_update_state.json",
     "data/news_scored_cache_provenance.jsonl",
+    "data/news_display_metadata.jsonl",
 }
 MARKET_FILES = {
     "prices.csv", "sentiment.csv", "news_cache.csv", "manifest.json",
@@ -141,6 +142,11 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
         path = root / name
         if path.is_symlink() or not path.is_file() or digest(path) != wanted:
             raise ValueError(f"Immutable artifact changed or missing: {name}")
+    # Display-only titles never alter scoring evidence; committed rows are append-only.
+    from scripts.capture_news_display import METADATA, validate_metadata
+    prior_titles = git(root, "show", f"HEAD:{METADATA}", check=False)
+    if (root / METADATA).exists() or prior_titles.returncode == 0:
+        validate_metadata(root / METADATA, prior_titles.stdout if prior_titles.returncode == 0 else None)
     attempts = git(root, "ls-tree", "-r", "--name-only", "-z", "HEAD", "--", "reports/attempts/")
     for raw in attempts.stdout.split(b"\0"):
         if not raw:
