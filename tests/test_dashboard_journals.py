@@ -46,11 +46,14 @@ def test_cumulative_filters_retain_original_delayed_entry_and_history():
 
 def test_actual_attempts_keep_failure_and_maintenance_not_current_success():
     records = journals.attempt_records("2026-11-17", ROOT)
-    assert len(records) >= 3
-    assert all(row["run_date"] == "2026-11-17" and row["as_of_date"] == "2026-11-16" for row in records)
-    assert any(row["status"] == "failed" for row in records)
-    assert any(row["steps"]["555"]["status"] == "failed" for row in records)
-    assert all(row["steps"]["v211"]["status"] == "maintenance_only" for row in records)
+    assert all(row["run_date"] == "2026-11-17" for row in records)
+    # Later successful attempts on the same real run date must not change the
+    # preserved delayed-session failures or make them current successes.
+    delayed = [row for row in records if row["as_of_date"] == "2026-11-16"]
+    assert len(delayed) >= 3
+    assert any(row["status"] == "failed" for row in delayed)
+    assert any(row["steps"]["555"]["status"] == "failed" for row in delayed)
+    assert all(row["steps"]["v211"]["status"] == "maintenance_only" for row in delayed)
 
 
 def test_missing_dates_and_journals_stay_missing(tmp_path):
@@ -116,7 +119,9 @@ def test_journal_ui_switches_all_modes_and_search_without_writes_or_runtime(monk
     monkeypatch.setitem(sys.modules, "tensorflow", None)
     at = app()
     assert not at.exception
-    assert at.selectbox(key="journals_daily_date").value == "2026-11-16"
+    assert at.selectbox(key="journals_daily_date").value == journals.available_dates(root=ROOT)[0]
+    at.selectbox(key="journals_daily_date").set_value("2026-11-16").run()
+    assert not at.exception
     assert any(metric.label == "真正執行日" and metric.value == "2026-11-17" for metric in at.metric)
     at.selectbox(key="journals_daily_document").set_value("555 日誌").run()
     assert not at.exception
@@ -125,6 +130,12 @@ def test_journal_ui_switches_all_modes_and_search_without_writes_or_runtime(monk
     at.text_input(key="journals_search").set_value("延後").run()
     assert not at.exception and len(at.expander) == 1
     at.radio(key="journals_mode").set_value("實際執行紀錄").run()
+    at.selectbox(key="journals_attempt_date").set_value("2026-11-17").run()
+    records = journals.attempt_records("2026-11-17", ROOT)
+    delayed_index = next(i for i, row in enumerate(records)
+                         if row["as_of_date"] == "2026-11-16"
+                         and row["steps"]["v211"]["status"] == "maintenance_only")
+    at.selectbox(key="journals_attempt_record").set_value(delayed_index).run()
     assert not at.exception and len(at.dataframe) == 1
     assert any("maintenance_only" in str(item.value) for item in at.json)
     at.radio(key="journals_mode").set_value("最新摘要").run()

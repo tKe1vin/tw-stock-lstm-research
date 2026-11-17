@@ -15,9 +15,31 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_real_archive_deduplicates_same_scored_row_without_dropping_stock_matches():
     archive = news.load_news_archive()
     frame = archive["articles"]
-    assert len(frame) == 44 and frame.news_id.nunique() == 40
+    columns = ["news_id", "ticker", "publish_time", "Date", "Daily_Sentiment", "Model_ID"]
+    caches = [ROOT / "data/news_scored_cache.csv",
+              ROOT / "experiments/results/v2/v211/market/news_cache.csv"]
+    expected = pd.concat([pd.read_csv(path, dtype={"news_id": str})[columns]
+                          for path in caches], ignore_index=True).drop_duplicates()
+    # The expected population comes from both retained caches, not yesterday's
+    # article count. The full six-field version key preserves multi-stock news.
+    assert len(frame) == len(expected)
+    assert frame.news_id.nunique() == expected.news_id.nunique()
+    pd.testing.assert_frame_equal(
+        frame[columns].sort_values(columns).reset_index(drop=True),
+        expected.sort_values(columns).reset_index(drop=True))
     assert frame.cache_row_hash.is_unique
-    assert frame.available_at.notna().sum() == 23
+    recorded_hashes = set()
+    for path in caches:
+        evidence_path = path.with_name(path.stem + "_provenance.jsonl")
+        if evidence_path.is_file():
+            recorded_hashes.update(record["cache_row_hash"]
+                                   for line in evidence_path.read_text().splitlines()
+                                   if line.strip()
+                                   for record in [json.loads(line)]
+                                   if record.get("record_type") == "scored_cache_row")
+    timed_hashes = set(frame.loc[frame.available_at.notna(), "cache_row_hash"])
+    assert timed_hashes == set(frame.cache_row_hash) & recorded_hashes
+    assert len(timed_hashes) >= 23  # Preserve the original observed-score evidence.
     assert news.LEGACY in set(frame.timing_status) and news.LATE in set(frame.timing_status)
     assert archive["has_page_screenshots"] is False
     assert not archive["calendar"].empty and not archive["daily"].empty

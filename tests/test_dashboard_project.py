@@ -24,7 +24,7 @@ def copy_pair(tmp_path):
 
 
 def test_paired_history_keeps_each_period_and_identical_core_without_native_roi_mix():
-    current = load_paired(paired_dates()[0])
+    current = load_paired('2026-11-16')
     older = load_paired(root=ROOT, archived=True)
     assert current['start'] == '2026-04-09' and current['end'] == '2026-11-16'
     assert older['start'] == '2026-03-30' and older['end'] == '2026-11-06'
@@ -37,6 +37,14 @@ def test_paired_history_keeps_each_period_and_identical_core_without_native_roi_
     native = load_model_output('444', '2026-11-16')['tables']['native_strategy_metrics']['data']
     paired_roi = current['metrics'].set_index('Arm').loc['static_equal444', 'ROI_Pct']
     assert paired_roi != native.ROI_Pct.iloc[0]
+    latest = load_paired(paired_dates()[0])
+    latest_saved = pd.read_csv(ROOT / latest['base'] / 'metrics.csv', encoding='utf-8-sig')
+    assert latest_saved.First_Execution_Date.nunique() == 1
+    assert latest_saved.Last_Valuation_Date.nunique() == 1
+    assert latest['start'] == latest_saved.First_Execution_Date.iloc[0]
+    assert latest['end'] == latest_saved.Last_Valuation_Date.iloc[0]
+    assert latest['end'] >= current['end']
+    pd.testing.assert_frame_equal(latest['metrics'].drop(columns='組別'), latest_saved)
 
 
 def test_changed_pair_fails_closed_and_never_replaces_archive(tmp_path):
@@ -63,7 +71,9 @@ def test_forecast_only_and_missing_output_are_never_fabricated_as_realized_resul
     assert v2['status']['signal_published'] is False
     assert v2['status']['recommendation_execution_status'] == 'forecast_only'
     assert v2['tables']['unified_signal']['data'].execution_status.eq('forecast_only').all()
-    tracker = load_model_output('v211', model_dates('v211')[0])
+    # The delayed 11/16 output remains maintenance-only even after a later
+    # session has legitimately published a new signal.
+    tracker = load_model_output('v211', '2026-11-16')
     assert tracker['status']['maintenance_successful'] is True
     assert tracker['status']['signal_published'] is False and tracker['tables'] == {}
     with pytest.raises(DataIntegrityError):
@@ -74,13 +84,23 @@ def test_forecast_only_and_missing_output_are_never_fabricated_as_realized_resul
 
 def test_tracker_retains_separate_signal_and_valuation_dates_and_checks_ledger(tmp_path):
     tracker = load_tracker()
-    assert tracker['last_signal_date'] == '2026-11-10'
+    relative = 'experiments/results/v2/v211'
+    signal_files = list((ROOT / relative / 'daily').glob('????-??-??.csv'))
+    assert tracker['last_signal_date'] == max(path.stem for path in signal_files)
+    assert tracker['signal_count'] == len(signal_files)
     assert tracker['historical_availability_certified'] is False
     tables = tracker['tables']
-    assert tables['live_nav']['data'].Date.max() == '2026-11-16'
-    assert len(tables['matured_scores']['data']) == 10
-    assert tables['matured_scores']['data'].Signal_Date.nunique() == 2
-    relative = 'experiments/results/v2/v211'
+    saved_nav = pd.read_csv(ROOT / relative / 'live_nav.csv')
+    pd.testing.assert_frame_equal(tables['live_nav']['data'], saved_nav)
+    assert tables['live_nav']['data'].Date.max() == saved_nav.Date.max()
+    matured = tables['matured_scores']['data']
+    pd.testing.assert_frame_equal(matured, pd.read_csv(ROOT / relative / 'matured_scores.csv'))
+    assert {'2026-11-05', '2026-11-06'}.issubset(set(matured.Signal_Date))
+    assert matured.groupby('Signal_Date').size().eq(5).all()
+    assert not matured.duplicated(['Signal_Date', 'Ticker']).any()
+    for signal_day, part in matured.groupby('Signal_Date'):
+        saved_signal = pd.read_csv(ROOT / relative / 'daily' / f'{signal_day}.csv')
+        assert set(part.Ticker) == set(saved_signal.Ticker)
     base = tmp_path / relative
     base.mkdir(parents=True)
     for name in ['ledger_integrity.json', 'matured_scores.csv']:
