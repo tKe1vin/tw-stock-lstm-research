@@ -46,7 +46,7 @@ def test_default_study_renders_actual_metrics_and_rejected_news_status():
     assert result["新聞對同架構價格控制"] == "+0.12 個百分點"
     assert any("尚未通過採用門檻" in message.value for message in at.warning)
     assert any("B0_benchmark" in str(item.value) for item in at.json)
-    assert len(at.tabs) == 6
+    assert [tab.label for tab in at.tabs] == ["結果總覽", "預測與驗證", "成本與風險", "每日運作", "優化實驗", "來源與限制"]
 
 
 def test_version_switch_updates_both_period_and_metrics_without_cross_period_ranking():

@@ -10,17 +10,16 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
 
 from dashboard.data import DataIntegrityError, STUDIES, load_daily_status, load_study
 from dashboard.refresh import automatic_refresh
+from dashboard.research_charts import comparison_bars, wealth_chart
+from dashboard.research_layout import RESEARCH_TABS
 
 GITHUB = "https://github.com/tKe1vin/tw-stock-lstm-research/blob/main/"
-COLORS = {"0050 基準": "#7b8799", "新聞 Ridge": "#2563eb",
-          "價格 Ridge": "#c48b29", "0050＋五股等權": "#8063c5"}
 REASONS = {
     "insufficient_positive_folds": "正超額折數不足",
     "nonpositive_validation_excess": "驗證累積超額未為正",
@@ -52,32 +51,9 @@ def pp(value):
 
 
 def curve_chart(curves, metric, arms):
-    """Chart complete common dates; never combine different study periods."""
-    frame = curves.copy()
-    benchmark = frame.loc[frame.Arm.eq("B0_benchmark"), ["Date", "Wealth_Index"]].rename(
-        columns={"Wealth_Index": "Benchmark_Wealth"})
-    frame = frame.merge(benchmark, on="Date", validate="many_to_one")
-    frame["Relative_Wealth_Pct"] = (frame.Wealth_Index / frame.Benchmark_Wealth - 1) * 100
-    frame = frame[frame.Arm.isin(arms)].copy()
-    field, title = {"成本後淨值": ("Wealth_Index", "淨值指數（起始資金＝100）"),
-                    "相對0050": ("Relative_Wealth_Pct", "相對0050財富增長（%）"),
-                    "回撤路徑": ("Drawdown_Pct", "回撤（%）")}[metric]
-    names = [name for name in COLORS if name in set(frame.Display_Name)]
-    palette = alt.Scale(domain=names, range=[COLORS[name] for name in names])
-    hover = alt.selection_point(fields=["Date"], nearest=True, on="pointerover", empty=False)
-    base = alt.Chart(frame).encode(
-        x=alt.X("Date:T", title=None, axis=alt.Axis(format="%m/%d", grid=False)),
-        y=alt.Y(f"{field}:Q", title=title, scale=alt.Scale(zero=False)),
-        color=alt.Color("Display_Name:N", title=None, scale=palette,
-                        legend=alt.Legend(orient="bottom", labelLimit=200)),
-        tooltip=[alt.Tooltip("Date:T", title="日期", format="%Y-%m-%d"),
-                 alt.Tooltip("Display_Name:N", title="組別"), alt.Tooltip(f"{field}:Q", title=title, format=".2f")])
-    line = base.mark_line(strokeWidth=2.4)
-    points = base.mark_circle(size=55).encode(opacity=alt.condition(hover, alt.value(1), alt.value(0))).add_params(hover)
-    reference = alt.Chart(pd.DataFrame({"value": [100 if metric == "成本後淨值" else 0]})).mark_rule(
-        color="#bdc8d7", strokeDash=[4, 5]).encode(y="value:Q")
-    return (reference + line + points).properties(width="container", height=345).configure_view(strokeWidth=0).configure_axis(
-        labelColor="#6b7a90", titleColor="#6b7a90", gridColor="#e9edf4", titleFontWeight="normal")
+    """Retain existing widget values while using the shared V2/V3 chart."""
+    view = "相對基準" if metric == "相對0050" else metric
+    return wealth_chart(curves, view, arms, "B0_benchmark", benchmark_label="0050")
 
 
 def overview(study):
@@ -87,7 +63,7 @@ def overview(study):
     a.metric("新聞候選淨報酬 · 未採用", f"{news.ROI_Pct:.2f}%")
     b.metric("0050基準淨報酬", f"{benchmark.ROI_Pct:.2f}%")
     c.metric("新聞對0050差額", pp(news.ROI_Pct - benchmark.ROI_Pct))
-    d.metric("新聞對同架構價格控制", pp(news.ROI_Pct - price.ROI_Pct))
+    d.metric("模型最大回撤", f"{news.MDD_Pct:.2f}%")
     st.caption("摘要使用完整留出期與相同成本假設；新聞增量只對照同家族價格模型，不能由單段留出結果決定採用。")
     with st.container(border=True):
         left, right = st.columns([3, 2])
@@ -95,6 +71,7 @@ def overview(study):
             st.subheader("同期間，成本後的資金路徑")
         with right:
             metric = st.radio("圖表視角", ["成本後淨值", "相對0050", "回撤路徑"], horizontal=True,
+                              format_func=lambda view: "相對基準" if view == "相對0050" else view,
                               label_visibility="collapsed", key="curve_view")
         include_equal = st.checkbox("加入0050＋五股等權控制組", value=False, key="show_equal")
         arms = [study["benchmark_arm"], study["price_arm"], study["news_arm"]]
@@ -113,6 +90,7 @@ def overview(study):
             key: st.column_config.NumberColumn(format="%.2f") for key in table.columns[1:]})
     with right:
         st.subheader("這一輪的結論")
+        st.metric("新聞對同架構價格控制", pp(news.ROI_Pct - price.ROI_Pct))
         st.write("目前沒有可採用的新聞候選。三折驗證採用結果仍是 **0050基準（B0）**。")
         st.write("等權控制組可幫助辨認股票池與配置的影響；它的勝出不能直接算成新聞的效果。")
         st.caption("新聞模型的留出期結果為失敗診斷，沒有因留出表現改選，也沒有替換每日模型。")
@@ -121,6 +99,14 @@ def overview(study):
 def validation(study):
     st.subheader("先通過驗證，才考慮採用")
     st.write("三折皆使用時間切分與成熟標籤隔離。採用決策在留出期評分前寫入；已看過的歷史仍屬探索。")
+    folds = study["validation"][["Candidate", "Fold", "Relative_Wealth_Excess_Pct"]].copy()
+    folds["驗證折"] = folds.Fold.map(lambda value: f"第{int(value)}折")
+    folds["候選"] = folds.Candidate.map(lambda value: value.replace("ridge", "Ridge").replace("hgb", "HGB")
+                                        .replace("lstm", "LSTM").replace("_price", "・價格").replace("_news", "・新聞"))
+    folds = folds.rename(columns={"Relative_Wealth_Excess_Pct": "相對財富"})
+    st.altair_chart(comparison_bars(folds, "驗證折", "相對財富", "逐折相對0050財富增長",
+                                    series="候選", unit="%"), use_container_width=True)
+    st.caption("各折各自比較同期間0050；正值才代表該折相對財富增加，不是預測準確率，也不是留出期績效。")
     rows = []
     for candidate, part in study["validation"].groupby("Candidate", sort=False):
         rows.append({"候選": candidate, "正超額折數": f"{int(part.Relative_Wealth_Excess_Pct.gt(0).sum())}/{len(part)}",
@@ -150,6 +136,14 @@ def costs(study):
     c2.metric("額外實現成本的影響", pp(-cost_gap))
     c3.metric("其餘持倉／現金路徑差", pp(gap + cost_gap))
     st.caption("這是同一組已實現帳本的會計差異分解。移除成本會改變開倉門檻與交易路徑，不能把它直接當成減費後的回測或因果歸因。")
+    cost_chart, risk_chart = st.columns(2, gap="large")
+    with cost_chart:
+        st.altair_chart(comparison_bars(study["metrics"], "Display_Name", "Total_Transaction_Cost",
+                                        "已實現交易成本", unit="元"), use_container_width=True)
+    with risk_chart:
+        st.altair_chart(comparison_bars(study["metrics"], "Display_Name", "MDD_Pct",
+                                        "最大回撤", unit="%"), use_container_width=True)
+    st.caption("成本以元計，回撤以百分比計，各自使用獨立座標；最大回撤包含初始資金與進場成本。")
     left, right = st.columns(2, gap="large")
     with left:
         st.subheader("成本與回撤")
@@ -227,24 +221,28 @@ def render_v3(version):
     st.title("新聞訊號，值得加碼嗎？")
     st.markdown(f'<div class="subline">{study["label"]}　／　留出期 {study["period_start"]} — {study["period_end"]}<br>以0050為基準，分開檢驗模型、新聞與交易成本。</div>', unsafe_allow_html=True)
     st.warning("探索性結果｜新聞候選尚未通過採用門檻，維持0050基準；每日模型未被替換。", icon="🧪")
-    tabs = st.tabs(["結果總覽", "配對驗證", "成本與風險", "每日運作", "下一輪研究", "優化實驗"])
+    tabs = st.tabs(RESEARCH_TABS)
     with tabs[0]: overview(study)
     with tabs[1]: validation(study)
     with tabs[2]: costs(study)
     with tabs[3]: daily()
-    with tabs[4]: next_steps()
-    with tabs[5]:
+    with tabs[4]:
         from dashboard.optimization import render_cost_experiment
         render_cost_experiment()
-    with st.expander("下載與研究來源"):
-        a, b, c = st.columns(3)
-        a.download_button("下載留出期指標 CSV", study["metrics"].to_csv(index=False).encode("utf-8-sig"),
-                          file_name=f"{version}_holdout_metrics.csv", mime="text/csv", width="stretch")
-        b.download_button("下載三折驗證 CSV", study["validation"].to_csv(index=False).encode("utf-8-sig"),
-                          file_name=f"{version}_validation_metrics.csv", mime="text/csv", width="stretch")
-        c.link_button("查看原始研究報告", GITHUB + study["report_dir"] + "/summary.md", width="stretch")
-        st.caption("圖表為保存帳本衍生的淨值指數。完整行情與新聞原文未隨展示散布；雜湊用於檔案完整性，不等於歷史新聞可用時點的證明。")
-        st.json(study["provenance"], expanded=False)
+    with tabs[5]:
+        st.subheader("資料來源與可解讀範圍")
+        st.write("歷史新聞當時可用性尚未完整證明，原五股缺研究前選定證據，收盤成交仍為模型假設。這些留出結果用於失敗診斷，不能取代新的前瞻驗證。")
+        with st.expander("下載與研究來源"):
+            a, b, c = st.columns(3)
+            a.download_button("下載留出期指標 CSV", study["metrics"].to_csv(index=False).encode("utf-8-sig"),
+                              file_name=f"{version}_holdout_metrics.csv", mime="text/csv", width="stretch")
+            b.download_button("下載三折驗證 CSV", study["validation"].to_csv(index=False).encode("utf-8-sig"),
+                              file_name=f"{version}_validation_metrics.csv", mime="text/csv", width="stretch")
+            c.link_button("查看原始研究報告", GITHUB + study["report_dir"] + "/summary.md", width="stretch")
+            st.caption("圖表為保存帳本衍生的淨值指數。完整行情與新聞原文未隨展示散布；雜湊用於檔案完整性，不等於歷史新聞可用時點的證明。")
+            st.json(study["provenance"], expanded=False)
+        st.divider()
+        next_steps()
 
 
 def _navigate(page):

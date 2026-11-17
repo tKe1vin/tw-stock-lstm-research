@@ -9,6 +9,9 @@ on:
       - 'streamlit_v2_app.py'
       - 'docs/v2_integration/**'
       - 'dashboard/**'
+      - 'tests/test_dashboard*.py'
+      - 'tests/test_research_charts.py'
+      - 'tests/test_v2_presentation.py'
       - 'experiments/v2/**'
       - '.github/workflows/v2-delivery-review.yml'
   pull_request:
@@ -17,6 +20,9 @@ on:
       - 'streamlit_v2_app.py'
       - 'docs/v2_integration/**'
       - 'dashboard/**'
+      - 'tests/test_dashboard*.py'
+      - 'tests/test_research_charts.py'
+      - 'tests/test_v2_presentation.py'
       - 'experiments/v2/**'
       - '.github/workflows/v2-delivery-review.yml'
 
@@ -46,6 +52,6 @@ jobs:
       - name: Check current portal and additive V2 UI and inference contracts
         run: >-
           python -m pytest -q tests/test_dashboard*.py tests/test_news_display*.py
-          tests/test_v2_diagnostics.py tests/test_v3_4.py
+          tests/test_v2_diagnostics.py tests/test_v2_presentation.py tests/test_research_charts.py tests/test_v3_4.py
           dashboard_v2/tests docs/v2_integration/tests
           docs/v2_integration/v2_improvement_notes/tests

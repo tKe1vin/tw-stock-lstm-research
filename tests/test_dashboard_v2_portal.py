@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-import re
 import sys
 
 import pytest
@@ -21,8 +20,10 @@ def portal():
 
 
 def displayed(at):
-    return "\n".join(item.value for kind in (at.markdown, at.caption, at.info, at.warning)
-                     for item in kind)
+    texts = [item.value for kind in (at.markdown, at.caption, at.info, at.warning)
+             for item in kind]
+    texts.extend(f"{item.label}：{item.value}" for item in at.metric)
+    return "\n".join(texts)
 
 
 def saved_evidence():
@@ -34,10 +35,11 @@ def saved_evidence():
 
 
 def choose_section(at, token):
-    """Use the visible section containing a stable research label."""
-    options = at.selectbox(key="v2_section").options
+    """Historical sources and daily operations have independent selectors."""
+    key = "v2_archive_section" if token in {"Ridge", "V2 總覽", "原 555 與 V2", "歷史實驗", "限制"} else "v2_section"
+    options = at.selectbox(key=key).options
     value = next(option for option in options if token in option)
-    return at.selectbox(key="v2_section").set_value(value).run()
+    return at.selectbox(key=key).set_value(value).run()
 
 
 def test_v2_portal_defaults_to_saved_v211_and_missing_ridge_not_demo_metrics(monkeypatch):
@@ -50,14 +52,15 @@ def test_v2_portal_defaults_to_saved_v211_and_missing_ridge_not_demo_metrics(mon
     assert not at.exception and not at.error
     signal_root = ROOT / "experiments/results/v2/v211/daily"
     latest = max(path.stem for path in signal_root.glob("????-??-??.csv"))
-    assert f"LAST_SIGNAL {latest}" in displayed(at)
-    assert "ROOT experiments/results/v2/v211" in displayed(at)
+    assert any(metric.label == "最後保存訊號日" and metric.value == latest for metric in at.metric)
+    assert "experiments/results/v2/v211" in displayed(at)
     at = choose_section(at, "Ridge")
     assert not at.exception and not at.error
     text = displayed(at)
     assert "DATA_UNAVAILABLE" in text
-    metric = re.search(r"MAE / RMSE</p>\s*<strong>(.*?)</strong>", text)
-    assert metric is not None and metric.group(1) in {"None", "DATA_UNAVAILABLE"}
+    ridge_metrics = [metric for metric in at.metric if "Ridge" in metric.label and "MAE" in metric.label]
+    assert ridge_metrics
+    assert all(metric.value in {"未提供", "—", "None", "DATA_UNAVAILABLE"} for metric in ridge_metrics)
 
 
 def test_demo_is_explicit_and_does_not_leak_into_v3_or_new_portal_session(monkeypatch):
@@ -67,6 +70,9 @@ def test_demo_is_explicit_and_does_not_leak_into_v3_or_new_portal_session(monkey
         monkeypatch.delenv(key, raising=False)
     standalone_root = prospective.v211_root()
     at = portal()
+    at = choose_section(at, "交易日誌")
+    latest_day = max(option for option in at.selectbox(key="v2_journal_day").options if option != "全部")
+    at.selectbox(key="v2_journal_day").set_value(latest_day).run()
     at.radio(key="v2_data_mode").set_value("demo").run()
     assert not at.exception and not at.error
     assert "SYNTHETIC_DEMO" in displayed(at)
@@ -118,10 +124,19 @@ def test_all_v2_sections_use_no_model_or_provider_and_preserve_every_source(monk
     assert not at.exception and len(at.title) == 1
     for mode in ("saved", "demo"):
         at.radio(key="v2_data_mode").set_value(mode).run()
-        for section in list(at.selectbox(key="v2_section").options):
-            at.selectbox(key="v2_section").set_value(section).run()
-            assert not at.exception, (mode, section, [item.message for item in at.exception])
-            assert not at.error, (mode, section, [item.value for item in at.error])
-            assert len(at.title) == 1
-            assert ".stApp {background:#101418" not in displayed(at)
+        assert not at.exception and not at.error
+        if mode == "demo":
+            assert any(metric.label == "已發生成交費" and metric.value == "未提供" for metric in at.metric)
+            fee_metrics = [metric for metric in at.metric if "費" in metric.label]
+            assert all("nan" not in metric.value.lower() and "None" not in metric.value
+                       for metric in fee_metrics)
+            assert any("不以0元補齊" in item.value for item in at.info)
+        for key in ("v2_section", "v2_archive_section"):
+            for section in list(at.selectbox(key=key).options):
+                at.selectbox(key=key).set_value(section).run()
+                assert not at.exception, (mode, section, [item.message for item in at.exception])
+                assert not at.error, (mode, section, [item.value for item in at.error])
+                assert len(at.title) == 1
+                assert ".stApp {background:#101418" not in displayed(at)
+                assert 'svg[role="img"] {background:#101418' not in displayed(at)
     assert saved_evidence() == before

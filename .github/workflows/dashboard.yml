@@ -12,6 +12,8 @@ on:
       - 'tests/test_dashboard_data.py'
       - 'tests/test_dashboard_app.py'
       - 'tests/test_dashboard*.py'
+      - 'tests/test_research_charts.py'
+      - 'tests/test_v2_presentation.py'
       - 'tests/test_news_display*.py'
       - 'scripts/capture_news_display.py'
       - 'scripts/persist_daily_state.py'
@@ -36,6 +38,8 @@ on:
       - 'tests/test_dashboard_data.py'
       - 'tests/test_dashboard_app.py'
       - 'tests/test_dashboard*.py'
+      - 'tests/test_research_charts.py'
+      - 'tests/test_v2_presentation.py'
       - 'tests/test_news_display*.py'
       - 'scripts/capture_news_display.py'
       - 'scripts/persist_daily_state.py'
@@ -76,4 +80,4 @@ jobs:
       - name: Install presentation dependencies
         run: python -m pip install -r dashboard/requirements.txt 'pytest>=8,<9'
       - name: Check data integrity and actual Streamlit interactions
-        run: python -m pytest -q tests/test_dashboard*.py tests/test_news_display*.py tests/test_v2_diagnostics.py tests/test_v3_4.py
+        run: python -m pytest -q tests/test_dashboard*.py tests/test_news_display*.py tests/test_v2_diagnostics.py tests/test_v2_presentation.py tests/test_research_charts.py tests/test_v3_4.py
