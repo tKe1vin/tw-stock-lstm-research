@@ -1,0 +1,55 @@
+name: Streamlit research dashboard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - '.streamlit/**'
+      - 'streamlit_app.py'
+      - 'scripts/export_dashboard_data.py'
+      - 'tests/test_dashboard_data.py'
+      - 'tests/test_dashboard_app.py'
+      - 'reports/research_v3/**'
+      - 'reports/research_v3_3/**'
+      - 'reports/latest/four_systems.json'
+      - '.github/workflows/dashboard.yml'
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - '.streamlit/**'
+      - 'streamlit_app.py'
+      - 'scripts/export_dashboard_data.py'
+      - 'tests/test_dashboard_data.py'
+      - 'tests/test_dashboard_app.py'
+      - 'reports/research_v3/**'
+      - 'reports/research_v3_3/**'
+      - 'reports/latest/four_systems.json'
+      - '.github/workflows/dashboard.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  presentation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TZ: Asia/Taipei
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: dashboard/requirements.txt
+      - name: Install presentation dependencies
+        run: python -m pip install -r dashboard/requirements.txt 'pytest>=8,<9'
+      - name: Check data integrity and actual Streamlit interactions
+        run: python -m pytest -q tests/test_dashboard_data.py tests/test_dashboard_app.py

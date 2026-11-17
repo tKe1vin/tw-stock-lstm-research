@@ -1,0 +1,72 @@
+{
+  "schema": "research-dashboard-curves-v1",
+  "created_on": "2026-11-17",
+  "raw_provider_data_included": false,
+  "curve_definition": "Wealth_Index = 100 × saved portfolio NAV / common initial capital; entry costs retained. Drawdown includes initial wealth100.",
+  "provider_source_note": "Only derived portfolio wealth is redistributed, no raw/normalized provider price panel, orders, quotes or article text.",
+  "cross_version_comparison": "Periods differ. Never combine curves or interpret cross-version ROI ranking as improvement.",
+  "studies": {
+    "v3.3": {
+      "curves_file": "curves_v33.csv",
+      "curves_sha256": "fed6c0e63fc36a99d5daeba5a3aa6390b52289f0a77c75c5b9f51f5f92b0b9d2",
+      "report_sha256": {
+        "reports/research_v3_3/2026-11-17/holdout_metrics.csv": "427ffb288320b817ba82ceb1a8f750bd1c4944b139bc5ff00b45259859c118ea",
+        "reports/research_v3_3/2026-11-17/validation_metrics.csv": "37c98950eaf54603494216460470c7a344a9a0f31788a10d28b2c68a3e100bee",
+        "reports/research_v3_3/2026-11-17/selection.json": "b47baf7e53cb9e044c05a7ebb3a4c3be629db53c1782ade21424c3b9b496b3fc",
+        "reports/research_v3_3/2026-11-17/registered_config.json": "68fc03a1f0f9efe2f8707ed449e9721887f9233db04e3687c15d32c59111203f",
+        "reports/research_v3_3/2026-11-17/limitations.json": "5f113169278564a6c8efb8167ed53963d548aab2c2f839d0c55f21b12826ff1e",
+        "reports/research_v3_3/2026-11-17/input_provenance.json": "bfcc564f3060ac08f6873185d3aec706b002be2ce175041e4874b818ca0b1a99",
+        "reports/research_v3_3/2026-11-17/reproduction_manifest.json": "98b652464b988702324e75bbf67deb5c0e38a8b08b1cc888e942f7a13e85b6fe"
+      },
+      "private_run_manifest_sha256": "6a9ac1527df634b9e3a1817e9c4d915c1638a35db17b70e95e6dbbcbbd932e06",
+      "retained_derived_nav_sha256": {
+        "holdout_B0_benchmark/nav.csv": "59989ea41b2a949ed69c1f9e16db109210f651f714328cee5c87017fdb0dcbee",
+        "holdout_B1_equal/nav.csv": "b16cedf30f7dbd65f48d8bb98cb932d24d860d23f39ec1d43aaac323705b3597",
+        "holdout_ridge_price/nav.csv": "fae34cb6555ecf8fb1bbce4f9775454540947e020d26416ebc0c23936d938fec",
+        "holdout_ridge_news/nav.csv": "e24dbfa02ca0b14228b4fa2005ade000206b836120943644c51348b7d4bc8884"
+      },
+      "initial_capital": 1000000.0,
+      "period_start": "2026-04-15",
+      "period_end": "2026-11-09",
+      "arms": [
+        "B0_benchmark",
+        "B1_equal",
+        "ridge_price",
+        "ridge_news"
+      ],
+      "rows": 564,
+      "derived_only": true
+    },
+    "v3.2": {
+      "curves_file": "curves_v32.csv",
+      "curves_sha256": "240751035bf771f4a27d9ff76beee52739b4525cae2930f929afd2c21a679b57",
+      "report_sha256": {
+        "reports/research_v3/2026-11-10/holdout_metrics.csv": "eebfc485b174c7a1f7497d128935ab4d21e9af228aade24cf054210f6f8c507b",
+        "reports/research_v3/2026-11-10/validation_metrics.csv": "44335b5a3b084c983534bdcac21e94a6863bf1d6d1504ff914d504a8ca8d9140",
+        "reports/research_v3/2026-11-10/selection.json": "bf344c4d81abd1d0c29036885161f1a7e01d5e49b40f981185cea3b8d1f7094d",
+        "reports/research_v3/2026-11-10/registered_config.json": "18f9ec4aee829a9419b5fcccff0c2d3e1e32223ff9122bbfef9c5a6e614018be",
+        "reports/research_v3/2026-11-10/limitations.json": "205217846ce4dbc8fc8e20864f5d4be047809949dbc5370a58690bd193e0ed55",
+        "reports/research_v3/2026-11-10/input_provenance.json": "a1dfc20ff53950fe9296ca591d04408de2c8fb7a20a30ab49eca0e2566da7f4f",
+        "reports/research_v3/2026-11-10/reproduction_manifest.json": "2d4cdbb1798b34d8bfbcc86b6ad360272d23f3a98a012153fb27aa0278afc35e"
+      },
+      "private_run_manifest_sha256": "491d9c31fa9df7ff7e0c6ce6527874a7795a2c4b921e0560678e82b0663556c9",
+      "retained_derived_nav_sha256": {
+        "holdout_B0_benchmark/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb",
+        "holdout_B1_equal/nav.csv": "75f0200b3cdc460327b62cc7a6dab1023c3b3756464033a62e30d2c9d96269aa",
+        "holdout_ridge_price/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb",
+        "holdout_ridge_news/nav.csv": "bdc4f5c963ef7c523acd94a9befc37af1b05fe705c87a451b9c7ca6a7f5e53fb"
+      },
+      "initial_capital": 1000000.0,
+      "period_start": "2026-08-04",
+      "period_end": "2026-11-03",
+      "arms": [
+        "B0_benchmark",
+        "B1_equal",
+        "ridge_price",
+        "ridge_news"
+      ],
+      "rows": 244,
+      "derived_only": true
+    }
+  }
+}
