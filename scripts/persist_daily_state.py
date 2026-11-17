@@ -96,13 +96,18 @@ def allowed_path(name: str) -> bool:
                 and parts[1].endswith(".csv") and bool(DATE.fullmatch(parts[1][:-4]))
             )
     parts = path.parts
+    if len(parts) == 4 and parts[:2] == ("reports", "attempts") and DATE.fullmatch(parts[2]):
+        return (parts[3] == "summary.md" or bool(re.fullmatch(
+            r"[0-9]{8}T[0-9]{12}\+0800_[0-9a-f]{16}\.json", parts[3])))
     if len(parts) == 5 and parts[0] == "outputs":
         return (
             parts[1] in {"444", "555"} and bool(DATE.fullmatch(parts[2]))
             and parts[3] == "native" and parts[4] in NATIVE_EXPORTS
         )
     if len(parts) == 4 and parts[0] == "outputs":
-        if parts[1] in {"444", "555"} and parts[2] in {"recommendation_history", "paired_recommendation_history"}:
+        if parts[1] in {"444", "555"} and parts[2] in {
+                "recommendation_history", "paired_recommendation_history",
+                "expired_recommendation_history", "paired_expired_recommendation_history"}:
             return parts[3].endswith(".csv")
         if parts[1] == "daily_summary" and DATE.fullmatch(parts[2]):
             return parts[3] == "summary.json"
@@ -136,6 +141,17 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
         path = root / name
         if path.is_symlink() or not path.is_file() or digest(path) != wanted:
             raise ValueError(f"Immutable artifact changed or missing: {name}")
+    attempts = git(root, "ls-tree", "-r", "--name-only", "-z", "HEAD", "--", "reports/attempts/")
+    for raw in attempts.stdout.split(b"\0"):
+        if not raw:
+            continue
+        name = raw.decode("utf-8")
+        if not name.endswith(".json"):
+            continue
+        path = root / name
+        prior = git(root, "show", f"HEAD:{name}").stdout
+        if path.is_symlink() or not path.is_file() or path.read_bytes() != prior:
+            raise ValueError(f"Published daily attempt changed or missing: {name}")
     for book in BOOK_ROOTS:
         base = root / book
         from scripts.ledger_integrity import validate_ledger_sources

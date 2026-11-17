@@ -2,16 +2,19 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-from scripts.common import ROOT, atomic_json
+from scripts.common import ROOT, TZ, atomic_json
 
 MODELS = ("444", "555", "555_v2", "v211")
 REPORT_SCHEMA = "four-systems-v1"
+ATTEMPT_SCHEMA = "daily-research-attempt-v1"
 COMPACT_FILES = (
     "strategy_metrics.csv", "evaluation_protocol.json", "next_day_recommendation.csv",
     "model_metrics.csv", "backtest_nav.csv", "test_predictions.csv", "market_metrics.csv",
@@ -96,11 +99,198 @@ def _validate_forecast(path: Path, day: str) -> None:
         raise ValueError(f"Incomplete or stale five-stock forecast: {path}")
 
 
+def _news_summary(day: str) -> dict:
+    """Summarize observed scan coverage without publishing article content."""
+    market = ROOT / "experiments/results/v2/v211/market"
+    coverage = _read(market / "news_scan_coverage.json")
+    calendar = coverage.get("calendar_days") or {}
+    sessions = coverage.get("signal_sessions") or {}
+    observed = sessions.get(day) or {}
+    latest = max(calendar, default=None)
+    return {
+        "provider": "cnyes",
+        "calendar_scan_through": latest,
+        "signal_session": day,
+        "signal_session_scan_complete": day in sessions,
+        "source_start": observed.get("source_start"),
+        "source_end": observed.get("source_end"),
+        "completed_at": observed.get("completed_at"),
+        "articles_on_signal_calendar_day": (calendar.get(day) or {}).get("articles"),
+        "article_text_included": False,
+        "historical_availability_retroactively_certified": False,
+    }
+
+
+def _attempt_path(summary: dict, day: str) -> Path:
+    run_date = str(pd.Timestamp(summary.get("run_date") or day).date())
+    started = pd.Timestamp(summary.get("started") or datetime.now(TZ))
+    if started.tzinfo is None:
+        raise ValueError("A daily attempt timestamp must contain a timezone")
+    # The same invocation is idempotent; a later invocation has its own actual
+    # start time. Do not use wall-clock report rendering time as a fake signal.
+    core = {"as_of_date": day, "summary": summary}
+    raw = json.dumps(core, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode()
+    identity = hashlib.sha256(raw).hexdigest()[:16]
+    name = started.tz_convert(TZ).strftime("%Y%m%dT%H%M%S%f%z") + "_" + identity + ".json"
+    return ROOT / "reports/attempts" / run_date / name
+
+
+def _write_attempt(summary: dict, day: str, report: dict, path: Path) -> None:
+    """Append one immutable actual-run record, then refresh its derived index."""
+    payload = {
+        "schema": ATTEMPT_SCHEMA,
+        "as_of_date": day,
+        "run_date": str(pd.Timestamp(summary.get("run_date") or day).date()),
+        "output_day": str(summary.get("output_day") or day),
+        "started": summary.get("started"),
+        "finished": summary.get("finished"),
+        "delayed_run": bool(summary.get("delayed_run") or str(summary.get("run_date") or day) != day),
+        "attempt_status": summary.get("status") or report.get("status"),
+        "reason": summary.get("reason"),
+        "steps": summary.get("steps") or {},
+        "report": report,
+        "market": summary.get("market") or {},
+        "historical_signal_backfill_performed": False,
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if path.read_text(encoding="utf-8") != encoded:
+            raise ValueError("A recorded daily attempt cannot be overwritten")
+    else:
+        with path.open("x", encoding="utf-8") as handle:
+            handle.write(encoded)
+    lines = [f"# {payload['run_date']} 實際執行紀錄", "",
+             "每筆記錄保留實際執行時間、資料日與完成／等待原因；延後重建不冒充資料日已發布。", "",
+             "| 啟動時間 | 資料日 | 嘗試狀態 | 444 | 555 | 紀錄 |",
+             "| --- | --- | --- | --- | --- | --- |"]
+    for item in sorted(path.parent.glob("*.json"), reverse=True):
+        value = _read(item)
+        steps = value.get("steps") or {}
+        values = [str(value.get("started") or "未記錄"), value["as_of_date"],
+                  str(value.get("attempt_status") or "unknown"),
+                  str((steps.get("444") or {}).get("status") or "not_run"),
+                  str((steps.get("555") or {}).get("status") or "not_run")]
+        lines.append("| " + " | ".join(text.replace("|", "\\|") for text in values)
+                     + f" | [JSON]({item.name}) |")
+    (path.parent / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _status_path(summary: dict, model: str, day: str, run_date: str) -> Path:
+    step = (summary.get("steps") or {}).get(model) or {}
+    if step.get("status_path"):
+        return _inside_root(str(step["status_path"]))
+    if step.get("output_dir"):
+        return _inside_root(str(step["output_dir"])) / "status.json"
+    output_day = str(summary.get("output_day") or day)
+    choices = list(dict.fromkeys((output_day, run_date)))
+    paths = [ROOT / "outputs" / model / key / "status.json" for key in choices]
+    # Older versions stored by calendar run date. Only fall back when the
+    # as-of keyed status is absent, never to an older/different session record.
+    return next((path for path in paths if path.is_file()), paths[0])
+
+
+def _preserve_reason(summary: dict, day: str, previous: dict, daily_previous: dict, records: dict) -> str | None:
+    if not summary.get("steps") or summary.get("status") == "skipped":
+        return "empty_or_skipped_attempt_preserves_published_results"
+    if previous.get("as_of_date") and day < str(previous["as_of_date"]):
+        return "older_session_cannot_replace_latest_report"
+    old = daily_previous or (previous if previous.get("as_of_date") == day else {})
+    old_models = old.get("models") or {}
+    if old.get("status") == "complete" and not all(record["current"] for record in records.values()):
+        return "retry_cannot_replace_completed_session_report"
+    if all((old_models.get(model) or {}).get("current") for model in ("444", "555")) and not all(
+            records[model]["current"] for model in ("444", "555")):
+        return "retry_cannot_erase_completed_444_555_report"
+    currentness_improved = any(records[model]["current"] and not (old_models.get(model) or {}).get("current")
+                               for model in MODELS)
+    if not currentness_improved and all((old_models.get(model) or {}).get("current") for model in ("444", "555")) and all(
+            ((summary.get("steps") or {}).get(model) or {}).get("reason") == "already_completed_for_this_session"
+            for model in ("444", "555")):
+        return "already_published_444_555_for_this_session"
+    return None
+
+
+def _annotate_delayed_journals(day: str, summary: dict, records: dict) -> None:
+    """Keep next-day research tables honest when the scheduled run arrived late."""
+    if str(summary.get("run_date") or day) == day and not summary.get("delayed_run"):
+        return
+    marker = "<!-- delayed-run-timing -->"
+    end_marker = "<!-- /delayed-run-timing -->"
+    for model in ("444", "555"):
+        if not records[model]["current"]:
+            continue
+        record = records[model]
+        generated = record.get("generated_at") or summary.get("finished") or summary.get("started") or summary.get("run_date")
+        if record.get("forecast_timing") == "expired_entry":
+            note = "原預定進場時點已過，下表只作延後重建的研究預測，不計為可成交的新訊號或前瞻命中。"
+        elif record.get("forecast_timing") == "future_entry":
+            note = "生成時原預定進場尚未到，仍僅為研究輸出，未下單或成交。"
+        else:
+            note = "須依實際生成時間核對原目標時點，未認證為資料日已存在的前瞻訊號。"
+        block = (marker + "\n\n" + f"**延後執行註記：**資料日{day}；實際生成／執行時間{generated}。"
+                 + note + "\n\n" + end_marker + "\n")
+        daily = ROOT / "reports/daily" / day / f"{model}.md"
+        journal = ROOT / "reports/journals" / f"{model}.md"
+        for path in (daily, journal):
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            section = text.find(f"## {day} — {model}")
+            if section < 0:
+                continue
+            start = text.find("\n", section)
+            finish = text.find("\n## ", start + 1)
+            finish = len(text) if finish < 0 else finish
+            body = text[start + 1:finish]
+            if marker in body:
+                before, existing = body.split(marker, 1)
+                if end_marker not in existing:
+                    raise ValueError("Incomplete delayed journal timing annotation")
+                body = before + existing.split(end_marker, 1)[1].lstrip("\n")
+            updated = text[:start + 1] + "\n" + block + "\n" + body.lstrip("\n") + text[finish:]
+            path.write_text(updated, encoding="utf-8")
+
+
+def _write_independent_journal(model: str, source: Path, day: str, summary: dict) -> None:
+    """A successful model still has a journal when its comparison peer waits."""
+    destination = ROOT / "reports/daily" / day / f"{model}.md"
+    if destination.exists():
+        return  # A validated paired/previous report is not replaced by a fallback.
+    metrics = pd.read_csv(source / "strategy_metrics.csv").iloc[0]
+    recommendation = pd.read_csv(source / "next_day_recommendation.csv")
+    import math
+    values = {name: float(metrics[name]) for name in ("ROI_Pct", "Sharpe", "MDD_Pct")}
+    if not all(math.isfinite(value) for value in values.values()):
+        raise ValueError(f"{model} has a non-finite independent journal metric")
+    marker = f"## {day} — {model} 獨立完成紀錄"
+    lines = [marker, "", f"資料日：{day}；實際執行日：{summary.get('run_date') or day}。",
+             "另一模型或共同核心比較尚未完成；以下為此模型原生研究輸出，不與不同協議合併排名。", "",
+             f"原生研究ROI {values['ROI_Pct']:+.2f}%；Sharpe {values['Sharpe']:.3f}；MDD {values['MDD_Pct']:.2f}%。", "",
+             "### 保存的下一期研究目標（不代表可成交委託）", "",
+             "| 股票 | 預測報酬 | 目標權重 |", "| --- | ---: | ---: |"]
+    for row in recommendation.itertuples():
+        prediction, weight = float(row.Predicted_Return_Pct), float(row.Target_Weight)
+        if not math.isfinite(prediction) or not math.isfinite(weight):
+            raise ValueError(f"{model} has a non-finite independent recommendation")
+        lines.append(f"| {row.Ticker} | {prediction:+.3f}% | {weight:.2%} |")
+    lines += ["", "研究輸出未下單或成交；方向準確率不當作逐筆交易勝率。", ""]
+    text = "\n".join(lines)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(text, encoding="utf-8")
+    journal = ROOT / "reports/journals" / f"{model}.md"
+    journal.parent.mkdir(parents=True, exist_ok=True)
+    old = journal.read_text(encoding="utf-8") if journal.exists() else f"# {model} 研究日誌\n"
+    if marker not in old:
+        title, _, body = old.partition("\n")
+        journal.write_text(title + "\n\n" + text + "\n" + body, encoding="utf-8")
+
+
 def _markdown(report: dict, destination: Path) -> str:
     lines = [
         "# 四套系統每日狀態", "",
         f"資料截止交易日：**{report['as_of_date']}**；執行日：{report['run_date']}。",
-        f"整體狀態：**{report['status']}**。", "",
+        f"整體狀態：**{report['status']}**；444／555 主研究：**{report.get('research_status', 'partial')}**。", "",
         "| 系統 | 本次狀態 | 當日結果 |", "| --- | --- | --- |",
     ]
     for model in MODELS:
@@ -113,6 +303,18 @@ def _markdown(report: dict, destination: Path) -> str:
         elif record["current"]:
             link = "已完成"
         lines.append(f"| {model} | {record['status']} | {link} |")
+    if report.get("delayed_run"):
+        lines += ["", f"延後執行：資料日為{report['as_of_date']}，實際啟動為{report.get('started') or report['run_date']}。",
+                  "本次輸出不冒充於資料日當晚發布；若預定進場已過，預測僅供研究，不列為可成交的新訊號。"]
+    if any(record.get("maintenance_only") for record in report["models"].values()):
+        lines += ["", "V2.11 本次只維護已保存訊號的成交／成熟標籤，沒有補寫過去訊號；不影響444／555主研究完成狀態。"]
+    expired = [model for model, record in report["models"].items() if record.get("forecast_timing") == "expired_entry"]
+    if expired:
+        lines += ["", "已過原預定進場時點的研究輸出：" + "、".join(expired) + "；不標示為可執行的新建議。"]
+    news = report.get("news") or {}
+    lines += ["", "新聞掃描：最近來源日 " + str(news.get("calendar_scan_through") or "未完成／未記錄")
+              + "；本資料日覆蓋 " + ("已完成" if news.get("signal_session_scan_complete") else "未完成／未記錄")
+              + "。來源失敗與確實無匹配文章分開，不用昨日分數冒充今日新聞。"]
     lines += [
         "", "444 與 555 的績效只在相同測試日期、價格快照及評估規格下比較。",
         "555 V2 是凍結候選的預測輸出；V2.11 使用同一模型保存研究訊號、成交與成熟標籤。",
@@ -133,20 +335,25 @@ def _markdown(report: dict, destination: Path) -> str:
         lines += ["當日 444／555 比較尚未完成。", ""]
     if report.get("last_successful_as_of_date") and report["status"] != "complete":
         lines += [f"最近四套系統均完成的資料日：{report['last_successful_as_of_date']}。", ""]
+    if report.get("attempt_journal"):
+        target = os.path.relpath(ROOT / report["attempt_journal"], destination).replace(os.sep, "/")
+        lines += [f"[本次實際執行紀錄]({target})", ""]
     return "\n".join(lines)
 
 
-def build_reports(summary: dict, completed_session) -> dict:
+def _build_reports(summary: dict, completed_session, *, attempt_path: Path) -> dict:
     """Write status for partial runs, and validate all current comparison inputs."""
     day = str(pd.Timestamp(completed_session).date())
     run_date = str(summary.get("run_date") or day)
     latest = ROOT / "reports" / "latest"
     previous = _read(latest / "four_systems.json") or _read(latest / "metadata.json")
+    daily = ROOT / "reports" / "daily" / day
+    daily_previous = _read(daily / "status.json")
     records = {}
     native = {}
     for model in MODELS:
         step = summary.get("steps", {}).get(model, {})
-        payload_path = ROOT / "outputs" / model / run_date / "status.json"
+        payload_path = _status_path(summary, model, day, run_date)
         payload = _read(payload_path)
         observed = str(payload.get("completed_session", ""))[:10]
         success = step.get("status") == "success"
@@ -160,12 +367,17 @@ def build_reports(summary: dict, completed_session) -> dict:
             "observed_as_of_date": observed or None,
             "reason": payload.get("reason") or step.get("reason"),
             "current_output": None,
+            "maintenance_only": bool(step.get("maintenance_only") or payload.get("maintenance_only")
+                                     or step.get("status") == "maintenance_only" or payload.get("status") == "maintenance_only"),
+            "forecast_timing": payload.get("forecast_timing") or step.get("forecast_timing"),
+            "recommendation_execution_status": payload.get("recommendation_execution_status") or step.get("recommendation_execution_status"),
+            "generated_at": payload.get("generated_at"),
         }
         if current and model in ("444", "555"):
             native[model] = _native(model, payload, day)
             record["current_output"] = f"reports/latest/{model}/next_day_recommendation.csv"
         elif current and model == "555_v2":
-            signal = _inside_root(payload.get("unified_csv") or f"outputs/555_v2/{run_date}/prediction.csv")
+            signal = _inside_root(payload.get("unified_csv") or str(payload_path.parent.relative_to(ROOT) / "prediction.csv"))
             if not signal.is_file():
                 raise ValueError("555_v2 success is missing its current prediction file")
             _validate_forecast(signal, day)
@@ -179,6 +391,26 @@ def build_reports(summary: dict, completed_session) -> dict:
             _validate_forecast(signal, day)
             record["current_output"] = signal.relative_to(ROOT).as_posix()
         records[model] = record
+
+    preserved = _preserve_reason(summary, day, previous, daily_previous, records)
+    if preserved:
+        # A skipped/failed retry is still journaled, but cannot erase a valid
+        # published snapshot or move the latest report backwards.
+        return {
+            "report_schema": REPORT_SCHEMA, "as_of_date": day, "run_date": run_date,
+            "output_day": str(summary.get("output_day") or day),
+            "started": summary.get("started"), "finished": summary.get("finished"),
+            "delayed_run": bool(summary.get("delayed_run") or day != run_date),
+            "status": ("skipped" if summary.get("status") == "skipped" or not summary.get("steps")
+                       else "complete" if all(record["current"] for record in records.values()) else "partial"),
+            "research_status": "complete" if all(records[model]["current"] for model in ("444", "555")) else "partial",
+            "models": records, "publication_status": "attempt_only", "preserved_reason": preserved,
+            "last_successful_as_of_date": _last_success(previous),
+            "comparison_status": "not_recomputed_for_preserved_attempt",
+            "market": summary.get("market") or {}, "news": _news_summary(day),
+            "attempt_journal": attempt_path.relative_to(ROOT).as_posix(),
+            "performance_protocols_combined": False,
+        }
 
     comparison_status = "waiting_for_both_current_notebooks"
     primary_research = None
@@ -229,19 +461,28 @@ def build_reports(summary: dict, completed_session) -> dict:
     if primary_research.get("status") == "complete":
         atomic_json(latest / "paired_research.json", primary_research)
 
+    for model, source in native.items():
+        _write_independent_journal(model, source, day, summary)
+    _annotate_delayed_journals(day, summary, records)
+
     complete = all(record["current"] for record in records.values())
     report = {
         "report_schema": REPORT_SCHEMA,
         "as_of_date": day, "run_date": run_date,
+        "output_day": str(summary.get("output_day") or day),
         "started": summary.get("started"), "finished": summary.get("finished"),
+        "delayed_run": bool(summary.get("delayed_run") or day != run_date),
         "status": "complete" if complete else "partial",
+        "research_status": "complete" if all(records[model]["current"] for model in ("444", "555")) else "partial",
         "last_successful_as_of_date": day if complete else _last_success(previous),
         "models": records, "comparison_status": comparison_status,
         "market": summary.get("market", {}),
+        "news": _news_summary(day),
+        "attempt_journal": attempt_path.relative_to(ROOT).as_posix(),
+        "publication_status": "published",
         "performance_protocols_combined": False,
         "primary_research": primary_research,
     }
-    daily = ROOT / "reports" / "daily" / day
     atomic_json(daily / "status.json", report)
     atomic_json(latest / "four_systems.json", report)
     atomic_json(latest / "metadata.json", {
@@ -249,9 +490,30 @@ def build_reports(summary: dict, completed_session) -> dict:
         "as_of_date": day, "status": report["status"],
         "last_successful_as_of_date": report["last_successful_as_of_date"],
         "comparison_status": comparison_status,
+        "research_status": report["research_status"],
+        "delayed_run": report["delayed_run"],
         "model_currentness": {model: record["current"] for model, record in records.items()},
         "note": "Read four_systems.json before treating any older result file as current.",
     })
     (daily / "summary.md").write_text(_markdown(report, daily), encoding="utf-8")
     (latest / "summary.md").write_text(_markdown(report, latest), encoding="utf-8")
+    return report
+
+
+def build_reports(summary: dict, completed_session) -> dict:
+    """Publish validated session outputs and always journal the actual attempt."""
+    summary = dict(summary)
+    if not summary.get("started"):
+        summary["started"] = datetime.now(TZ).isoformat()
+    day = str(pd.Timestamp(completed_session).date())
+    path = _attempt_path(summary, day)
+    try:
+        report = _build_reports(summary, day, attempt_path=path)
+    except Exception as exc:
+        failed = {"status": "failed", "reason": "report_validation_failed", "error": str(exc),
+                  "as_of_date": day, "run_date": str(summary.get("run_date") or day),
+                  "publication_status": "rejected"}
+        _write_attempt(summary, day, failed, path)
+        raise
+    _write_attempt(summary, day, report, path)
     return report

@@ -97,6 +97,8 @@ def test_partial_preserves_previous_results_and_marks_currentness(root):
     assert metadata["status"] == "partial"
     assert metadata["model_currentness"]["555"] is False
     assert not (root / f"reports/daily/{DAY}/comparison.md").exists()
+    assert (root / f"reports/daily/{DAY}/444.md").exists()
+    assert "獨立完成紀錄" in (root / "reports/journals/444.md").read_text()
 
 
 def test_legacy_two_model_complete_is_not_a_four_system_success(root):
@@ -206,3 +208,62 @@ def test_journal_does_not_score_later_historical_replays_as_forward_predictions(
     # No prices are needed: the recommendation was not available on its signal date.
     review = journal.past_444(DAY, price_path=root / "missing.csv")
     assert "暫不評分" in review
+
+
+def test_delayed_444_555_complete_independently_of_tracker_deferral(root):
+    notebook(root, "444")
+    notebook(root, "555")
+    for model in ("444", "555"):
+        path = root / "outputs" / model / DAY / "status.json"
+        payload = json.loads(path.read_text())
+        payload.update(forecast_timing="future_entry", generated_at="2026-11-07T07:15:00+08:00")
+        save_json(path, payload)
+    run = summary({"444": "success", "555": "success", "555_v2": "waiting", "v211": "maintenance_only"})
+    run.update(run_date="2026-11-07", output_day=DAY, delayed_run=True,
+               started="2026-11-07T07:01:00+08:00")
+    report = daily_reports.build_reports(run, DAY)
+    assert report["research_status"] == "complete"
+    assert report["status"] == "partial"
+    assert report["models"]["v211"]["maintenance_only"] is True
+    assert report["models"]["v211"]["current"] is False
+    assert report["as_of_date"] == DAY and report["run_date"] == "2026-11-07"
+    assert "2026-11-07T07:01:00+08:00" in (root / f"reports/daily/{DAY}/summary.md").read_text()
+    for model in ("444", "555"):
+        note = (root / f"reports/daily/{DAY}/{model}.md").read_text()
+        assert "延後執行註記" in note and "2026-11-07T07:15:00+08:00" in note
+        assert "原預定進場尚未到" in note
+    assert len(list((root / "reports/attempts/2026-11-07").glob("*.json"))) == 1
+
+
+def test_expired_delayed_predictions_are_annotated_as_research_only(root):
+    notebook(root, "444")
+    notebook(root, "555")
+    for model in ("444", "555"):
+        path = root / "outputs" / model / DAY / "status.json"
+        payload = json.loads(path.read_text())
+        payload.update(forecast_timing="expired_entry", generated_at="2026-11-09T14:30:00+08:00")
+        save_json(path, payload)
+    run = summary({"444": "success", "555": "success", "555_v2": "waiting", "v211": "maintenance_only"})
+    run.update(run_date="2026-11-09", output_day=DAY, delayed_run=True,
+               started="2026-11-09T14:05:00+08:00")
+    daily_reports.build_reports(run, DAY)
+    for model in ("444", "555"):
+        assert "原預定進場時點已過" in (root / f"reports/daily/{DAY}/{model}.md").read_text()
+        assert "不計為可成交的新訊號或前瞻命中" in (root / f"reports/journals/{model}.md").read_text()
+
+
+def test_failed_peer_retry_does_not_erase_completed_primary_report(root):
+    notebook(root, "444")
+    notebook(root, "555")
+    first = summary({"444": "success", "555": "success", "555_v2": "waiting", "v211": "waiting"})
+    daily_reports.build_reports(first, DAY)
+    observed = {path: path.read_bytes() for path in [
+        root / "reports/latest/four_systems.json", root / f"reports/daily/{DAY}/status.json",
+        root / f"reports/daily/{DAY}/444.md", root / "reports/journals/555.md"]}
+    retry = summary({"444": "success", "555": "failed", "555_v2": "waiting", "v211": "waiting"})
+    retry["started"] = "2026-11-06T21:37:00+08:00"
+    report = daily_reports.build_reports(retry, DAY)
+    assert report["publication_status"] == "attempt_only"
+    assert report["models"]["555"]["current"] is False
+    assert all(path.read_bytes() == raw for path, raw in observed.items())
+    assert len(list((root / "reports/attempts" / DAY).glob("*.json"))) == 2

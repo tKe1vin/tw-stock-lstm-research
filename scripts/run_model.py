@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -27,7 +28,80 @@ SIGNAL_CREATED = "2026-11-05T23:23:09.114628+08:00"
 
 def run_day(now=None):
     now = now or datetime.now(TZ)
-    return now, pd.Timestamp(now.astimezone(TZ).date()), pd.Timestamp(current_completed_session(now)).normalize()
+    completed = pd.Timestamp(current_completed_session(now)).normalize()
+    target = os.environ.get("TW_LSTM_TARGET_SESSION")
+    if target:
+        started = datetime.fromisoformat(os.environ.get("TW_LSTM_RUN_STARTED_AT", ""))
+        if (started.tzinfo is None or now.tzinfo is None or started > now
+                or now - started > timedelta(hours=6)):
+            raise ValueError("Invalid or expired orchestrator run context")
+        selected = pd.Timestamp(target).normalize()
+        if (str(selected.date()) != target or selected > completed
+                or selected != pd.Timestamp(current_completed_session(started)).normalize()):
+            raise ValueError("The orchestrator target must be its latest completed session")
+        completed = selected
+    return now, pd.Timestamp(now.astimezone(TZ).date()), completed
+
+
+def _output_day(today, completed):
+    """Keep actual execution dates while an orchestrated export is session keyed."""
+    day = os.environ.get("TW_LSTM_OUTPUT_DAY")
+    if not day:
+        return today
+    if day != str(completed.date()):
+        raise ValueError("Output day must equal the selected completed session")
+    return completed
+
+
+def _entry_expired(target, generated_at):
+    target = pd.Timestamp(target)
+    generated = pd.Timestamp(generated_at)
+    if pd.isna(target) or pd.isna(generated) or generated.tzinfo is None:
+        raise ValueError("A dated target and actual timezone-aware generation time are required")
+    close = target.normalize().tz_localize(TZ) if target.tzinfo is None else target.tz_convert(TZ).normalize()
+    return generated.tz_convert(TZ) >= close + pd.Timedelta(hours=13, minutes=30)
+
+
+def _finish_delayed_history(history, before, model):
+    """Keep expired/new invalid output out of the forward recommendation history.
+
+    Prior bytes are restored even if an upstream notebook reused a filename.
+    Only artifacts created or changed by this invocation are classified here.
+    """
+    archived = []
+    for path in sorted(history.glob("*.csv")):
+        raw = path.read_bytes()
+        if path in before and raw == before[path]:
+            continue
+        invalid = False
+        try:
+            frame = pd.read_csv(path)
+            expired = any(_entry_expired(row.Target_Date, row.Created_At) for row in frame.itertuples())
+            if frame.empty:
+                raise ValueError("Empty recommendation history")
+        except (ValueError, TypeError, AttributeError, KeyError):
+            invalid, expired = True, False
+        overwritten = path in before
+        if not (invalid or expired or overwritten):
+            continue
+        # Restore published bytes before any potentially failing archive operation.
+        if overwritten:
+            path.write_bytes(before[path])
+        label = "expired_recommendation_history" if expired else "unverified_recommendation_history"
+        destination = ROOT / "outputs" / model / label
+        destination.mkdir(parents=True, exist_ok=True)
+        name = (f"{path.stem}_{hashlib.sha256(raw).hexdigest()[:16]}.csv" if overwritten else path.name)
+        target = destination / name
+        if target.exists() and target.read_bytes() != raw:
+            raise ValueError("Historical diagnostic filename conflict")
+        if not target.exists():
+            target.write_bytes(raw)
+        if not overwritten:
+            path.unlink()
+        archived.append(target.relative_to(ROOT).as_posix())
+        if invalid or (overwritten and not expired):
+            raise ValueError("Notebook history was invalid or tried to overwrite a published recommendation")
+    return archived
 
 
 def ledger_mode() -> str:
@@ -119,6 +193,9 @@ def prepare_independent_ledger() -> Path:
 
 
 def _write_status(model: str, day: pd.Timestamp, payload: dict) -> None:
+    if payload.get("completed_session") and payload.get("fixture") != "reproducible":
+        day = _output_day(day, pd.Timestamp(payload["completed_session"]))
+    payload["output_day"] = str(day.date())
     folder = ROOT / "outputs" / model / str(day.date())
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "status.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -286,7 +363,7 @@ def run_notebook(kind: str, mode: str, fixture: str = "") -> int:
         price, price_reason = _price_snapshot(completed)
         if kind == "555":
             feature, feature_reason = _sentiment_snapshot(completed)
-        output_name = str(today.date())
+        output_name = str(_output_day(today, completed).date())
     ready = price is not None and (kind == "444" or feature is not None)
     payload = {
         "model": kind,
@@ -296,6 +373,8 @@ def run_notebook(kind: str, mode: str, fixture: str = "") -> int:
         "forecast_produced": False,
         "completed_session": str(completed.date()),
         "run_date": str(today.date()),
+        "output_day": output_name if not fixture else str(today.date()),
+        "delayed_run": not fixture and today != completed,
         "fixture": fixture or "live_snapshot",
         "price_reason": price_reason,
         "sentiment_reason": feature_reason,
@@ -314,13 +393,18 @@ def run_notebook(kind: str, mode: str, fixture: str = "") -> int:
     os.environ.setdefault("LSTM_SAVE_MODELS", "1")
     history = out / "recommendation_history" if fixture else ROOT / "outputs" / kind / "recommendation_history"
     os.environ["LSTM_RECOMMENDATION_HISTORY_DIR"] = str(history)
+    history_before = {path: path.read_bytes() for path in history.glob("*.csv")} if payload["delayed_run"] else {}
     if feature is not None:
         os.environ["LSTM_FEATURE_CSV"] = str(feature)
     from scripts.execute_nb import execute
 
     prior_recommendations = {p: p.stat().st_mtime_ns for p in out.rglob("next_day_recommendation.csv")}
     try:
-        execute(kind)
+        try:
+            execute(kind)
+        finally:
+            if payload["delayed_run"]:
+                payload["archived_diagnostic_history"] = _finish_delayed_history(history, history_before, kind)
         payload["training_executed"] = True
         _export_notebook_csv(kind, out, completed, price, payload, prior_recommendations)
         payload["status"] = "success"
@@ -369,6 +453,7 @@ def _export_notebook_csv(kind: str, out: Path, completed, price: Path, payload: 
     payload["native_output_dir"] = native.relative_to(ROOT).as_posix()
     payload["daily_native_dir"] = compact.relative_to(ROOT).as_posix()
     rows = []
+    expired_entries = []
     for _, item in frame.iterrows():
         row = blank_row()
         row.update({
@@ -392,6 +477,14 @@ def _export_notebook_csv(kind: str, out: Path, completed, price: Path, payload: 
             "model_hash": NOT_APPLICABLE,
             "data_hash": sha256(price),
         })
+        if payload.get("delayed_run"):
+            expired = _entry_expired(item["Target_Date"], item["Created_At"])
+            row.update(trade_eligible=not expired,
+                       forecast_entry_date=item["Target_Date"],
+                       intended_execution_date=NOT_APPLICABLE if expired else item["Target_Date"],
+                       execution_status="delayed_research_target_expired" if expired
+                       else "delayed_research_target_only_no_order")
+            expired_entries.append(expired)
         rows.append(row)
     destination = out / "unified_signal.csv"
     write_table(destination, rows, {
@@ -402,6 +495,17 @@ def _export_notebook_csv(kind: str, out: Path, completed, price: Path, payload: 
         "research_sample": False,
     })
     payload["unified_csv"] = str(destination.relative_to(ROOT)).replace("\\", "/")
+    if payload.get("delayed_run"):
+        annotated = frame.copy()
+        annotated["Entry_Window_Expired"] = expired_entries
+        annotated["Trade_Eligible"] = [not expired for expired in expired_entries]
+        annotated["Execution_Status"] = ["delayed_research_target_expired" if expired
+                                          else "delayed_research_target_only_no_order" for expired in expired_entries]
+        annotated.to_csv(compact / "next_day_recommendation.csv", index=False)
+        payload.update(forecast_timing="expired_entry" if any(expired_entries) else "future_entry",
+                       recommendation_execution_status="delayed_research_target_expired" if any(expired_entries)
+                       else "delayed_research_target_only_no_order",
+                       generated_at=datetime.now(TZ).isoformat())
 
 
 def v2_date_record(signal_date: str, run_date: str, execution_date: str) -> dict:
@@ -490,7 +594,7 @@ def run_555_v2(mode: str) -> int:
     dates = v2_date_record(str(completed.date()), str(today.date()), execution)
     dates.update(tracker.execution_eligibility(completed))
     dates["intended_execution_date_meaning"] = "相容舊欄位：預測標籤的假設進場日；實際交易須另看 trade_eligible 與 scheduled_rebalance_date"
-    out = ROOT / "outputs" / "555_v2" / str(today.date())
+    out = ROOT / "outputs" / "555_v2" / str(_output_day(today, completed).date())
     out.mkdir(parents=True, exist_ok=True)
     export = rows.copy()
     export.insert(0, "Signal_Date", dates["signal_date"])
@@ -498,6 +602,11 @@ def run_555_v2(mode: str) -> int:
     export.insert(2, "Data_AsOf", dates["data_asof"])
     export.insert(3, "Planned_Execution_Date", dates["intended_execution_date"])
     export.to_csv(out / "prediction.csv", index=False, encoding="utf-8-sig")
+    generated_at = datetime.now(TZ)
+    expired = _entry_expired(dates["forecast_entry_date"], generated_at)
+    dates["entry_window_expired"] = expired
+    if expired:
+        dates["trade_eligible"] = False
     (out / "dates.json").write_text(json.dumps(dates, ensure_ascii=False, indent=2), encoding="utf-8")
     unified = []
     for _, item in rows.iterrows():
@@ -507,7 +616,7 @@ def run_555_v2(mode: str) -> int:
             "model_version": tracker.MODEL_VERSION,
             "signal_date": dates["signal_date"],
             "run_date": dates["run_date"],
-            "generated_at": now.astimezone(TZ).isoformat(),
+            "generated_at": generated_at.isoformat(),
             "data_asof": dates["data_asof"],
             "stock_id": item["Ticker"],
             "stock_name": NAMES[item["Ticker"]],
@@ -522,7 +631,7 @@ def run_555_v2(mode: str) -> int:
             "scheduled_rebalance_date": dates["scheduled_rebalance_date"],
             "trade_eligible": dates["trade_eligible"],
             "execution_price": NOT_APPLICABLE,
-            "execution_status": "eligible_unfilled" if dates["trade_eligible"] else "forecast_only",
+            "execution_status": "forecast_expired" if expired else "eligible_unfilled" if dates["trade_eligible"] else "forecast_only",
             "model_hash": digest,
             "data_hash": sha256(PRICES),
         })
@@ -542,6 +651,10 @@ def run_555_v2(mode: str) -> int:
         "reason": "prediction_written_not_a_research_signal",
         "weight_sha256": digest,
         "weights_reused": True,
+        "forecast_timing": "expired_entry" if expired else "future_entry",
+        "recommendation_execution_status": "forecast_expired" if expired else "forecast_only",
+        "generated_at": generated_at.isoformat(),
+        "delayed_run": today != completed,
         "dates": dates,
         "planned_execution": execution,
         "unified_csv": str((out / "unified_signal.csv").relative_to(ROOT)).replace("\\", "/"),
@@ -575,8 +688,16 @@ def run_v211(mode: str) -> int:
         _write_status("v211", today, payload)
         print(json.dumps(payload, ensure_ascii=False), flush=True)
         return 1
+    delayed = today != completed
+    command = [sys.executable, "-m", "experiments.v2.v211_daily"]
+    if delayed:
+        command = [sys.executable, "-c", (
+            "import json; from datetime import datetime; from scripts.common import TZ; "
+            "from experiments.v2.v211_daily import update_recorded_results; "
+            "print(json.dumps(update_recorded_results(datetime.now(TZ)),ensure_ascii=False))"
+        )]
     completed_run = subprocess.run(
-        [sys.executable, "-m", "experiments.v2.v211_daily"],
+        command,
         cwd=str(ROOT),
         env=env,
         text=True,
@@ -606,11 +727,18 @@ def run_v211(mode: str) -> int:
         "official_555_replacement": False,
         "stdout_tail": text[-2000:],
     }
+    if delayed:
+        maintained = completed_run.returncode == 0
+        payload.update(status="maintenance_only" if maintained else "failed",
+                       exit_code=2 if maintained else 1,
+                       delayed_run=True, signal_published=False,
+                       maintenance_successful=maintained,
+                       reason="delayed_session_maintenance_only" if maintained else "delayed_maintenance_failed")
     _write_status("v211", today, payload)
     print(json.dumps({key: value for key, value in payload.items() if key != "stdout_tail"}, ensure_ascii=False), flush=True)
     if after != before:
         return 1
-    return int(completed_run.returncode)
+    return int(payload["exit_code"])
 
 
 def run_paired_555(mode: str) -> int:
@@ -624,12 +752,12 @@ def run_paired_555(mode: str) -> int:
     now, today, completed = run_day()
     price, price_reason = _price_snapshot(completed)
     sentiment, sentiment_reason = _sentiment_snapshot(completed)
-    baseline = ROOT / "outputs/444" / str(today.date()) / "native"
-    baseline_status = ROOT / "outputs/444" / str(today.date()) / "status.json"
-    status444 = json.loads(baseline_status.read_text(encoding="utf-8")) if baseline_status.is_file() else {}
+    output_day = _output_day(today, completed)
+    baseline, status444 = _current_444_core(today, completed)
     payload = {"model": "555", "mode": mode, "status": "waiting", "core_model": "444",
                "training_executed": False, "forecast_produced": False,
                "completed_session": str(completed.date()), "run_date": str(today.date()),
+               "output_day": str(output_day.date()), "delayed_run": today != completed,
                "research_protocol": "paired-444-core-allocation-v1",
                "execution_assumption": "signal-day allocation; next-session close; common costs",
                "research_status": "exploratory", "historical_news_point_in_time_proven": False}
@@ -642,20 +770,31 @@ def run_paired_555(mode: str) -> int:
     protocol = json.loads((baseline / "evaluation_protocol.json").read_text(encoding="utf-8"))
     result = run_paired_research(baseline / "test_predictions.csv", price, sentiment, protocol)
     recommendation = paired_daily_recommendation(baseline / "next_day_recommendation.csv", price, sentiment, protocol)
-    out = ROOT / "outputs/555" / str(today.date())
+    out = ROOT / "outputs/555" / str(output_day.date())
     native = out / "native"
     export = export_paired_native(result, recommendation, baseline, native, completed, datetime.now(TZ))
     research = build_paired_report(baseline, price, sentiment, ROOT / "reports/daily" / str(completed.date()) / "paired", root=ROOT)
     rec = pd.read_csv(native / "next_day_recommendation.csv")
+    if payload["delayed_run"]:
+        expired = [_entry_expired(item["Target_Date"], item["Created_At"]) for item in rec.to_dict("records")]
+        rec["Entry_Window_Expired"] = expired
+        rec["Trade_Eligible"] = [not value for value in expired]
+        rec["Execution_Status"] = ["research_target_expired" if value else "research_target_only_no_order" for value in expired]
+        rec.to_csv(native / "next_day_recommendation.csv", index=False)
     # Separate method histories: never blend these with the old six-feature 555.
-    history = ROOT / "outputs/555/paired_recommendation_history"
+    history_name = ("paired_expired_recommendation_history" if payload["delayed_run"]
+                    and rec.Entry_Window_Expired.any() else "paired_recommendation_history")
+    history = ROOT / "outputs/555" / history_name
     history.mkdir(parents=True, exist_ok=True)
     history_path = history / f"{export['run_id']}.csv"
     if history_path.exists():
         raise FileExistsError(history_path)
     shutil.copy2(native / "next_day_recommendation.csv", history_path)
     rows = []
+    expired_entries = []
     for item in rec.to_dict("records"):
+        expired = _entry_expired(item["Target_Date"], item["Created_At"])
+        expired_entries.append(expired)
         row = blank_row()
         row.update({"model_id": "555", "model_version": payload["research_protocol"],
                     "signal_date": item["Signal_Date"], "run_date": str(today.date()),
@@ -665,8 +804,10 @@ def run_paired_555(mode: str) -> int:
                     "target_weight": item["Target_Weight"], "cash_weight": item["Cash_Weight"],
                     "risk_status": "Risk_Off" if bool(item["Risk_Off"]) else "Risk_On",
                     "forecast_entry_date": item["Target_Date"], "scheduled_rebalance_date": item["Target_Date"],
-                    "trade_eligible": True, "intended_execution_date": item["Target_Date"],
-                    "execution_status": "research_target_only_no_order", "data_hash": sha256(price)})
+                    "trade_eligible": not expired,
+                    "intended_execution_date": NOT_APPLICABLE if expired else item["Target_Date"],
+                    "execution_status": "research_target_expired" if expired else "research_target_only_no_order",
+                    "data_hash": sha256(price)})
         rows.append(row)
     unified = out / "unified_signal.csv"
     write_table(unified, rows, {"model_id": "555", "core_model": "444", "research_sample": False,
@@ -675,6 +816,10 @@ def run_paired_555(mode: str) -> int:
                               "sentiment_sha256": sha256(sentiment), "core_source_sha256": export["core_source_sha256"],
                               "original_six_feature_555": "available through --legacy-555; a separate secondary study"})
     payload.update({"status": "success", "forecast_produced": True,
+                    "forecast_timing": "expired_entry" if any(expired_entries) else "future_entry",
+                    "recommendation_execution_status": "research_target_expired" if any(expired_entries)
+                    else "research_target_only_no_order",
+                    "generated_at": datetime.now(TZ).isoformat(),
                     "reason": "shared_444_core_dynamic_news_risk_exported", "primary_research": research,
                     "native_output_dir": native.relative_to(ROOT).as_posix(),
                     "daily_native_dir": native.relative_to(ROOT).as_posix(),
@@ -682,6 +827,30 @@ def run_paired_555(mode: str) -> int:
     _write_status("555", today, payload)
     print(json.dumps(payload, ensure_ascii=False), flush=True)
     return 0
+
+
+def _current_444_core(today, completed):
+    """Reuse only a complete same-asof core, including old calendar-keyed exports."""
+    selected = str(completed.date())
+    default = ROOT / "outputs/444" / str(_output_day(today, completed).date()) / "native"
+    for day in dict.fromkeys((str(_output_day(today, completed).date()), str(today.date()))):
+        folder = ROOT / "outputs/444" / day
+        status_path = folder / "status.json"
+        if not status_path.is_file():
+            continue
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        if status.get("status") != "success" or status.get("completed_session") != selected:
+            continue
+        native = (ROOT / status["daily_native_dir"]).resolve() if status.get("daily_native_dir") else folder / "native"
+        if not native.resolve().is_relative_to(ROOT.resolve()):
+            raise ValueError("Saved 444 core leaves the repository")
+        if not all((native / name).is_file() for name in (
+                "evaluation_protocol.json", "test_predictions.csv", "next_day_recommendation.csv", "model_metrics.csv")):
+            continue
+        protocol = json.loads((native / "evaluation_protocol.json").read_text(encoding="utf-8"))
+        if str(protocol.get("as_of_date", ""))[:10] == selected:
+            return native, status
+    return default, {}
 
 
 def run(model: str, mode: str, fixture: str = "", legacy_555: bool = False) -> int:

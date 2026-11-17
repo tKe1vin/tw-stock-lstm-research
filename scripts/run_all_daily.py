@@ -18,6 +18,7 @@ from scripts.common import TZ, current_completed_session
 # Publish the frozen-model decision before the slower baseline retraining.
 ORDER = ["v211", "555_v2", "444", "555"]
 LOCK = ROOT / "logs" / "orchestrator" / "run.lock"
+_RUN_CONTEXT = {}
 
 
 def _alive(pid: int) -> bool:
@@ -90,7 +91,7 @@ def _run_process(command, name: str, extra_env=None) -> dict:
 
 
 def _update_market() -> dict:
-    result = _run_process([sys.executable, "-m", "scripts.update_market_data"], "market")
+    result = _run_process([sys.executable, "-m", "scripts.update_market_data"], "market", _RUN_CONTEXT)
     report = {}
     for line in reversed(result.pop("output").splitlines()):
         try:
@@ -106,8 +107,22 @@ def _update_market() -> dict:
 def _run_one(model: str, mode: str) -> dict:
     result = _run_process(
         [sys.executable, "-m", "scripts.run_model", "--model", model, "--mode", mode],
-        model, {"TW_LSTM_SKIP_MARKET_UPDATE": "1"})
-    result.pop("output", None)
+        model, {"TW_LSTM_SKIP_MARKET_UPDATE": "1", **_RUN_CONTEXT})
+    output = result.pop("output", "")
+    for line in reversed(output.splitlines()):
+        try:
+            payload = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(payload, dict) and payload.get("model") == model:
+            for key in ("reason", "maintenance_successful", "signal_published", "output_day",
+                        "completed_session", "run_date", "unified_csv", "daily_native_dir",
+                        "forecast_timing", "generated_at", "recommendation_execution_status"):
+                if key in payload:
+                    result[key] = payload[key]
+            if result["exit_code"] == 2 and payload.get("status") == "maintenance_only":
+                result["status"] = "maintenance_only"
+            break
     return {"model": model, **result, "outputs_retained": True}
 
 
@@ -115,7 +130,9 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
     """Only skip successful model exports, never the V2.11 fill/label maintenance."""
     if model == "v211":
         return None
-    folder = ROOT / "outputs" / model / run_date
+    folder = ROOT / "outputs" / model / session
+    if not (folder / "status.json").exists():
+        folder = ROOT / "outputs" / model / run_date  # Legacy calendar-keyed exports.
     try:
         status = json.loads((folder / "status.json").read_text(encoding="utf-8"))
         if status.get("status") != "success" or status.get("completed_session") != session:
@@ -129,6 +146,17 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
                 return None
         if model == "555" and status.get("research_protocol") != "paired-444-core-allocation-v1":
             return None  # Old six-feature exports are not the new shared-core study.
+        if model == "444":
+            native = ROOT / status["daily_native_dir"] if status.get("daily_native_dir") else folder / "native"
+            if not native.resolve().is_relative_to(ROOT.resolve()):
+                return None
+            if not all((native / name).is_file() for name in (
+                    "evaluation_protocol.json", "test_predictions.csv", "next_day_recommendation.csv",
+                    "model_metrics.csv", "strategy_metrics.csv", "backtest_nav.csv")):
+                return None
+            protocol = json.loads((native / "evaluation_protocol.json").read_text(encoding="utf-8"))
+            if str(protocol.get("as_of_date", ""))[:10] != session:
+                return None
         return {"model": model, "status": "success", "exit_code": 0,
                 "reason": "already_completed_for_this_session", "outputs_retained": True}
     except (OSError, ValueError, TypeError):
@@ -141,6 +169,11 @@ def _save_summary(summary):
     temporary = destination / "summary.json.tmp"
     temporary.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(destination / "summary.json")
+    latest = ROOT / "logs" / "orchestrator" / "latest_summary.json"
+    latest.parent.mkdir(parents=True, exist_ok=True)
+    temporary = latest.with_suffix(".json.tmp")
+    temporary.write_bytes((destination / "summary.json").read_bytes())
+    temporary.replace(latest)
 
 
 def main(argv=None, now=None) -> int:
@@ -156,7 +189,8 @@ def main(argv=None, now=None) -> int:
     run_date = str(now.astimezone(TZ).date())
     session = str(current_completed_session(now).date())
     summary = {"started": now.isoformat(), "run_date": run_date,
-               "completed_session": session, "mode": args.mode, "steps": {}}
+               "completed_session": session, "output_day": session,
+               "delayed_run": session != run_date, "mode": args.mode, "steps": {}}
     if args.mode == "check":
         from scripts.run_model import inspect_model
         from experiments.v2.v211_market import inspect_market
@@ -172,17 +206,19 @@ def main(argv=None, now=None) -> int:
         print(json.dumps({"status": "waiting", "reason": "another run is active"}))
         return 2
     try:
-        # Never retrain on Friday's data on a holiday, nor manufacture a past signal.
-        if session != run_date:
-            summary.update(status="skipped", reason="today_has_no_completed_session", exit_code=0)
-            _save_summary(summary)
-            print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
-            return 0
-        if args.skip_download:
-            from scripts.update_market_data import build_snapshot
-            summary["market"] = build_snapshot(now, allow_download=False)
-        else:
-            summary["market"] = _update_market()
+        # A delayed scheduled job still owes the newest closed session's research.
+        # Freeze that session across children, without changing their real clocks.
+        _RUN_CONTEXT.update(TW_LSTM_TARGET_SESSION=session, TW_LSTM_OUTPUT_DAY=session,
+                            TW_LSTM_RUN_STARTED_AT=now.isoformat())
+        try:
+            if args.skip_download:
+                from scripts.update_market_data import build_snapshot
+                summary["market"] = build_snapshot(now, allow_download=False)
+            else:
+                summary["market"] = _update_market()
+        except Exception as exc:
+            summary["market"] = {"status": "failed", "exit_code": 1,
+                                 "error": f"{type(exc).__name__}: {exc}"}
         for model in ORDER:
             previous = None if args.force else _completed_model(model, session, run_date)
             try:
@@ -196,17 +232,26 @@ def main(argv=None, now=None) -> int:
             summary["reports"] = build_reports(summary, session)
         except Exception as exc:
             summary["reports"] = {"status": "failed", "error": str(exc)}
-        codes = [step["exit_code"] for step in summary["steps"].values()]
+        tracker = summary["steps"].get("v211", {})
+        deferred_tracker = (summary["delayed_run"] and tracker.get("status") == "maintenance_only"
+                            and tracker.get("reason") == "delayed_session_maintenance_only"
+                            and tracker.get("maintenance_successful") is True
+                            and tracker.get("signal_published") is False)
+        codes = [step["exit_code"] for model, step in summary["steps"].items()
+                 if not (model == "v211" and deferred_tracker)]
         codes.append(summary["market"].get("exit_code", 0))
         if summary["reports"].get("status") == "failed":
             codes.append(1)
         code = 1 if any(c not in (0, 2) for c in codes) else 2 if 2 in codes else 0
-        summary.update(status="complete" if code == 0 else "waiting" if code == 2 else "failed",
+        status = ("research_complete_tracker_deferred" if code == 0 and deferred_tracker
+                  else "complete" if code == 0 else "waiting" if code == 2 else "failed")
+        summary.update(status=status,
                        exit_code=code, finished=datetime.now(TZ).isoformat())
         _save_summary(summary)
         print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
         return code
     finally:
+        _RUN_CONTEXT.clear()
         _release(fd)
 
 

@@ -1,0 +1,37 @@
+{
+  "source_sha256": {
+    "research/v3_3/run.py": "9c68b1970e24c11c8d664c6a86d6511f529db5e960d3ed9180d0fc7eeb5774a0",
+    "research/v3/data.py": "cf49e12fb8eee17d1505c4ccf4148ecc4320113a63c75e392e826d55d16c1805",
+    "research/v3/models.py": "2ff2cc52b3fa0eebc34d4b206eacf5983b0525a479d7e91a0401b03698efa9a6",
+    "research/v3_3/models.py": "bd855f0e61d13bc2e9b26cc183963f8181775014333ad3dc2da17083a478cc65",
+    "research/v3_3/portfolio.py": "ca5e59e04453c48f678b27d5c250b10f801d2e2daf1da79d20f10f9635ff55e2",
+    "research/v3_3/config.json": "68fc03a1f0f9efe2f8707ed449e9721887f9233db04e3687c15d32c59111203f",
+    "scripts/common.py": "499b163c47ed6d1dc5780d9c2d58dc1b14de81e26fde354689ea329c4e6f950c"
+  },
+  "exporter_sha256": "3c002205dd8b10e96a5692a131c4b9ddebfd1a53174064aecd4bf29626a9586f",
+  "files_sha256": {
+    "data_quality.json": "909befc05e67d9734fff3cf1ecb9a8238937b1d2442f0b74f69f378f7e182b31",
+    "final_ridge_news.json.gz": "1e2625c0a9865d09ae044c158c5eb51bed872a40ced439f1f2ca4b5337088182",
+    "final_ridge_price.json.gz": "c8496bcd740cdeebf5ba7c376bb50f580cc8483a0eb7563d6874768520b83e9b",
+    "fold1_hgb_news.json.gz": "cbebdd2a39e3869b3e74b3f37f85e6d79d5ccdcaeae02ef636e634d4e06c6ea8",
+    "fold1_hgb_price.json.gz": "bf089a526500726e055c1e7b1f830282d79f1679b1a93a0418e5b0b6b727c248",
+    "fold1_ridge_news.json.gz": "4b94af095f69c63c77942cd8405355d1377afed2002917b71d088fae5cd5e856",
+    "fold1_ridge_price.json.gz": "d0bd7fd0edcc59bcf09cc48664a8d2417b29e75c18778c49864d484bee067035",
+    "fold2_hgb_news.json.gz": "3dbb9f1d21ab42e6e7243f4d439b81c449ec26d37dd0511337b62ee85dad78c1",
+    "fold2_hgb_price.json.gz": "ec63d47fee86fed7e6c531347d38aa4447bf44283ad2d707f95cec605cdcf494",
+    "fold2_ridge_news.json.gz": "8b7f4d34ca9647ee8ffe75f5212a32c78467af959db902018acf9d1f7465e1e1",
+    "fold2_ridge_price.json.gz": "c9f592d35d931bf4a5d477a810a5a16f198fd20e5cedf6ffc67ef430284c9c8f",
+    "fold3_hgb_news.json.gz": "307d5d7741a0194f07a216638eb6dc87886c83494f46c7a82869abe086e58401",
+    "fold3_hgb_price.json.gz": "dc38621d0068e39c6762bca7649a9912317cffb25525834c1bcd00e5b45ab0ab",
+    "fold3_ridge_news.json.gz": "fce7f985b41d2ecf198a2dda6d861b978efb62644016694207e91454e93950f1",
+    "fold3_ridge_price.json.gz": "e2a34acd7978a00a21f1bdaf3f449dd50c638a1a2e1ef00d09a648f04496812e",
+    "holdout_metrics.csv": "427ffb288320b817ba82ceb1a8f750bd1c4944b139bc5ff00b45259859c118ea",
+    "input_provenance.json": "bfcc564f3060ac08f6873185d3aec706b002be2ce175041e4874b818ca0b1a99",
+    "limitations.json": "5f113169278564a6c8efb8167ed53963d548aab2c2f839d0c55f21b12826ff1e",
+    "registered_config.json": "68fc03a1f0f9efe2f8707ed449e9721887f9233db04e3687c15d32c59111203f",
+    "selection.json": "b47baf7e53cb9e044c05a7ebb3a4c3be629db53c1782ade21424c3b9b496b3fc",
+    "splits.json": "b51eb68b678bbbcfe42950e3cc7f4c136dc1c6f9203ba388fc2a5a122405e3ef",
+    "summary.md": "e7df5971b813fc13782c15b66465c88fa9d64549eda73e5f5edcef1201dbe8e2",
+    "validation_metrics.csv": "37c98950eaf54603494216460470c7a344a9a0f31788a10d28b2c68a3e100bee"
+  }
+}

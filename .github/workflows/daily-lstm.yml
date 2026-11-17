@@ -9,9 +9,11 @@ on:
         default: false
   schedule:
     # UTC 09:37 / 13:37 = Taipei 17:37 / 21:37. The second run retries missing data.
-    # The application rechecks the XTAI calendar and today's completed close.
+    # The morning retry recovers delayed jobs even after the Taipei date changes.
+    # GitHub cron can be delayed; select the latest completed XTAI session.
     - cron: '37 9 * * 1-5'
     - cron: '37 13 * * 1-5'
+    - cron: '17 1 * * *'
   push:
     branches: [main]
     paths:
@@ -111,6 +113,8 @@ jobs:
             logs/
             outputs/
             reports/daily/
+            reports/attempts/
+            reports/latest/
             data/snapshots/
             experiments/results/v2/v211/status.json
       - name: Report complete, waiting or failed
@@ -122,10 +126,26 @@ jobs:
         run: |
           {
             echo '### Daily research run'
-            echo "Pipeline exit code: ${PIPELINE_EXIT:-unavailable} (0 complete; 2 waiting; 1 failed)."
+            echo "Pipeline exit code: ${PIPELINE_EXIT:-unavailable} (0 research complete, possibly with an explicitly deferred tracker; 2 waiting; 1 failed)."
             echo "State persistence: $PERSIST_OUTCOME."
             echo 'Full outputs and logs are attached as the daily-lstm artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          path = Path('logs/orchestrator/latest_summary.json')
+          if path.is_file():
+              run = json.loads(path.read_text(encoding='utf-8'))
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as output:
+                  output.write(f"\nActual run date: {run.get('run_date')}; data session: {run.get('completed_session')}.\n")
+                  output.write(f"\nResearch outcome: {run.get('status')}.\n")
+                  if run.get('status') == 'research_complete_tracker_deferred':
+                      output.write('\n444/555 research completed. The frozen tracker performed maintenance only and did not backfill a historical signal.\n')
+                  attempt = (run.get('reports') or {}).get('attempt_journal')
+                  if attempt:
+                      output.write(f"\nPermanent attempt journal: `{attempt}`.\n")
+          PY
           if [[ "$PERSIST_OUTCOME" != 'success' ]]; then
             echo 'State persistence failed; inspect the persistence step before retrying.'
             exit 1

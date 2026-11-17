@@ -1,0 +1,107 @@
+{
+  "protocol_version": "sentiment_0050_v3_3_monthly",
+  "registered_on": "2026-11-17",
+  "study_status": "exploratory_previously_observed_history",
+  "benchmark": {
+    "ticker": "0050.TW",
+    "tracking_index": "FTSE TWSE Taiwan 50",
+    "total_return_required": true
+  },
+  "satellite_tickers": [
+    "2330.TW",
+    "2317.TW",
+    "2603.TW",
+    "2002.TW",
+    "2891.TW"
+  ],
+  "candidate_order": [
+    "ridge_price",
+    "ridge_news",
+    "hgb_price",
+    "hgb_news"
+  ],
+  "news_candidate_order": [
+    "ridge_news",
+    "hgb_news"
+  ],
+  "paired_controls": {
+    "ridge_news": "ridge_price",
+    "hgb_news": "hgb_price"
+  },
+  "seed": 42,
+  "time_step": 10,
+  "label_gap": 21,
+  "hold_sessions": 20,
+  "train_samples": 756,
+  "min_train_samples": 252,
+  "validation_samples": 126,
+  "validation_folds": 3,
+  "exploratory_holdout_samples": 126,
+  "initial_capital": 1000000,
+  "allocation": {
+    "minimum_benchmark_weight": 0.8,
+    "maximum_satellite_weight": 0.2,
+    "maximum_direct_stock_weight": 0.1,
+    "maximum_active_stocks": 2,
+    "long_only": true,
+    "leverage": 1.0,
+    "unallocated_satellite_destination": "benchmark"
+  },
+  "execution": {
+    "rebalance_every_sessions": 20,
+    "weight_change_no_trade_band": 0.02,
+    "minimum_expected_edge_cost_multiplier": 1.5,
+    "broker_fee_rate": 0.001425,
+    "minimum_broker_fee": 20.0,
+    "stock_sell_tax": 0.003,
+    "equity_etf_sell_tax": 0.001,
+    "slippage_bps_each_side": 5.0,
+    "stress_slippage_bps_each_side": 15.0,
+    "maximum_previous_volume_participation": 0.01,
+    "entry": "next_session_close",
+    "end_treatment": "liquidate_whole_shares_report_fractional_entitlements",
+    "dividend_treatment": "ex_date_receivable_payment_date_spendable_cash; unknown payment explicitly limited"
+  },
+  "selection": {
+    "minimum_positive_net_excess_folds": 2,
+    "maximum_annualized_tracking_error": 0.06,
+    "news_must_beat_paired_control": true,
+    "stress_net_excess_must_be_positive": true,
+    "ranking": "compounded_validation_relative_wealth_then_registered_order",
+    "failure_fallback": "B0_benchmark",
+    "use_holdout_for_selection": false
+  },
+  "prospective": {
+    "enabled": false,
+    "requires": [
+      "point_in_time_news_and_checkpoint",
+      "payment_date_and_corporate_action_entitlements",
+      "frozen_bundle",
+      "new_observations_after_freeze"
+    ],
+    "operational_review_mature_signals": 60,
+    "first_effect_review_sessions": 252,
+    "bootstrap_block_sessions": 20,
+    "confidence": 0.95
+  },
+  "allow_production_replacement": false,
+  "allow_test_selection": false,
+  "performance_claim": "none",
+  "model_parameters": {
+    "ridge": {
+      "alpha": 10.0,
+      "fit_intercept": true
+    },
+    "hgb": {
+      "loss": "squared_error",
+      "max_iter": 150,
+      "learning_rate": 0.05,
+      "max_leaf_nodes": 7,
+      "min_samples_leaf": 40,
+      "l2_regularization": 10.0,
+      "early_stopping": false
+    }
+  },
+  "feature_revision": "v33_relative_momentum_news_interactions_ticker_onehot",
+  "notes": "New finite exploratory version after V3.2 failed. Previously viewed history is never renamed independent; no automatic daily model replacement."
+}

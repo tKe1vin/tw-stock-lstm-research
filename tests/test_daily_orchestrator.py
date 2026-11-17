@@ -42,13 +42,26 @@ def test_partial_failure_keeps_running_and_writes_truthful_summary(monkeypatch, 
     assert summary['status'] == 'failed'
 
 
-def test_before_close_or_holiday_does_not_publish_old_signals(monkeypatch, tmp_path):
+def test_before_close_recovers_latest_session_without_publishing_past_signals(monkeypatch, tmp_path):
     monkeypatch.setattr(daily, 'ROOT', tmp_path)
     monkeypatch.setattr(daily, 'LOCK', tmp_path/'logs/run.lock')
     monkeypatch.setattr(daily, 'current_completed_session', lambda now: __import__('pandas').Timestamp('2026-11-05'))
-    monkeypatch.setattr(daily, '_update_market', lambda: (_ for _ in ()).throw(AssertionError('must not fetch')))
+    calls = []
+    monkeypatch.setattr(daily, '_update_market', lambda: calls.append('market') or {'exit_code': 0})
+    def run(model, mode):
+        calls.append(model)
+        return ({'status': 'maintenance_only', 'exit_code': 2,
+                 'reason': 'delayed_session_maintenance_only', 'maintenance_successful': True,
+                 'signal_published': False} if model == 'v211' else {'status': 'success', 'exit_code': 0})
+    monkeypatch.setattr(daily, '_run_one', run)
+    import scripts.daily_reports as reports
+    monkeypatch.setattr(reports, 'build_reports', lambda summary, day: {'status': 'partial'})
     assert daily.main([], now=datetime(2026, 11, 6, 13, 0, tzinfo=TZ)) == 0
-    assert json.loads((tmp_path/'outputs/daily_summary/2026-11-06/summary.json').read_text())['status'] == 'skipped'
+    summary = json.loads((tmp_path/'outputs/daily_summary/2026-11-06/summary.json').read_text())
+    assert calls == ['market', 'v211', '555_v2', '444', '555']
+    assert summary['status'] == 'research_complete_tracker_deferred'
+    assert summary['output_day'] == '2026-11-05'
+    assert not summary['steps']['v211']['signal_published']
 
 
 def test_successful_exports_skipped_on_retry_but_v211_maintenance_runs(monkeypatch, tmp_path):

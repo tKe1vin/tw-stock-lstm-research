@@ -1,0 +1,74 @@
+{
+  "provider": "FinMind",
+  "provider_terms": "https://finmind.github.io/Disclaimer/",
+  "raw_data_redistributed": false,
+  "normalized_bars_redistributed": false,
+  "clean_clone_contains_all_inputs": false,
+  "replay_requires_authorized_external_inputs": true,
+  "input_sha256": {
+    "bars.csv": "38338735c0c7278b03f0cecd6ce3795d979634497c7a11423091e6bb0e650ea8",
+    "bars.metadata.json": "0f1566b6d2ca3c0b83ef6dd6676a12d531808c24ed0f98a685cc4797e1c935c3",
+    "sentiment.csv": "01cabc6ad18aefcaea89c6d690d0f8961be6efd041179c543b9e8f98f3c3a91b"
+  },
+  "private_run_manifest_sha256": "6a9ac1527df634b9e3a1817e9c4d915c1638a35db17b70e95e6dbbcbbd932e06",
+  "runtime_versions": {
+    "numpy": "2.0.2",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0"
+  },
+  "python": "3.12.14",
+  "provider_fetched_at": "2026-11-17T04:54:21.164533+00:00",
+  "close_basis": "truly_raw_unadjusted",
+  "raw_manifest_sha256": "665b1ea7d6225a1e4277bd8d464736c91e4a0d3393e30bf9bcf8e1a290bf8a2e",
+  "reviewed_suspensions": [
+    {
+      "ticker": "0050.TW",
+      "start": "2025-06-11",
+      "end": "2025-06-17",
+      "reason": "official_split_suspension",
+      "source": "https://www.twse.com.tw/staticFiles/news/news/tsecnews/8a8216d696b406fc0196ce27c2e90063.pdf"
+    },
+    {
+      "ticker": "2603.TW",
+      "start": "2022-09-07",
+      "end": "2022-09-16",
+      "reason": "announced_capital_reduction_suspension",
+      "source": "https://www.cna.com.tw/news/afe/202208230303.aspx"
+    },
+    {
+      "ticker": "2317.TW",
+      "start": "2025-07-30",
+      "end": "2025-07-30",
+      "reason": "official_material_information_suspension",
+      "source": "https://investoredu.twse.com.tw/Mobile_Pages/..%2FFileSystem%2FFileUpload%2Fcb744523-2d37-495f-9738-345b882924e7.pdf"
+    }
+  ],
+  "reviewed_action_overrides": [
+    {
+      "ticker": "2002.TW",
+      "original_date": "2024-07-25",
+      "effective_date": "2024-07-26",
+      "evidence_file": "2002_postponed_20240726.html",
+      "source": "https://superpy.kgieworld.com.tw/kgipythonapi/stockInfo/finance/exDividend?stockCode=2002",
+      "basis": "Broker corporate-action history records effective ex-dividend trading on 26 July",
+      "evidence_path": "raw/2002_postponed_20240726.html",
+      "sha256": "f0c41b9fdff0fa2447d03779ad2d9df457b74e4a42d4fa7259e712cd09c625e4"
+    },
+    {
+      "ticker": "2891.TW",
+      "original_date": "2026-07-10",
+      "effective_date": "2026-07-13",
+      "evidence_file": "2891_postponed_20260713.html",
+      "source": "https://m.cnyes.com/news/print/6529878",
+      "basis": "Contemporaneous report quoting TWSE closure/postponement; official calculation table retains original date",
+      "evidence_path": "raw/2891_postponed_20260713.html",
+      "sha256": "393e203618dae87d798652748b2e85477f8f3f481f85a882ef3a7c704b35ffab"
+    }
+  ],
+  "point_in_time_certified": false,
+  "official_exhaustive_action_coverage_certified": false,
+  "limitations": [
+    "Provider revisions can prevent later exact source reconstruction.",
+    "Hashes show integrity; they do not prove historical information availability."
+  ]
+}
