@@ -1,16 +1,16 @@
 {
   "report_schema": "four-systems-v1",
-  "as_of_date": "2026-11-16",
-  "status": "partial",
-  "last_successful_as_of_date": "2026-11-10",
+  "as_of_date": "2026-11-17",
+  "status": "complete",
+  "last_successful_as_of_date": "2026-11-17",
   "comparison_status": "paired_444_core_next_close",
   "research_status": "complete",
-  "delayed_run": true,
+  "delayed_run": false,
   "model_currentness": {
     "444": true,
     "555": true,
     "555_v2": true,
-    "v211": false
+    "v211": true
   },
   "note": "Read four_systems.json before treating any older result file as current."
 }
