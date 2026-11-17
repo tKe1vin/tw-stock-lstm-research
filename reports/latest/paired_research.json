@@ -1,11 +1,11 @@
 {
   "status": "complete",
   "protocol": "paired-444-core-allocation-v1",
-  "as_of_date": "2026-11-10",
+  "as_of_date": "2026-11-16",
   "research_status": "exploratory",
   "core_model": "444",
-  "source_prediction_sha256": "120d7e041203be996529f9c82e45937a56e294c5beaafcbc191255f6150e7611",
-  "report": "reports/daily/2026-11-10/paired/comparison.md",
-  "recommendation": "reports/daily/2026-11-10/paired/555_next_day_recommendation.csv",
-  "news_increment_roi_pp": -1.2866558346917412
+  "source_prediction_sha256": "c94a5bf5f7c6b0469a12e861783b99f16897c30acbab73b77d352e24dc8c8a92",
+  "report": "reports/daily/2026-11-16/paired/comparison.md",
+  "recommendation": "reports/daily/2026-11-16/paired/555_next_day_recommendation.csv",
+  "news_increment_roi_pp": -0.19884663548495052
 }
