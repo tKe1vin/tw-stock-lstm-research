@@ -1,0 +1,9 @@
+{
+  "reproduced": true,
+  "model_fitting_executed": false,
+  "tensorflow_used": true,
+  "rows": 4950,
+  "maximum_prediction_delta": 8.881784197001252e-16,
+  "tolerance": 1e-06,
+  "historical_alpha_proven": false
+}

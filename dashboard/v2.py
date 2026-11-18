@@ -10,6 +10,7 @@ from dashboard.project import load_tracker
 from dashboard.research_charts import comparison_bars, wealth_chart
 from dashboard.research_layout import RESEARCH_TABS
 from dashboard.v2_presentation import load_v2_presentation
+from dashboard.v2_history import history_available, load_v2_history, render_v2_history
 from dashboard_v2.data_access.load import NAMES, v2_comparison
 from dashboard_v2.data_access.prospective import (
     day_review, display_sources, signal_dates, source_status, trading_journal,
@@ -254,13 +255,44 @@ def _sources(data):
 def render_v2(root=ROOT):
     root = Path(root)
     st.title("V2研究與每日檢討")
-    st.caption("與V3採相同的摘要卡、互動圖與六個分頁；讀取每日保存資料，每五分鐘重新讀取。沒有券商下單功能。")
+    st.caption("與V3採相同的摘要卡、互動圖與六個分頁；讀取保存研究及每日資料，每五分鐘重新讀取。沒有券商下單功能。")
     mode = st.radio("前瞻／日誌資料", ["saved", "demo"], horizontal=True, key="v2_data_mode",
                     format_func=lambda value: {"saved": "正式保存資料", "demo": "合成DEMO展示"}[value])
+    available = history_available(root) if mode == "saved" else False
+    if mode == "demo":
+        st.session_state["v2_research_scope"] = "tracking"
+        st.warning("SYNTHETIC_DEMO｜合成資料，只供介面展示，不是實際模型績效，也不計入正式結果。")
+        st.caption("DEMO只展示每日追蹤介面，不借用正式歷史回測的預測、曲線或績效。")
+    scope = st.radio("研究範圍", ["historical", "tracking"], horizontal=True,
+                     index=0 if available else 1, key="v2_research_scope", disabled=mode == "demo",
+                     format_func=lambda value: {"historical": "同標準歷史回測（150日）", "tracking": "每日凍結追蹤"}[value])
+    if mode == "saved" and not available:
+        st.warning("同標準歷史報告尚未同步；每日凍結追蹤仍可查看。選擇歷史範圍可查看來源檢查訊息。")
+    if mode == "saved" and scope == "historical":
+        try:
+            history = load_v2_history(root)
+        except (DataIntegrityError, OSError, ValueError, KeyError, RuntimeError) as exc:
+            st.error("同標準歷史回測來源缺少或未通過完整性檢查，暫停顯示歷史績效。可手動切換「每日凍結追蹤」查看V2.11。")
+            st.caption(str(exc))
+            return
+
+        def tracking_section(section=None):
+            try:
+                load_tracker(root)
+                tracking = load_v2_presentation(root=root, mode="saved")
+                with display_sources(mode="saved", root=root):
+                    if section is None:
+                        _daily(tracking)
+                    else:
+                        _archive(tracking, section)
+            except (DataIntegrityError, OSError, ValueError, KeyError, RuntimeError) as exc:
+                st.warning("V2.11每日追蹤來源未完整同步，歷史回測仍保留獨立呈現。")
+                st.caption(str(exc))
+
+        render_v2_history(history, daily_renderer=tracking_section, archive_renderer=tracking_section)
+        return
     if mode == "saved":
         st.info("正式保存資料｜V2.11凍結模型的研究追蹤，歷史發布時點尚未完整認證，維持PENDING。缺少的Ridge來源不以DEMO補齊。")
-    else:
-        st.warning("SYNTHETIC_DEMO｜合成資料，只供介面展示，不是實際模型績效，也不計入正式結果。")
     try:
         if mode == "saved":
             load_tracker(root)

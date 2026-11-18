@@ -1,0 +1,4 @@
+Fold,Signal_Days,Stock_Rows,Nonzero_Scores,Unknown_Source_Status_Rows,Observed_Article_Rows,Verified_No_Article_Rows,Publication_Timestamp_Rows,Historical_Availability_Certified
+1,50,250,128,250,0,0,0,False
+2,50,250,115,250,0,0,0,False
+3,50,250,113,180,19,51,19,False

@@ -1,0 +1,29 @@
+{
+  "protocol_version": "v2-common-training-v1",
+  "study_status": "exploratory",
+  "as_of": "2026-11-17",
+  "candidate_order": ["price_lstm", "no_news_lstm", "news_lstm"],
+  "candidates": {
+    "price_lstm": ["Close"],
+    "no_news_lstm": ["Close", "MA20", "RSI_14", "MACD_Hist", "Market_Vol_20d"],
+    "news_lstm": ["Close", "MA20", "RSI_14", "MACD_Hist", "Market_Vol_20d", "Daily_Sentiment"]
+  },
+  "test_samples": 150,
+  "folds": 3,
+  "fold_test_samples": 50,
+  "validation_samples": 60,
+  "train_samples": 756,
+  "time_step": 10,
+  "label_gap": 6,
+  "hold_sessions": 5,
+  "layers": 2,
+  "units": 50,
+  "dropout": 0.2,
+  "seed": 42,
+  "learning_rate": 0.001,
+  "max_epochs": 50,
+  "patience": 5,
+  "batch_size": 32,
+  "allow_test_selection": false,
+  "allow_official_model_replacement": false
+}

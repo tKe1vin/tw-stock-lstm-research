@@ -8,6 +8,7 @@ import sys
 import pytest
 
 pytest.importorskip("streamlit")
+pytest.importorskip("altair")
 from streamlit.testing.v1 import AppTest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,7 +17,8 @@ APP = ROOT / "dashboard/app.py"
 
 def portal():
     at = AppTest.from_file(str(APP), default_timeout=30).run()
-    return at.radio(key="project_page").set_value("V2研究").run()
+    at = at.radio(key="project_page").set_value("V2研究").run()
+    return at.radio(key="v2_research_scope").set_value("tracking").run()
 
 
 def displayed(at):

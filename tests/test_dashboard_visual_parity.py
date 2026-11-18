@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("streamlit")
+pytest.importorskip("altair")
 from streamlit.testing.v1 import AppTest
 
 
@@ -14,7 +15,10 @@ TABS = ["結果總覽", "預測與驗證", "成本與風險", "每日運作", "�
 
 def portal(page):
     at = AppTest.from_file(str(APP), default_timeout=30).run()
-    return at.radio(key="project_page").set_value(page).run()
+    at = at.radio(key="project_page").set_value(page).run()
+    if page == "V2研究":
+        at = at.radio(key="v2_research_scope").set_value("tracking").run()
+    return at
 
 
 def test_both_research_versions_have_identical_six_native_tabs():

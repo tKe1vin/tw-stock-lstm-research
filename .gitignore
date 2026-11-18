@@ -61,3 +61,6 @@ research/v211/independent_ledger/market/yahoo_staging*
 experiments/results/signal_models/predictions.csv
 experiments/results/walk_forward_predictions.csv
 experiments/results/v2/v210/
+
+# Reviewed inference-only V2.12 pack; raw provider caches stay excluded.
+!research/v2_common/models/2026-11-17/fold_models.zip

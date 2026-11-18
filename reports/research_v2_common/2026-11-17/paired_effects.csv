@@ -1,0 +1,4 @@
+Contrast,Arm_A,Arm_B,N_Days,Mean_Daily_Difference_Pp,CI_Lower_Pp,CI_Upper_Pp,Block_Length,Requested_Draws,Usable_Draws,Seed,Confidence_Level,Result_Status,Unit
+news_vs_no_news,v2_news_lstm,v2_no_news_lstm,149,0.0008531442243259079,-0.004224987638810749,0.0057199135450718185,20,2000,2000,42,0.95,historical_exploration,percentage points of mean arithmetic daily net return
+risk_with_news,v2_news_lstm,v2_news_no_risk,149,-0.04512255886487903,-0.13045036749556163,0.03096263629476546,20,2000,2000,42,0.95,historical_exploration,percentage points of mean arithmetic daily net return
+selection_at_same_gross,v2_news_lstm,v2_matched_equal,149,0.000719728219507248,-0.005526195385188893,0.006720069425621559,20,2000,2000,42,0.95,historical_exploration,percentage points of mean arithmetic daily net return

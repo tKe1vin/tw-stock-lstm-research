@@ -6,6 +6,7 @@
 - [V3.3：20交易日／Ridge與HGB新聞模型](research/v3_3/design.md) · [11/17實測](reports/research_v3_3/2026-11-17/summary.md)
 - [Streamlit完整專案展示與啟動方式](docs/streamlit_demo.md) · [V3下一輪研究討論](docs/v3_next_research.md)
 - [V2整合與首輪優化](docs/unified_v2_v3_20261117.md) · [V3.4固定成本配置實驗](reports/research_v3_4/2026-11-17/summary.md)
+- [V2.12同標準歷史回測設計與缺口](docs/v2_common_backtest.md) · [150日共同帳本結果](reports/research_v2_common/2026-11-17/summary.md)
 - [130題逐題狀態](docs/audit_130_status.md) · [訓練關鍵修正與歷史限制](docs/audit_130_critical.md)
 - [修訂企畫書](docs/proposal_revised.md) · [Word 版本](docs/proposal_revised.docx)
 - [研究協議](docs/research_protocol_v2.md) · [十項 P0 改善與歷史限制](docs/p0_remediation.md)
@@ -22,9 +23,9 @@ python -m pip install -r dashboard/requirements.txt
 python -m streamlit run dashboard/app.py
 ```
 
-開啟終端顯示的網址（預設 `http://localhost:8501`）。側欄提供**專案總覽、模型與結果、研究日誌、新聞與情緒、V2研究、V3研究、文件與重現**七個入口。V2預設讀取正式保存的V2.11訊號／帳本，整合每日檢討、隔日策略、歷史實驗與成熟預測診斷；合成DEMO須明確切換，不替代缺少的Ridge私人資料。V3保留各版歷史結果，另展示固定預測下的V3.4成本配置實驗。
+開啟終端顯示的網址（預設 `http://localhost:8501`）。側欄提供**專案總覽、模型與結果、研究日誌、新聞與情緒、V2研究、V3研究、文件與重現**七個入口。V2正式模式預設展示150日同標準歷史回測，可切回每日凍結追蹤，保留V2.11日誌、每日檢討、隔日策略與成熟預測診斷；合成DEMO須明確切換，不替代缺少的Ridge私人資料。V3保留各版歷史結果，另展示固定預測下的V3.4成本配置實驗。
 
-V2與V3統一為**結果總覽、預測與驗證、成本與風險、每日運作、優化實驗、來源與限制**六分頁，共用互動淨值／相對基準／回撤圖。V2新增曝險與持倉、成本拆分、預測誤差與交易日期時間線；[本輪補齊項目與仍缺證據](docs/v2_v3_visualization_update.md)。
+V2與V3統一為**結果總覽、預測與驗證、成本與風險、每日運作、優化實驗、來源與限制**六分頁，共用互動淨值／相對基準／回撤圖。V2正式模式新增同444／555標準的150日歷史回測，可切回原每日凍結追蹤；歷史結果保持探索性。V2新增曝險與持倉、成本拆分、預測誤差與交易日期時間線；[本輪補齊項目與仍缺證據](docs/v2_v3_visualization_update.md)。
 
 原444／555共同核心回測、四系統逐日預測、累積／逐日日誌、真正執行紀錄、新聞來源與時間、企畫書／Notebook下載均保留；入口仍為 `dashboard/app.py`，每日同步與五分鐘重新讀取不變。
 
