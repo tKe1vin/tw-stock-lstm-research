@@ -7114,3 +7114,8 @@ Date,ticker,Daily_Sentiment,News_Count,Latest_News_Timestamp,Source_Status,Scori
 2026-11-17,2603.TW,0.0,0,,verified_no_matching_article,neutral_no_news
 2026-11-17,2002.TW,0.0,0,,verified_no_matching_article,neutral_no_news
 2026-11-17,2891.TW,0.0,0,,verified_no_matching_article,neutral_no_news
+2026-11-18,2330.TW,0.35019999999999996,2,2026-11-18T11:30:06+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
+2026-11-18,2317.TW,0.90705,2,2026-11-17T22:00:07+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
+2026-11-18,2603.TW,0.9037,1,2026-11-17T14:10:24+08:00,observed_article,IDEA-CCNL/Erlangshen-Roberta-110M-Sentiment
+2026-11-18,2002.TW,0.0,0,,verified_no_matching_article,neutral_no_news
+2026-11-18,2891.TW,0.0,0,,verified_no_matching_article,neutral_no_news

@@ -1,0 +1,6 @@
+﻿Created_At,Run_ID,Run_Mode,Signal_Date,Target_Date,Ticker,Previous_Close,Predicted_Close,Predicted_Return_Pct,Target_Weight,Cash_Weight,Note
+2026-11-18T16:37:54.402298+08:00,20261118T163754402298,daily,2026-11-18,2026-11-19,2330.TW,2175.0,2248.9521484375,3.4000987787356385,0.2,0.0,"fixed-share reference, not actual drifted holdings or trade instruction"
+2026-11-18T16:37:54.402298+08:00,20261118T163754402298,daily,2026-11-18,2026-11-19,2317.TW,221.0,240.8130645751953,8.96518759058611,0.2,0.0,"fixed-share reference, not actual drifted holdings or trade instruction"
+2026-11-18T16:37:54.402298+08:00,20261118T163754402298,daily,2026-11-18,2026-11-19,2603.TW,257.5,263.2588806152344,2.236458491353166,0.2,0.0,"fixed-share reference, not actual drifted holdings or trade instruction"
+2026-11-18T16:37:54.402298+08:00,20261118T163754402298,daily,2026-11-18,2026-11-19,2002.TW,17.950000762939453,18.30404281616211,1.9723790427554233,0.2,0.0,"fixed-share reference, not actual drifted holdings or trade instruction"
+2026-11-18T16:37:54.402298+08:00,20261118T163754402298,daily,2026-11-18,2026-11-19,2891.TW,73.4000015258789,73.30506134033203,-0.12934629914606033,0.2,0.0,"fixed-share reference, not actual drifted holdings or trade instruction"
