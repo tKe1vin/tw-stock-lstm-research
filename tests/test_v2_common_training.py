@@ -79,11 +79,62 @@ def test_retained_coverage_rejects_non_session_extra_date(data):
 def test_warmup_missing_rows_are_preserved_and_risk_matches_paired(data):
     from scripts.paired_research import market_risk, price_panel
 
-    original = price_panel(training.ROOT / training.PRICE_PATH)
+    # Daily source files keep growing; this experiment is frozen at its as-of.
+    original = price_panel(training.ROOT / training.PRICE_PATH).loc[:data["as_of"]]
     pd.testing.assert_frame_equal(data["panel"], original)
     assert len(original) == 3135
     assert original.isna().any(axis=1).sum() == 4
     pd.testing.assert_frame_equal(data["risk"], market_risk(original))
+
+
+def test_future_daily_appends_cannot_change_retained_training_or_pending_labels(tmp_path, config, data):
+    cutoff = str(data["as_of"].date())
+    prices = pd.read_csv(training.ROOT / training.PRICE_PATH)
+    prices = prices.loc[prices.Date.le(cutoff)].copy()
+    sentiment = pd.read_csv(training.ROOT / training.SENTIMENT_PATH)
+    sentiment = sentiment.loc[sentiment.Date.le(cutoff)].copy()
+    price_path, sentiment_path = tmp_path / "prices.csv", tmp_path / "sentiment.csv"
+    prices.to_csv(price_path, index=False)
+    sentiment.to_csv(sentiment_path, index=False)
+    before = training.prepare_data(training.ROOT, config, price_path, sentiment_path)
+
+    future_dates = data["calendar"][data["calendar"] > data["as_of"]][:6]
+    last_prices = prices.groupby("ticker", sort=False).tail(1)
+    added_prices, added_sentiment = [], []
+    for day in future_dates:
+        day = str(day.date())
+        new_prices = last_prices.copy()
+        new_prices["Date"] = day
+        new_prices["Close"] *= 1e6  # Exposes accidental use of post-cutoff bars.
+        added_prices.append(new_prices)
+        added_sentiment.extend({"Date": day, "ticker": ticker, "Daily_Sentiment": -1.0}
+                               for ticker in training.TICKERS)
+    pd.concat([prices, *added_prices], ignore_index=True).to_csv(price_path, index=False)
+    pd.concat([sentiment, pd.DataFrame(added_sentiment)], ignore_index=True).to_csv(sentiment_path, index=False)
+    after = training.prepare_data(training.ROOT, config, price_path, sentiment_path)
+
+    # Input receipts describe the actual file bytes; derived historical values
+    # must remain unchanged even as those receipts acquire a different hash.
+    for name in ("prices", "sentiment"):
+        assert before["source_metadata"][name]["sha256"] != after["source_metadata"][name]["sha256"]
+    for name in ("panel", "sentiment", "risk", "target"):
+        pd.testing.assert_frame_equal(before[name], after[name])
+    pd.testing.assert_index_equal(before["calendar"], after["calendar"])
+    for ticker in training.TICKERS:
+        pd.testing.assert_frame_equal(before["frames"][ticker], after["frames"][ticker])
+    for old_fold, new_fold in zip(before["folds"], after["folds"]):
+        for split in ("train", "validation", "test"):
+            np.testing.assert_array_equal(old_fold[split], new_fold[split])
+        ticker = training.TICKERS[0]
+        old_windows, old_scaler, old_rows = training.scaled_windows(before["frames"][ticker], training.FEATURES, old_fold)
+        new_windows, new_scaler, new_rows = training.scaled_windows(after["frames"][ticker], training.FEATURES, new_fold)
+        np.testing.assert_array_equal(old_rows, new_rows)
+        np.testing.assert_array_equal(old_scaler.scale_, new_scaler.scale_)
+        for split in old_windows:
+            np.testing.assert_array_equal(old_windows[split], new_windows[split])
+    counts = training.check_report(after)
+    assert counts["matured_test_signal_days"] == 145
+    assert counts["pending_test_signal_days"] == 5
 
 
 def test_pending_test_labels_keep_all_150_signals_without_future_prices(data):
