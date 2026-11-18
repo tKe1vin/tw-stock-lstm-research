@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# The daily model environment intentionally omits presentation dependencies.
+# Both dashboard workflows install Altair and run this entire module.
+pytest.importorskip("altair")
+
 from dashboard.research_charts import ChartDataError, comparison_bars, wealth_chart
 
 
