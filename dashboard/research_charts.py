@@ -36,6 +36,17 @@ def _color(arm, name, benchmark_arm=None, *, fallback=MODEL):
     return fallback
 
 
+def _responsive_legend():
+    # Vega's bottom legend otherwise puts every series in one unbounded row.
+    # Its labels can be clipped inside the SVG even when the page does not
+    # overflow. Reserve room per entry and let narrow charts add legend rows.
+    return alt.Legend(
+        orient="bottom", columns=alt.ExprRef(expr="max(1, floor(width / 260))"),
+        labelLimit=alt.ExprRef(expr="max(80, min(220, width - 30))"),
+        labelOverlap=False, columnPadding=12, rowPadding=6,
+    )
+
+
 def _wealth_frame(curves, arms, benchmark_arm):
     required = {"Date", "Arm", "Display_Name", "Wealth_Index", "Drawdown_Pct"}
     if not isinstance(curves, pd.DataFrame) or not required.issubset(curves):
@@ -112,7 +123,7 @@ def wealth_chart(curves, view, arms, benchmark_arm, *, benchmark_label="基準")
         x=alt.X("Date:T", title=None, axis=alt.Axis(format="%m/%d", grid=False)),
         y=alt.Y(f"{field}:Q", title=title, scale=alt.Scale(zero=False)),
         color=alt.Color("Display_Name:N", title=None, scale=palette,
-                        legend=alt.Legend(orient="bottom", labelLimit=220)),
+                        legend=_responsive_legend()),
         tooltip=[alt.Tooltip("Date:T", title="日期", format="%Y-%m-%d"),
                  alt.Tooltip("Display_Name:N", title="組別"),
                  alt.Tooltip(f"{field}:Q", title=title, format=".3f")])
@@ -121,7 +132,13 @@ def wealth_chart(curves, view, arms, benchmark_arm, *, benchmark_label="基準")
         opacity=alt.condition(hover, alt.value(1), alt.value(0))).add_params(hover)
     reference = alt.Chart(pd.DataFrame({"value": [100 if view == "成本後淨值" else 0]})).mark_rule(
         color="#bdc8d7", strokeDash=[4, 5]).encode(y="value:Q")
-    return (reference + line + points).properties(width="container", height=330).configure_view(
+    # Streamlit fits axes and the legend inside this height. At mobile widths
+    # every extra series needs its own legend row; reserve space so selecting
+    # all comparisons does not squeeze the plot or clip its vertical title.
+    height = 330 + 40 * max(0, len(selected) - 3)
+    return (reference + line + points).properties(
+        width="container", height=height,
+        padding={"left": 6, "right": 6, "top": 6, "bottom": 6}).configure_view(
         strokeWidth=0).configure_axis(labelColor="#6b7a90", titleColor="#6b7a90",
                                      gridColor="#e9edf4", titleFontWeight="normal")
 
@@ -168,7 +185,7 @@ def comparison_bars(frame, category, value, title, *, series=None, unit="", heig
         "x": alt.X(f"{category}:N", title=None, sort=None, axis=alt.Axis(labelAngle=0, labelLimit=200)),
         "y": alt.Y(f"{value}:Q", title=f"{title}（{unit}）" if unit else title, scale=alt.Scale(zero=True)),
         "color": alt.Color(f"{palette_key}:N", title=None, scale=palette,
-                           legend=alt.Legend(orient="bottom") if series else None),
+                           legend=_responsive_legend() if series else None),
         "tooltip": [alt.Tooltip(f"{key}:N", title=key) for key in keys] + [
             alt.Tooltip(f"{value}:Q", title=title, format=".3f")],
     }

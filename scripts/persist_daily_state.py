@@ -223,22 +223,65 @@ def changed_state(root: Path) -> list[str]:
     return selected
 
 
+def _rebase_in_progress(root: Path) -> bool:
+    for name in ("rebase-merge", "rebase-apply"):
+        value = git(root, "rev-parse", "--git-path", name).stdout.decode().strip()
+        if (root / value).exists():
+            return True
+    return False
+
+
+def _abort_state_rebase(root: Path) -> None:
+    if _rebase_in_progress(root):
+        aborted = git(root, "rebase", "--abort", check=False)
+        if aborted.returncode:
+            detail = aborted.stderr.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"State rebase abort failed; manual recovery required: {detail}")
+
+
 def push_state(root: Path, branch: str, preserved_signals: dict[str, str]) -> None:
     git(root, "check-ref-format", "--branch", branch)
+    if _rebase_in_progress(root):
+        raise RuntimeError("A rebase is already in progress; refusing automatic state push")
     target = f"HEAD:refs/heads/{branch}"
     if git(root, "push", "origin", target, check=False).returncode == 0:
         return
     if git(root, "diff", "--quiet", check=False).returncode:
         raise RuntimeError("Push failed and unrelated tracked files are dirty; refusing automatic rebase")
     git(root, "fetch", "origin", f"refs/heads/{branch}:refs/remotes/origin/{branch}")
-    if git(root, "rebase", f"refs/remotes/origin/{branch}", check=False).returncode:
-        git(root, "rebase", "--abort", check=False)
+    try:
+        rebased = git(root, "rebase", f"refs/remotes/origin/{branch}", check=False)
+    except BaseException:
+        _abort_state_rebase(root)
+        raise
+    if rebased.returncode:
+        _abort_state_rebase(root)
         raise RuntimeError("Concurrent state changes conflict; rebase aborted without overwriting either ledger")
     validate_state(root)
     current = signal_hashes(root)
     if any(current.get(name) != value for name, value in preserved_signals.items()):
         raise RuntimeError("A published signal changed during rebase; refusing push")
     git(root, "push", "origin", target)
+
+
+def pending_state_commits(root: Path, branch: str) -> list[str]:
+    """Recognize only unpublished state checkpoints before retrying a push."""
+    git(root, "check-ref-format", "--branch", branch)
+    remote = f"refs/remotes/origin/{branch}"
+    if git(root, "rev-parse", "--verify", remote, check=False).returncode:
+        raise RuntimeError("Cannot safely persist without a known remote-tracking branch")
+    commits = git(root, "rev-list", "--reverse", f"{remote}..HEAD").stdout.decode().splitlines()
+    for commit in commits:
+        subject = git(root, "show", "-s", "--format=%s", commit).stdout.decode().strip()
+        parents = git(root, "show", "-s", "--format=%P", commit).stdout.split()
+        changed = git(root, "diff-tree", "--no-commit-id", "--name-only", "--no-renames",
+                      "-r", "-z", commit).stdout.split(b"\0")
+        names = [name.decode("utf-8") for name in changed if name]
+        if (len(parents) != 1 or not re.fullmatch(
+                r"research: daily state \d{4}-\d{2}-\d{2} \[skip ci\]", subject)
+                or not names or not all(allowed_path(name) for name in names)):
+            raise RuntimeError("Unpublished commits include unrelated changes; refusing automatic state push")
+    return commits
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -248,20 +291,30 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.push and not args.commit:
         parser.error("--push requires --commit")
+    if args.commit and _rebase_in_progress(ROOT):
+        raise RuntimeError("A rebase is already in progress; refusing to change its HEAD or index")
     validate_state(ROOT)
     selected = changed_state(ROOT)
     print(json.dumps({"read_only": not args.commit, "state_files": selected}, ensure_ascii=False), flush=True)
-    if not args.commit or not selected:
+    if not args.commit:
         return 0
     staged = git(ROOT, "diff", "--cached", "--name-only", "-z").stdout
     if staged:
         raise ValueError("The Git index already contains staged changes; refusing to include pre-existing staged content")
-    git(ROOT, "add", "--", *selected)
-    day = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d")
-    git(ROOT, "commit", "-m", f"research: daily state {day} [skip ci]")
+    if selected:
+        try:
+            git(ROOT, "add", "--", *selected)
+            day = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d")
+            git(ROOT, "commit", "-m", f"research: daily state {day} [skip ci]")
+        except BaseException:
+            # The index was empty before this invocation. Keep recoverable files
+            # on disk, and avoid poisoning the next retry with our own staging.
+            git(ROOT, "reset", "HEAD", "--", *selected, check=False)
+            raise
     if args.push:
         branch = os.environ.get("GITHUB_REF_NAME") or git(ROOT, "branch", "--show-current").stdout.decode().strip()
-        push_state(ROOT, branch, signal_hashes(ROOT))
+        if pending_state_commits(ROOT, branch):
+            push_state(ROOT, branch, signal_hashes(ROOT))
     return 0
 
 

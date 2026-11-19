@@ -72,6 +72,55 @@ def test_all_three_views_share_complete_points_and_benchmark_reference():
         wealth_chart(curves(), "未知", ["model"], "B0")
 
 
+def test_series_legends_wrap_to_chart_width_and_keep_full_names_in_hover():
+    # Container sizing alone does not prevent Vega's default single legend row
+    # from clipping later series inside its SVG at a 390px mobile viewport.
+    for view in ("成本後淨值", "相對基準", "回撤路徑"):
+        spec = wealth_chart(curves(), view, ["B0", "model", "price"], "B0").to_dict()
+        encoding = spec["layer"][1]["encoding"]
+        legend = encoding["color"]["legend"]
+        assert legend["columns"] == {"expr": "max(1, floor(width / 260))"}
+        assert legend["labelLimit"] == {"expr": "max(80, min(220, width - 30))"}
+        assert legend["labelOverlap"] is False
+        assert next(item for item in encoding["tooltip"] if item["field"] == "Display_Name")["type"] == "nominal"
+        assert encoding["color"]["scale"]["domain"] == ["同曝險等權", "凍結模型", "價格模型"]
+    frame = pd.DataFrame({"Measure": ["MAE"] * 3, "Forecast": ["新聞", "無新聞", "零預測"], "Value": [1., 2., 3.]})
+    bars = comparison_bars(frame, "Measure", "Value", "誤差", series="Forecast").to_dict()
+    assert bars["encoding"]["color"]["legend"] == legend
+    assert bars["encoding"]["xOffset"]["field"] == "Forecast"
+
+
+@pytest.mark.parametrize("view", ["成本後淨值", "相對基準", "回撤路徑"])
+def test_eight_curve_legend_keeps_mobile_plot_space_and_identical_financial_points(view):
+    source = curves()
+    extra = []
+    for index in range(5):
+        arm = source[source.Arm.eq("model")].copy()
+        arm["Arm"] = f"control_{index}"
+        arm["Display_Name"] = f"延伸比較組 {index} 完整名稱"
+        extra.append(arm)
+    source = pd.concat([source, *extra], ignore_index=True)
+    before = source.copy(deep=True)
+    default_arms = ["B0", "model", "price"]
+    all_arms = [*default_arms, *(f"control_{index}" for index in range(5))]
+    default = wealth_chart(source, view, default_arms, "B0")
+    expanded = wealth_chart(source, view, all_arms, "B0")
+    spec = expanded.to_dict()
+    assert default.to_dict()["height"] == 330
+    # The 390px browser measurement uses one 24px legend row per series,
+    # about 70px for axes/padding, and needs at least 200px of plotting space.
+    assert spec["height"] >= 8 * 24 + 70 + 200
+    # Streamlit mutates padding.bottom, so its renderer also needs object form.
+    assert spec["padding"] == {"left": 6, "right": 6, "top": 6, "bottom": 6}
+    assert len(spec["layer"][1]["encoding"]["color"]["scale"]["domain"]) == 8
+    default_rows = pd.DataFrame(plotted_rows(default))
+    all_rows = pd.DataFrame(plotted_rows(expanded))
+    assert len(all_rows) == 24
+    retained = all_rows[all_rows.Arm.isin(default_arms)].reset_index(drop=True)
+    pd.testing.assert_frame_equal(default_rows, retained)
+    pd.testing.assert_frame_equal(source, before)
+
+
 def test_bars_preserve_signed_values_and_require_complete_unique_classifications():
     frame = pd.DataFrame({"Measure": ["MAE", "MAE"], "Forecast": ["凍結模型", "零預測基準"], "Value": [4.7, 4.8]})
     chart = comparison_bars(frame, "Measure", "Value", "同列預測誤差", series="Forecast", unit="百分點")

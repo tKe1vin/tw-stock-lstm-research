@@ -5,32 +5,50 @@ on:
   push:
     branches: [main, 'review/v2-delivery-*']
     paths:
-      - 'dashboard_v2/**'
-      - 'streamlit_v2_app.py'
-      - 'docs/v2_integration/**'
       - 'dashboard/**'
-      - 'tests/test_dashboard*.py'
-      - 'tests/test_research_charts.py'
-      - 'tests/test_v2_presentation.py'
-      - 'tests/test_v2_history.py'
-      - 'reports/research_v2_common/**'
-      - 'research/v2_common/**'
-      - 'experiments/v2/**'
-      - '.github/workflows/v2-delivery-review.yml'
+      - 'dashboard_v2/**'
+      - '.streamlit/**'
+      - 'streamlit_app.py'
+      - 'streamlit_v2_app.py'
+      - 'requirements*.txt'
+      - 'pytest.ini'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'common/**'
+      - 'experiments/**/*.py'
+      - 'experiments/results/v2/v211/**'
+      - 'research/**'
+      - 'outputs/**'
+      - 'reports/**'
+      - 'data/news*'
+      - 'data/sentiment*'
+      - 'docs/**'
+      - 'README.md'
+      - 'VALIDATION.md'
+      - '.github/workflows/**'
   pull_request:
     paths:
-      - 'dashboard_v2/**'
-      - 'streamlit_v2_app.py'
-      - 'docs/v2_integration/**'
       - 'dashboard/**'
-      - 'tests/test_dashboard*.py'
-      - 'tests/test_research_charts.py'
-      - 'tests/test_v2_presentation.py'
-      - 'tests/test_v2_history.py'
-      - 'reports/research_v2_common/**'
-      - 'research/v2_common/**'
-      - 'experiments/v2/**'
-      - '.github/workflows/v2-delivery-review.yml'
+      - 'dashboard_v2/**'
+      - '.streamlit/**'
+      - 'streamlit_app.py'
+      - 'streamlit_v2_app.py'
+      - 'requirements*.txt'
+      - 'pytest.ini'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'common/**'
+      - 'experiments/**/*.py'
+      - 'experiments/results/v2/v211/**'
+      - 'research/**'
+      - 'outputs/**'
+      - 'reports/**'
+      - 'data/news*'
+      - 'data/sentiment*'
+      - 'docs/**'
+      - 'README.md'
+      - 'VALIDATION.md'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -55,9 +73,11 @@ jobs:
           cache-dependency-path: dashboard/requirements.txt
       - name: Install lightweight presentation dependencies
         run: python -m pip install -r dashboard/requirements.txt 'pytest>=8,<9'
+      - name: Check saved project health without model runtime
+        run: python -m scripts.project_health --profile dashboard
       - name: Check current portal and additive V2 UI and inference contracts
         run: >-
           python -m pytest -q tests/test_dashboard*.py tests/test_news_display*.py
-          tests/test_v2_diagnostics.py tests/test_v2_presentation.py tests/test_v2_history.py tests/test_research_charts.py tests/test_v3_4.py
+          tests/test_v2_diagnostics.py tests/test_v2_presentation.py tests/test_v2_history.py tests/test_research_charts.py tests/test_v3_4.py tests/test_environment_contracts.py
           dashboard_v2/tests docs/v2_integration/tests
           docs/v2_integration/v2_improvement_notes/tests

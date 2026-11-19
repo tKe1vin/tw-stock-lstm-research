@@ -21,6 +21,8 @@ from scripts.common import TZ
 
 def classify_exit(status, report, signal_exists, now):
     """Exit 0 only when today's own session was published. An older file does not count."""
+    if (report or {}).get("gate") == "integrity_error":
+        return 1
     today = str(pd.Timestamp(now.astimezone(TZ).date()).date())
     signal = status.get("signal") or {}
     reason = signal.get("reason")

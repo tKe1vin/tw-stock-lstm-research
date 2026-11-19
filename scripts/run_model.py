@@ -631,7 +631,8 @@ def run_555_v2(mode: str) -> int:
             "scheduled_rebalance_date": dates["scheduled_rebalance_date"],
             "trade_eligible": dates["trade_eligible"],
             "execution_price": NOT_APPLICABLE,
-            "execution_status": "forecast_expired" if expired else "eligible_unfilled" if dates["trade_eligible"] else "forecast_only",
+            # Ledger scheduling metadata does not publish this candidate as a trade.
+            "execution_status": "forecast_expired" if expired else "forecast_only",
             "model_hash": digest,
             "data_hash": sha256(PRICES),
         })

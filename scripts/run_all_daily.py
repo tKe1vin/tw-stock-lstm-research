@@ -135,10 +135,15 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
         folder = ROOT / "outputs" / model / run_date  # Legacy calendar-keyed exports.
     try:
         status = json.loads((folder / "status.json").read_text(encoding="utf-8"))
+        if not isinstance(status, dict):
+            return None
         if status.get("status") != "success" or status.get("completed_session") != session:
             return None
         export = status.get("unified_csv")
-        if not export or not (ROOT / export).is_file():
+        if not isinstance(export, str) or not export:
+            return None
+        export_path = (ROOT / export).resolve()
+        if not export_path.is_relative_to(ROOT.resolve()) or not export_path.is_file():
             return None
         if model == "555_v2":
             from scripts.run_model import EXPECTED_WEIGHTS
@@ -155,11 +160,11 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
                     "model_metrics.csv", "strategy_metrics.csv", "backtest_nav.csv")):
                 return None
             protocol = json.loads((native / "evaluation_protocol.json").read_text(encoding="utf-8"))
-            if str(protocol.get("as_of_date", ""))[:10] != session:
+            if not isinstance(protocol, dict) or str(protocol.get("as_of_date", ""))[:10] != session:
                 return None
         return {"model": model, "status": "success", "exit_code": 0,
                 "reason": "already_completed_for_this_session", "outputs_retained": True}
-    except (OSError, ValueError, TypeError):
+    except (OSError, ValueError, TypeError, RuntimeError):
         return None
 
 

@@ -98,7 +98,17 @@ def load_model_output(model, day, root=ROOT):
         value = _csv(root, base + "/" + relative)
         if value is not None:
             tables[name] = {"data": value, "path": base + "/" + relative}
-    return {"model": model, "day": day, "status": status, "tables": tables, "base": base}
+    execution_audit = None
+    if model == "555_v2":
+        signal = tables.get("unified_signal", {}).get("data")
+        saved = sorted(set(signal.execution_status.dropna().astype(str))) if signal is not None and "execution_status" in signal else []
+        execution_audit = {
+            "forecast_only": status.get("signal_published") is False,
+            "saved_execution_statuses": saved,
+            "legacy_status_discrepancy": any(value not in {"forecast_only", "forecast_expired"} for value in saved),
+        }
+    return {"model": model, "day": day, "status": status, "tables": tables, "base": base,
+            "execution_audit": execution_audit}
 
 
 def paired_dates(root=ROOT):
@@ -264,6 +274,11 @@ def render_project(root=ROOT):
                 st.caption(f"生成時間：{state.get('generated_at') or '未提供'}；用途：{state.get('recommendation_execution_status') or state.get('reason') or '未提供'}。")
                 if model == "555_v2":
                     st.info("555 V2此處是凍結模型預測；不是已實現績效，亦非已發布研究交易訊號。")
+                    audit = result["execution_audit"]
+                    if audit["legacy_status_discrepancy"]:
+                        st.warning("此日舊匯出列的執行狀態標記與僅預測用途不一致（"
+                                   + "、".join(audit["saved_execution_statuses"])
+                                   + "）；不視為可交易訊號或成交紀錄。下表與下載保留原檔數值。")
                 if model == "v211":
                     st.info("V2.11狀態以此資料日保存檔為準；僅維護時不會補造當日訊號。帳本請看下一個分頁。")
                 tables = result["tables"]

@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 pytest.importorskip('streamlit')
+pytest.importorskip('altair')
 from streamlit.testing.v1 import AppTest
 
 from dashboard.data import DataIntegrityError, ROOT
@@ -70,7 +71,16 @@ def test_forecast_only_and_missing_output_are_never_fabricated_as_realized_resul
     v2 = load_model_output('555_v2', model_dates('555_v2')[0])
     assert v2['status']['signal_published'] is False
     assert v2['status']['recommendation_execution_status'] == 'forecast_only'
-    assert v2['tables']['unified_signal']['data'].execution_status.eq('forecast_only').all()
+    # Older exports can contain the erroneous eligible_unfilled flag on an
+    # eligible rebalance day. Preserve the evidence and explicitly surface the
+    # discrepancy; do not rewrite it to make the current test pass.
+    signal = v2['tables']['unified_signal']
+    saved = pd.read_csv(ROOT / signal['path'], encoding='utf-8-sig')
+    pd.testing.assert_frame_equal(signal['data'], saved)
+    audit = v2['execution_audit']
+    assert audit['forecast_only']
+    assert audit['saved_execution_statuses'] == sorted(set(saved.execution_status))
+    assert audit['legacy_status_discrepancy'] == (not bool(saved.execution_status.isin(['forecast_only', 'forecast_expired']).all()))
     # The delayed 11/16 output remains maintenance-only even after a later
     # session has legitimately published a new signal.
     tracker = load_model_output('v211', '2026-11-16')
@@ -80,6 +90,22 @@ def test_forecast_only_and_missing_output_are_never_fabricated_as_realized_resul
         load_model_output('444', '../../models')
     with pytest.raises(DataIntegrityError):
         load_model_output('444', '2099-01-01')
+
+
+@pytest.mark.parametrize('saved_status', ['eligible_unfilled', 'forecast_only', 'forecast_expired'])
+def test_candidate_status_discrepancy_is_visible_without_rewriting_saved_evidence(tmp_path, saved_status):
+    base = tmp_path / 'outputs/555_v2/2026-11-19'
+    base.mkdir(parents=True)
+    (base / 'status.json').write_text(json.dumps({'signal_published': False,
+        'recommendation_execution_status': 'forecast_only'}))
+    path = base / 'unified_signal.csv'
+    pd.DataFrame([{'model_id': '555_v2', 'execution_status': saved_status}]).to_csv(path, index=False)
+    before = path.read_bytes()
+    result = load_model_output('555_v2', '2026-11-19', tmp_path)
+    assert result['execution_audit'] == {'forecast_only': True,
+        'saved_execution_statuses': [saved_status], 'legacy_status_discrepancy': saved_status == 'eligible_unfilled'}
+    assert result['tables']['unified_signal']['data'].execution_status.tolist() == [saved_status]
+    assert path.read_bytes() == before
 
 
 def test_tracker_retains_separate_signal_and_valuation_dates_and_checks_ledger(tmp_path):
@@ -126,6 +152,10 @@ def test_project_page_model_switch_and_saved_day_switch_are_read_only_without_mo
     for model in ['555', '555_v2', 'v211', '444']:
         at.selectbox(key='project_model').set_value(model).run()
         assert not at.exception and not at.error
+        if model == '555_v2':
+            saved_day = model_dates('555_v2')[0]
+            if load_model_output('555_v2', saved_day)['execution_audit']['legacy_status_discrepancy']:
+                assert any('不視為可交易訊號或成交紀錄' in item.value for item in at.warning)
     at.selectbox(key='project_pair_day').set_value('2026-11-09').run()
     assert not at.exception and not at.error
     assert any('2026-03-31' in v.value and '2026-11-09' in v.value for v in at.caption)

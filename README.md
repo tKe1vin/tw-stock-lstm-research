@@ -13,6 +13,7 @@
 - [修訂後配對研究實測](reports/research_revision/2026-11-06/paired/comparison.md)
 - [固定設定的多變量 LSTM 延伸](reports/research_extension/2026-11-06/summary.md)
 - [每日狀態](reports/latest/summary.md) · [驗證紀錄](VALIDATION.md)
+- [11/19 全專案健康檢查、測試與恢復措施](docs/project_health_20261119.md)
 
 ## Streamlit 完整專案展示
 

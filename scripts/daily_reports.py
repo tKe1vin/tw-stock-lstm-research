@@ -199,6 +199,8 @@ def _preserve_reason(summary: dict, day: str, previous: dict, daily_previous: di
     old_models = old.get("models") or {}
     if old.get("status") == "complete" and not all(record["current"] for record in records.values()):
         return "retry_cannot_replace_completed_session_report"
+    if old.get("status") == "complete" and old.get("as_of_date") == day and _last_success(old) == day:
+        return "already_published_completed_session_report"
     if all((old_models.get(model) or {}).get("current") for model in ("444", "555")) and not all(
             records[model]["current"] for model in ("444", "555")):
         return "retry_cannot_erase_completed_444_555_report"
@@ -394,8 +396,8 @@ def _build_reports(summary: dict, completed_session, *, attempt_path: Path) -> d
 
     preserved = _preserve_reason(summary, day, previous, daily_previous, records)
     if preserved:
-        # A skipped/failed retry is still journaled, but cannot erase a valid
-        # published snapshot or move the latest report backwards.
+        # Every later retry is journaled without rebuilding an already complete
+        # session from changed inputs or moving the latest report backwards.
         return {
             "report_schema": REPORT_SCHEMA, "as_of_date": day, "run_date": run_date,
             "output_day": str(summary.get("output_day") or day),
@@ -507,6 +509,15 @@ def build_reports(summary: dict, completed_session) -> dict:
         summary["started"] = datetime.now(TZ).isoformat()
     day = str(pd.Timestamp(completed_session).date())
     path = _attempt_path(summary, day)
+    if path.exists():
+        recorded = _read(path).get("report")
+        if not isinstance(recorded, dict) or recorded.get("publication_status") not in {"published", "attempt_only"}:
+            raise ValueError("A recorded daily attempt cannot be overwritten; start a new attempt")
+        # Replaying the same invocation must not regenerate reports from newer
+        # native files, nor turn its original publication into an attempt-only
+        # result. Verify the complete saved payload before returning it.
+        _write_attempt(summary, day, recorded, path)
+        return recorded
     try:
         report = _build_reports(summary, day, attempt_path=path)
     except Exception as exc:
