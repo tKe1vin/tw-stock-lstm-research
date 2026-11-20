@@ -1,8 +1,8 @@
 {
   "report_schema": "four-systems-v1",
-  "as_of_date": "2026-11-19",
+  "as_of_date": "2026-11-20",
   "status": "complete",
-  "last_successful_as_of_date": "2026-11-19",
+  "last_successful_as_of_date": "2026-11-20",
   "comparison_status": "paired_444_core_next_close",
   "research_status": "complete",
   "delayed_run": false,

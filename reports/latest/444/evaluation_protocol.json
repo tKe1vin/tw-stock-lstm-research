@@ -1,7 +1,7 @@
 {
   "protocol_version": "lstm-evaluation-v1",
   "strategy_id": "444_univariate_fixed",
-  "as_of_date": "2026-11-19",
+  "as_of_date": "2026-11-20",
   "price_auto_adjust": false,
   "initial_capital": 100000.0,
   "broker_fee_rate": 0.001425,
@@ -14,7 +14,6 @@
   "risk_free_rate": 0.0,
   "direction_zero_tolerance_pct": 1e-08,
   "test_target_dates": [
-    "2026-04-14",
     "2026-04-15",
     "2026-04-16",
     "2026-04-17",
@@ -163,12 +162,12 @@
     "2026-11-16",
     "2026-11-17",
     "2026-11-18",
-    "2026-11-19"
+    "2026-11-19",
+    "2026-11-20"
   ],
-  "test_target_dates_sha256": "f26e0ece7ad80f1861164296dbc525e81a68959439bcc59c4e91f1d10f0be6cf",
-  "price_panel_sha256": "21187e7af9443cd19c8e39f5f51efc9f5c06e518eb2db32306716e350af372d5",
+  "test_target_dates_sha256": "ef893af0698d895db952d5736d1a38b28e97c0c2bf600bd0da1595f536b33f2d",
+  "price_panel_sha256": "c2576b54a93a314d24e2e95b5e1d27dec351c6943f2ef8f8906dca606893a900",
   "validation_target_dates": [
-    "2026-01-06",
     "2026-01-07",
     "2026-01-08",
     "2026-01-09",
@@ -227,7 +226,8 @@
     "2026-04-08",
     "2026-04-09",
     "2026-04-10",
-    "2026-04-13"
+    "2026-04-13",
+    "2026-04-14"
   ],
   "test_predictions_not_trading_profit": true,
   "training_start_444": "2014-01-16",
