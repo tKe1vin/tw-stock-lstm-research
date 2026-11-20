@@ -133,6 +133,7 @@ def _costs(data):
             _table(data["target_weights"])
             st.json(data["holdings_reconciliation"])
     _table(costs)
+    st.caption("Buy_Fee為買進手續費；Sell_Fee為賣出手續費；Sell_Tax為賣稅。原凍結成交檔未另存Sell_Fee，展示依原協議以賣稅×手續費率÷賣稅率重建，再核對三者合計等於已發生總成本；原始帳本保持不變。")
     st.write("V2沿用原帳本的小數股、手續費及交易稅，未納入最低20元手續費與滑價；V3使用整數股、最低費用及滑價。兩版報酬不直接相減。")
 
 

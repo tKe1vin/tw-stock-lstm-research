@@ -185,6 +185,24 @@ def historical_research(root):
             "model_training_performed": False, "historical_availability_certified": False}
 
 
+def v2_live_presentation(root):
+    """Exercise the saved V2 display contract, including semantic cost checks.
+
+    Ledger hashes alone cannot establish that display assumptions still match
+    the next rebalance. Use the same read-only loader used by the website.
+    """
+    from dashboard.v2_presentation import load_v2_presentation
+
+    study = load_v2_presentation(root=root, mode="saved")
+    costs = study["costs"]
+    return {"period_start": study["period_start"], "period_end": study["period_end"],
+            "books": {str(row.Arm): {"execution_count": int(row.Execution_Count),
+                                      "actual_execution_cost": float(row.Actual_Execution_Cost)}
+                      for row in costs.itertuples(index=False)},
+            "costs_reconciled": True, "simulated_execution_only": True,
+            "source_files": len(study["sources"]), "model_training_performed": False}
+
+
 def evaluate(root=ROOT, profile="core", now=None):
     root = Path(root).resolve()
     now = now or datetime.now(TZ)
@@ -195,6 +213,7 @@ def evaluate(root=ROOT, profile="core", now=None):
     jobs = [("environment", lambda: environment(profile)), ("python_syntax", lambda: syntax(root)),
             ("frozen_bundle", lambda: frozen_bundle(root)), ("immutable_daily_state", lambda: retained_state(root)),
             ("latest_research", lambda: latest_research(root, now, profile)),
+            ("v2_live_presentation", lambda: v2_live_presentation(root)),
             ("retained_research", lambda: historical_research(root))]
     if profile == "core":
         jobs.insert(4, ("market_clock", lambda: market_clock(root, now)))

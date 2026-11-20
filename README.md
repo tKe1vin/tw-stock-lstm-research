@@ -14,6 +14,7 @@
 - [固定設定的多變量 LSTM 延伸](reports/research_extension/2026-11-06/summary.md)
 - [每日狀態](reports/latest/summary.md) · [驗證紀錄](VALIDATION.md)
 - [11/19 全專案健康檢查、測試與恢復措施](docs/project_health_20261119.md)
+- [11/21 每日流程失敗原因與賣出成本驗證修正](docs/daily_cost_recovery_20261121.md)
 
 ## Streamlit 完整專案展示
 

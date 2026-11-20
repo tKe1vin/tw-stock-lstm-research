@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
+import shutil
 
 import pandas as pd
 import pytest
@@ -62,6 +63,7 @@ def test_failed_check_does_not_hide_remaining_checks_and_waiting_does_not_block_
     monkeypatch.setattr(health, "frozen_bundle", lambda _root: {"verified": True})
     monkeypatch.setattr(health, "retained_state", lambda _root: {"verified": True})
     monkeypatch.setattr(health, "latest_research", lambda *_args: {"waiting": True})
+    monkeypatch.setattr(health, "v2_live_presentation", lambda _root: {"costs_reconciled": True})
     monkeypatch.setattr(health, "historical_research", lambda _root: {"verified": True})
     monkeypatch.setattr(health, "market_clock", lambda *_args: {"waiting": True})
     now = datetime(2026, 11, 19, 2, tzinfo=TZ)
@@ -75,6 +77,52 @@ def test_failed_check_does_not_hide_remaining_checks_and_waiting_does_not_block_
     assert result["status"] == "fail" and result["exit_code"] == 1
     assert result["failed_checks"] == ["immutable_daily_state"]
     assert result["checks"][-1]["name"] == "retained_research"
+
+
+def test_live_v2_health_uses_saved_costs_without_rewriting_omitted_sell_fee():
+    book = health.ROOT / "experiments/results/v2/v211"
+    path = book / "live_fills.csv"
+    before = path.read_bytes()
+    fills = pd.read_csv(path)
+    result = health.v2_live_presentation(health.ROOT)
+    for arm, name in (("v211", "published"), ("equal_policy", "equal")):
+        selected = fills[fills.Book.eq(name)]
+        assert result["books"][arm]["execution_count"] == len(selected)
+        assert result["books"][arm]["actual_execution_cost"] == pytest.approx(selected.Cost.sum())
+    assert result["costs_reconciled"] and result["simulated_execution_only"]
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize("profile", ["core", "dashboard"])
+def test_live_semantic_cost_error_fails_health_even_with_matching_checkpoint(tmp_path, monkeypatch, profile):
+    book_relative = "experiments/results/v2/v211"
+    book = tmp_path / book_relative
+    shutil.copytree(health.ROOT / book_relative, book)
+    script = tmp_path / "experiments/risk_experiment.py"
+    shutil.copyfile(health.ROOT / "experiments/risk_experiment.py", script)
+    path = book / "live_fills.csv"
+    fills = pd.read_csv(path)
+    # Preserve the complete ledger and its hash proof while corrupting one
+    # component. A matching checksum must not hide a semantic accounting error.
+    fills.loc[fills.index[0], "Buy_Fee"] += 1
+    fills.to_csv(path, index=False)
+    proof_path = book / "ledger_integrity.json"
+    proof = json.loads(proof_path.read_text())
+    proof["prefixes"]["live_fills.csv"] = {"bytes": len(path.read_bytes()),
+                                           "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    proof_path.write_text(json.dumps(proof))
+    before = {name: (book / name).read_bytes() for name in ("live_fills.csv", "ledger_integrity.json")}
+    for name in ("syntax", "frozen_bundle", "retained_state", "historical_research"):
+        monkeypatch.setattr(health, name, lambda _root: {"verified": True})
+    monkeypatch.setattr(health, "environment", lambda _profile: {"verified": True})
+    monkeypatch.setattr(health, "market_clock", lambda *_args: {"waiting": True})
+    monkeypatch.setattr(health, "latest_research", lambda *_args: {"waiting": True})
+    result = health.evaluate(tmp_path, profile=profile, now=datetime(2026, 11, 21, 7, tzinfo=TZ))
+    assert result["status"] == "fail" and result["exit_code"] == 1
+    assert result["failed_checks"] == ["v2_live_presentation"]
+    assert result["checks"][-1]["name"] == "retained_research"
+    assert result["checks"][-1]["status"] == "pass"
+    assert {name: (book / name).read_bytes() for name in before} == before
 
 
 def test_saved_evidence_checks_do_not_import_training_fetch_or_write_files(monkeypatch):

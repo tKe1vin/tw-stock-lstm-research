@@ -99,20 +99,50 @@ def _dates(frame, column, *, unique=False):
     return dates
 
 
-def _capital(root, sources):
+def _protocol(root, sources):
     path = _path(root, "experiments/risk_experiment.py")
     tree = ast.parse(_record(root, path, sources).decode("utf-8-sig"))
-    definitions = [node for node in tree.body if isinstance(node, ast.Assign)
-                   and any(isinstance(target, ast.Name) and target.id == "INITIAL_CAPITAL" for target in node.targets)]
-    if len(definitions) != 1:
-        raise V2PresentationError("找不到唯一的原協議初始資金")
-    try:
-        capital = float(ast.literal_eval(definitions[0].value))
-    except (TypeError, ValueError) as exc:
-        raise V2PresentationError("原協議初始資金不是固定數值") from exc
-    if not np.isfinite(capital) or capital <= 0:
-        raise V2PresentationError("原協議初始資金不合法")
-    return capital
+    values = {}
+    for name, label in (("INITIAL_CAPITAL", "初始資金"), ("BROKER_FEE_RATE", "手續費率"), ("SELL_TAX_RATE", "賣出稅率")):
+        definitions = [node for node in tree.body if isinstance(node, ast.Assign)
+                       and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)]
+        if len(definitions) != 1:
+            raise V2PresentationError(f"找不到唯一的原協議{label}")
+        try:
+            value = float(ast.literal_eval(definitions[0].value))
+        except (TypeError, ValueError) as exc:
+            raise V2PresentationError(f"原協議{label}不是固定數值") from exc
+        if not np.isfinite(value) or value <= 0 or (name != "INITIAL_CAPITAL" and value >= 1):
+            raise V2PresentationError(f"原協議{label}不合法")
+        values[name] = value
+    return values
+
+
+def _execution_costs(selected, protocol):
+    """Reconstruct the omitted sell commission without changing frozen ledgers.
+
+    The frozen producer records the complete Cost but serializes only Buy_Fee
+    and Sell_Tax. Sell tax and commission share the same sold notional, so the
+    original fixed rates independently determine Sell_Fee; Cost is never used
+    as the source of the missing component.
+    """
+    selected = selected.copy()
+    fields = ("Cost", "Buy_Fee", "Sell_Tax")
+    _finite(selected, fields, "模擬成交成本")
+    if (selected[list(fields)] < 0).any().any():
+        raise V2PresentationError("成交成本不可為負")
+    sell_fee = selected.Sell_Tax * protocol["BROKER_FEE_RATE"] / protocol["SELL_TAX_RATE"]
+    if "Sell_Fee" in selected:
+        _finite(selected, ("Sell_Fee",), "賣出手續費")
+        if (selected.Sell_Fee < 0).any() or not np.allclose(selected.Sell_Fee, sell_fee, rtol=0, atol=1e-6):
+            raise V2PresentationError("賣出手續費與原協議費率／賣稅不一致")
+        selected["Sell_Fee_Source"] = "recorded_and_rate_verified"
+    else:
+        selected["Sell_Fee_Source"] = "derived_from_sell_tax_and_frozen_rates"
+    selected["Sell_Fee"] = sell_fee
+    if not np.allclose(selected.Cost, selected.Buy_Fee + selected.Sell_Fee + selected.Sell_Tax, rtol=0, atol=1e-6):
+        raise V2PresentationError("買進／賣出手續費及賣稅無法重算總成本")
+    return selected
 
 
 def _one(frame, column, default=None):
@@ -236,7 +266,8 @@ def load_v2_presentation(root=ROOT, mode="saved"):
         raise V2PresentationError("來源模式必須是saved或demo")
     root = Path(root).resolve()
     sources, missing = {}, []
-    capital = _capital(root, sources)
+    protocol = _protocol(root, sources)
+    capital = protocol["INITIAL_CAPITAL"]
     with display_sources(mode=mode, root=root):
         book = v211_root()
         proof = _json(root, book / "ledger_integrity.json", sources) if mode == "saved" else {}
@@ -276,14 +307,16 @@ def load_v2_presentation(root=ROOT, mode="saved"):
             selected = fills[fills.Book.eq(fill_name)] if "Book" in fills else pd.DataFrame()
             breakdown = {"Cost", "Buy_Fee", "Sell_Tax"}.issubset(selected)
             if breakdown:
-                _finite(selected, ("Cost", "Buy_Fee", "Sell_Tax"), "模擬成交成本")
-                if (selected[["Cost", "Buy_Fee", "Sell_Tax"]] < 0).any().any():
-                    raise V2PresentationError("成交成本不可為負")
+                selected = _execution_costs(selected, protocol)
                 actual_cost = float(selected.Cost.sum())
                 if not np.isclose(actual_cost, float(nav.Rebalance_Cost.sum()), rtol=0, atol=1e-6):
                     raise V2PresentationError("成交成本加總與逐日再平衡費用不一致")
-                if not np.allclose(selected.Cost, selected.Buy_Fee + selected.Sell_Tax, rtol=0, atol=1e-6):
-                    raise V2PresentationError("成交費用／賣稅無法重算總成本")
+                dates = _dates(selected, "Execution_Date", unique=True)
+                if not dates.isin(nav.Date).all():
+                    raise V2PresentationError("成交日期缺對應估值帳本")
+                daily_cost = pd.Series(selected.Cost.to_numpy(float), index=dates).reindex(nav.Date, fill_value=0)
+                if not np.allclose(daily_cost, nav.Rebalance_Cost, rtol=0, atol=1e-6):
+                    raise V2PresentationError("成交成本與逐日再平衡費用日期不一致")
             else:
                 actual_cost = None
                 missing.append(f"{ARMS[arm]}成交來源缺手續費／賣稅明細，不補零費用。")
@@ -316,6 +349,8 @@ def load_v2_presentation(root=ROOT, mode="saved"):
                             "Total_Transaction_Cost": float(nav.Rebalance_Cost.sum()), "Hypothetical_Liquidation_Cost": float(last.Liquidation_If_Closed)})
             costs.append({"Arm": arm, "Display_Name": ARMS[arm], "Execution_Count": len(selected),
                           "Actual_Execution_Cost": actual_cost, "Buy_Fee": float(selected.Buy_Fee.sum()) if breakdown else None,
+                          "Sell_Fee": float(selected.Sell_Fee.sum()) if breakdown else None,
+                          "Sell_Fee_Source": ";".join(sorted(set(selected.Sell_Fee_Source))) if breakdown else "unavailable",
                           "Sell_Tax": float(selected.Sell_Tax.sum()) if breakdown else None, "NAV_Rebalance_Cost": float(nav.Rebalance_Cost.sum()),
                           "Hypothetical_Liquidation_Cost": float(last.Liquidation_If_Closed), "Cost_Breakdown_Available": breakdown})
         timeline, latest = _signals(root, book, sources, payload, fills, diagnostics, mode)

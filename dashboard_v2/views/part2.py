@@ -248,7 +248,7 @@ def _journal(day, ticker):
         ("direction", "方向"), ("forecast", "預測"), ("target_weight", "目標權重"),
         ("cash_weight", "現金"), ("risk_off", "Risk-Off"), ("rebalance_day", "再平衡日"),
         ("simulated_fill", "模擬成交"), ("execution_date", "成交日"), ("fill_price", "成交價"),
-        ("buy_fee", "手續費"), ("sell_tax", "交易稅"), ("nav", "NAV"),
+        ("buy_fee", "買進手續費"), ("sell_tax", "交易稅"), ("nav", "NAV"),
         ("source", "來源"), ("state", "狀態"), ("file_sha", "訊號雜湊"),
     ]), unsafe_allow_html=True)
 
@@ -272,8 +272,9 @@ def _review():
         st.markdown("##### 已發生模擬成交")
         st.markdown(table(review["fills"], [
             ("Signal_Date", "訊號日"), ("Execution_Date", "成交日"), ("Cost", "成本"),
-            ("Buy_Fee", "手續費"), ("Sell_Tax", "交易稅"), ("NAV_Open", "NAV"),
+            ("Buy_Fee", "買進手續費"), ("Sell_Tax", "交易稅"), ("NAV_Open", "NAV"),
         ]), unsafe_allow_html=True)
+        st.caption("原始成交檔Buy_Fee僅為買進手續費，Cost另包含賣出手續費與交易稅；完整成本拆分見V2共同展示的成本與風險頁。")
     else:
         st.markdown('<div class="gap">NO_TRADE</div>', unsafe_allow_html=True)
     st.markdown(

@@ -72,12 +72,80 @@ def test_costs_are_actual_fill_sums_and_terminal_liquidation_is_separate():
         nav = pd.read_csv(ROOT / BOOK / filename)
         assert cost.Actual_Execution_Cost == pytest.approx(source.Cost.sum())
         assert cost.Buy_Fee == pytest.approx(source.Buy_Fee.sum())
+        assert cost.Sell_Fee == pytest.approx(source.Sell_Tax.sum() * .001425 / .003)
         assert cost.Sell_Tax == pytest.approx(source.Sell_Tax.sum())
+        assert cost.Actual_Execution_Cost == pytest.approx(cost.Buy_Fee + cost.Sell_Fee + cost.Sell_Tax)
+        assert cost.Sell_Fee_Source == "derived_from_sell_tax_and_frozen_rates"
         assert metrics.Total_Transaction_Cost == pytest.approx(source.Cost.sum())
         assert cost.Hypothetical_Liquidation_Cost == pytest.approx(nav.Liquidation_If_Closed.iloc[-1])
         assert metrics.Total_Transaction_Cost < cost.Actual_Execution_Cost + cost.Hypothetical_Liquidation_Cost
     weights = study["exposure"].groupby(["Date", "Arm"]).Weight_Pct.sum()
     np.testing.assert_allclose(weights, 100)
+
+
+@pytest.mark.parametrize("buy_fee,sell_tax,total", [(1.425, 0., 1.425), (0., 3., 4.425), (1.425, 3., 5.85)])
+def test_buy_sell_and_mixed_fills_include_both_commissions(buy_fee, sell_tax, total):
+    protocol = {"BROKER_FEE_RATE": .001425, "SELL_TAX_RATE": .003}
+    raw = pd.DataFrame([{"Buy_Fee": buy_fee, "Sell_Tax": sell_tax, "Cost": total}])
+    before = raw.copy(deep=True)
+    result = presentation._execution_costs(raw, protocol)
+    assert result.Sell_Fee.iloc[0] == pytest.approx(sell_tax * .475)
+    pd.testing.assert_frame_equal(raw, before)  # The frozen source stays unchanged.
+    explicit = raw.assign(Sell_Fee=sell_tax * .475)
+    assert presentation._execution_costs(explicit, protocol).Sell_Fee_Source.iloc[0] == "recorded_and_rate_verified"
+
+
+@pytest.mark.parametrize("field,value", [("Cost", 4.425), ("Cost", 7.), ("Buy_Fee", -1.),
+                                          ("Sell_Tax", float("nan")), ("Sell_Fee", 0.), ("Sell_Fee", float("inf"))])
+def test_cost_corruption_cannot_be_hidden_as_an_inferred_commission(field, value):
+    raw = pd.DataFrame([{"Buy_Fee": 1.425, "Sell_Tax": 3., "Cost": 5.85}])
+    raw[field] = value
+    with pytest.raises(presentation.V2PresentationError):
+        presentation._execution_costs(raw, {"BROKER_FEE_RATE": .001425, "SELL_TAX_RATE": .003})
+
+
+def test_saved_commissions_independently_match_share_changes_at_execution_prices():
+    """The first selling rebalance must work without altering its source CSV."""
+    fills = pd.read_csv(ROOT / BOOK / "live_fills.csv")
+    study = presentation.load_v2_presentation()
+    for arm, book in (("v211", "published"), ("equal_policy", "equal")):
+        previous = np.zeros(len(presentation.TICKERS))
+        expected_sell_fees = 0.
+        for row in fills[fills.Book.eq(book)].sort_values("Execution_Date").to_dict("records"):
+            shares = np.array([row["Shares_" + ticker] for ticker in presentation.TICKERS])
+            prices = np.array([row["Fill_" + ticker] for ticker in presentation.TICKERS])
+            changes = (shares - previous) * prices
+            buy_fee = changes.clip(min=0).sum() * .001425
+            sell_notional = -changes.clip(max=0).sum()
+            sell_fee, sell_tax = sell_notional * .001425, sell_notional * .003
+            assert row["Buy_Fee"] == pytest.approx(buy_fee, abs=1e-8)
+            assert row["Sell_Tax"] == pytest.approx(sell_tax, abs=1e-8)
+            assert row["Cost"] == pytest.approx(buy_fee + sell_fee + sell_tax, abs=1e-8)
+            expected_sell_fees += sell_fee
+            previous = shares
+        assert study["costs"].set_index("Arm").loc[arm, "Sell_Fee"] == pytest.approx(expected_sell_fees, abs=1e-8)
+
+
+def test_wrong_frozen_cost_rate_and_wrong_daily_cost_assignment_fail_closed(tmp_path):
+    book = copy_book(tmp_path)
+    source = tmp_path / "experiments/risk_experiment.py"
+    original = source.read_text()
+    source.write_text(original.replace("BROKER_FEE_RATE = 0.001425", "BROKER_FEE_RATE = 0.002"))
+    with pytest.raises(presentation.V2PresentationError, match="總成本"):
+        presentation.load_v2_presentation(tmp_path)
+    source.write_text(original)
+    path = book / "live_nav.csv"
+    nav = pd.read_csv(path)
+    # Preserve the total while moving a cost to another valuation date.
+    trade = nav.index[nav.Rebalance_Cost.gt(0)][-1]
+    other = next(index for index in nav.index[1:] if index != trade)
+    moved = min(.5, float(nav.loc[trade, "Rebalance_Cost"]) / 2)
+    nav.loc[other, "Rebalance_Cost"] += moved
+    nav.loc[trade, "Rebalance_Cost"] -= moved
+    nav.to_csv(path, index=False)
+    checkpoint(book, "live_nav.csv")
+    with pytest.raises(presentation.V2PresentationError, match="日期不一致"):
+        presentation.load_v2_presentation(tmp_path)
 
 
 def test_actual_holdings_reconcile_shares_and_prices_and_are_not_latest_targets():
@@ -97,7 +165,10 @@ def test_actual_holdings_reconcile_shares_and_prices_and_are_not_latest_targets(
     assert holdings.Weight_Pct.sum() == pytest.approx(100)
     assert holdings.loc["CASH", "Weight_Pct"] == pytest.approx(nav.Cash_Weight * 100)
     assert study["holdings_reconciliation"]["NAV_Recomputed"] == pytest.approx(nav.NAV_Open)
-    assert not np.allclose(holdings.loc[list(presentation.TICKERS), "Weight_Pct"], targets.loc[list(presentation.TICKERS), "Weight_Pct"])
+    # At a rebalance close the executed holdings can legitimately equal the
+    # latest targets. The share/price/NAV checks above establish their source
+    # without assuming the two weights must differ on every future date.
+    assert not targets.empty
     assert any(shares != int(shares) for shares in holdings.Shares.dropna())  # Preserve fractional shares.
 
 

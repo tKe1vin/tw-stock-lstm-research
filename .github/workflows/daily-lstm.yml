@@ -19,6 +19,8 @@ on:
     paths:
       - '.github/workflows/daily-lstm.yml'
       - 'scripts/**'
+      - 'dashboard/**'
+      - 'dashboard_v2/data_access/**'
       - 'notebooks/**'
       - 'experiments/**/*.py'
       - 'models/**'
@@ -98,6 +100,10 @@ jobs:
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"
           # Persist valid partial results first. The final step reports waiting/failure.
           exit 0
+      - name: Check updated project health before publishing state
+        id: updated_health
+        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
+        run: python -m scripts.project_health --profile core
       - name: Capture display-only news titles for the project website
         if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
         continue-on-error: true
@@ -107,7 +113,7 @@ jobs:
           python -m scripts.capture_news_display --capture --limit 50 > logs/news-display-capture.json
       - name: Persist validated state, including partial progress
         id: persist
-        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure')
+        if: always() && (steps.daily.outcome == 'success' || steps.daily.outcome == 'failure') && steps.updated_health.outcome == 'success'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -132,11 +138,13 @@ jobs:
         env:
           PIPELINE_EXIT: ${{ steps.daily.outputs.exit_code }}
           PERSIST_OUTCOME: ${{ steps.persist.outcome }}
+          UPDATED_HEALTH_OUTCOME: ${{ steps.updated_health.outcome }}
         shell: bash
         run: |
           {
             echo '### Daily research run'
             echo "Pipeline exit code: ${PIPELINE_EXIT:-unavailable} (0 research complete, possibly with an explicitly deferred tracker; 2 waiting; 1 failed)."
+            echo "Updated state health: $UPDATED_HEALTH_OUTCOME."
             echo "State persistence: $PERSIST_OUTCOME."
             echo 'Full outputs and logs are attached as the daily-lstm artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -156,6 +164,10 @@ jobs:
                   if attempt:
                       output.write(f"\nPermanent attempt journal: `{attempt}`.\n")
           PY
+          if [[ "$UPDATED_HEALTH_OUTCOME" != 'success' ]]; then
+            echo 'Updated state failed its health contract and was not published. Inspect the updated health check and attached outputs before retrying.'
+            exit 1
+          fi
           if [[ "$PERSIST_OUTCOME" != 'success' ]]; then
             echo 'State persistence failed; inspect the persistence step before retrying.'
             exit 1
