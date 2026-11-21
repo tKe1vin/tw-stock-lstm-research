@@ -143,9 +143,15 @@ def _run_market_worker(now, timeout_seconds):
     with tempfile.TemporaryDirectory(prefix="tw-lstm-market-worker-") as temporary:
         report_path = Path(temporary) / "report.json"
         command = _worker_command(now, report_path)
+        inherited = {}
+        if sys.platform.startswith("linux"):
+            from scripts.process_supervisor import inherited_lock_fds, supervised_command
+            command, descriptors = supervised_command(command, os.getpid(), inherited_lock_fds())
+            inherited["pass_fds"] = descriptors
         process = subprocess.Popen(
             command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace", start_new_session=os.name == "posix",
+            **inherited,
         )
         timed_out = False
         try:

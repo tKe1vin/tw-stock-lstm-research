@@ -79,11 +79,31 @@ def _orchestrator_with_model(root):
         daily._release(fd)
 
 
+def _orchestrator_with_market_worker(root):
+    root = Path(root)
+    daily.ROOT = root
+    daily.LOCK = root / "run.lock"
+    fd = daily._acquire()
+    assert fd is not None
+    try:
+        daily._run_process([sys.executable, str(root / "market_parent.py")], "market", timeout_seconds=15)
+    finally:
+        daily._release(fd)
+
+
 def _stop_workers(workers):
     for worker in workers:
         if worker.is_alive():
             worker.kill()
         worker.join(timeout=3)
+
+
+def _process_stopped(pid):
+    try:
+        contents = Path(f"/proc/{pid}/stat").read_text()
+    except FileNotFoundError:
+        return True
+    return contents.rsplit(")", 1)[1].split()[0] == "Z"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Production lock/process-group stress uses POSIX fork")
@@ -313,9 +333,8 @@ def test_parent_death_and_supervisor_termination_stop_child_and_grandchild_write
         assert not (tmp_path / "model-late.txt").exists()
         assert not (tmp_path / "grandchild-late.txt").exists()
         for pid in pids:
-            stat = Path(f"/proc/{pid}/stat")
             # Orphan zombies can await the host's reaper; they cannot write.
-            assert not stat.exists() or stat.read_text().rsplit(")", 1)[1].split()[0] == "Z"
+            assert _process_stopped(pid)
     finally:
         _stop_workers([orchestrator])
         for pid in pids:
@@ -350,3 +369,110 @@ def test_supervision_preserves_model_success_error_and_waiting_codes(tmp_path, m
     result = daily._run_process([sys.executable, "-c", f"raise SystemExit({exit_code})"], "444", timeout_seconds=2)
     assert result["exit_code"] == exit_code
     assert result["status"] == {0: "success", 1: "failed", 2: "waiting"}[exit_code]
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Nested worker parent-death protection is Linux specific")
+@pytest.mark.parametrize("mode", ["nested_orchestrator", "standalone_source_parent"])
+def test_source_worker_new_session_cannot_escape_parent_death_or_release_the_lock_early(tmp_path, monkeypatch, mode):
+    project = str(Path(daily.__file__).resolve().parents[1])
+    (tmp_path / "source_grandchild.py").write_text(
+        "import os,signal,time\nfrom pathlib import Path\nroot=Path(__file__).parent\n"
+        "signal.signal(signal.SIGTERM,signal.SIG_IGN)\n"
+        "(root/'source-grandchild.pid').write_text(str(os.getpid()))\n"
+        "while not (root/'allow-late-writes').exists(): time.sleep(.005)\n"
+        "(root/'source-grandchild-late').write_text('escaped writer')\ntime.sleep(30)\n")
+    (tmp_path / "source_worker.py").write_text(
+        "import os,signal,subprocess,sys,time\nfrom pathlib import Path\nroot=Path(__file__).parent\n"
+        "signal.signal(signal.SIGTERM,signal.SIG_IGN)\n"
+        "(root/'inner-supervisor.pid').write_text(str(os.getppid()))\n"
+        "(root/'source-worker.pid').write_text(str(os.getpid()))\n"
+        "(root/'source-lock-fds').write_text(os.environ.get('TW_LSTM_LOCK_FDS',''))\n"
+        "subprocess.Popen([sys.executable,str(root/'source_grandchild.py')])\n"
+        "while not (root/'source-grandchild.pid').exists(): time.sleep(.005)\n"
+        "(root/'source-ready').write_text('ready')\n"
+        "while not (root/'allow-late-writes').exists(): time.sleep(.005)\n"
+        "(root/'source-worker-late').write_text('escaped writer')\ntime.sleep(30)\n")
+    (tmp_path / "market_parent.py").write_text(
+        "import os,sys\nfrom pathlib import Path\n"
+        f"sys.path.insert(0,{project!r})\nfrom scripts import update_market_data as market\n"
+        "from datetime import datetime\nroot=Path(__file__).parent\nmarket.ROOT=root\n"
+        "(root/'outer-supervisor.pid').write_text(str(os.getppid()))\n"
+        "(root/'market-parent.pid').write_text(str(os.getpid()))\n"
+        "market._worker_command=lambda now,report:[sys.executable,str(root/'source_worker.py'),str(report)]\n"
+        "market._run_market_worker(datetime.now(market.TZ),10)\n")
+    orchestrator = None
+    standalone = None
+    pids = []
+    if mode == "nested_orchestrator":
+        orchestrator = mp.get_context("fork").Process(target=_orchestrator_with_market_worker, args=(str(tmp_path),))
+        orchestrator.start()
+    else:
+        environment = {**os.environ, "TW_LSTM_LOCK_FDS": ""}
+        standalone = subprocess.Popen([sys.executable, str(tmp_path / "market_parent.py")],
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment, start_new_session=True)
+    try:
+        deadline = time.monotonic() + 8
+        while not (tmp_path / "source-ready").exists() and time.monotonic() < deadline:
+            time.sleep(.005)
+        assert (tmp_path / "source-ready").exists()
+        names = ("inner-supervisor.pid", "source-worker.pid", "source-grandchild.pid", "market-parent.pid")
+        pids = [int((tmp_path / name).read_text()) for name in names]
+        inner = pids[0]
+        os.kill(inner, signal.SIGSTOP)
+        if orchestrator is not None:
+            outer = int((tmp_path / "outer-supervisor.pid").read_text())
+            pids.append(outer)
+            assert (tmp_path / "source-lock-fds").read_text()
+            os.kill(orchestrator.pid, signal.SIGKILL)
+            orchestrator.join(timeout=3)
+            assert orchestrator.exitcode == -signal.SIGKILL
+            deadline = time.monotonic() + 3
+            while time.monotonic() < deadline:
+                if all(_process_stopped(pid) for pid in (outer, pids[3])):
+                    break
+                time.sleep(.005)
+            else:
+                pytest.fail("Outer source processes did not stop after orchestrator death")
+            monkeypatch.setattr(daily, "LOCK", tmp_path / "run.lock")
+            assert daily._acquire() is None  # Only the escaped inner chain remains.
+        else:
+            assert not (tmp_path / "source-lock-fds").read_text()
+            os.kill(standalone.pid, signal.SIGKILL)
+            standalone.communicate(timeout=3)
+            assert standalone.returncode == -signal.SIGKILL
+        os.kill(inner, signal.SIGCONT)
+        deadline = time.monotonic() + 3
+        while time.monotonic() < deadline:
+            if all(_process_stopped(pid) for pid in pids):
+                break
+            time.sleep(.005)
+        else:
+            pytest.fail("Inner source worker escaped the parent-death chain")
+        if orchestrator is not None:
+            recovered = daily._acquire()
+            assert recovered is not None
+            daily._release(recovered)
+        (tmp_path / "allow-late-writes").write_text("a replacement run may now write")
+        time.sleep(.1)
+        assert not (tmp_path / "source-worker-late").exists()
+        assert not (tmp_path / "source-grandchild-late").exists()
+    finally:
+        if orchestrator is not None:
+            _stop_workers([orchestrator])
+        if standalone is not None and standalone.poll() is None:
+            standalone.kill()
+            standalone.communicate(timeout=3)
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Explicit inherited descriptors are Linux supervision state")
+@pytest.mark.parametrize("value", ["-1", "0", "1", "2", "x", "3,,4", "99999999"])
+def test_nested_worker_rejects_invalid_inherited_lock_descriptors(monkeypatch, value):
+    from scripts.process_supervisor import LOCK_FDS_ENV, inherited_lock_fds
+    monkeypatch.setenv(LOCK_FDS_ENV, value)
+    with pytest.raises((ValueError, OSError)):
+        inherited_lock_fds()

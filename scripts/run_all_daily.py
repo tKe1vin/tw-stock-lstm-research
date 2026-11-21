@@ -132,11 +132,12 @@ def _run_process(command, name: str, extra_env=None, *, timeout_seconds=None) ->
     env = {**os.environ, "PYTHONPATH": str(ROOT), **(extra_env or {})}
     inherited = {}
     if sys.platform.startswith("linux"):
-        supervisor = Path(__file__).with_name("process_supervisor.py")
-        command = [sys.executable, str(supervisor), "--parent-pid", str(os.getpid()), "--", *command]
+        from scripts.process_supervisor import LOCK_FDS_ENV, supervised_command
+        command, descriptors = supervised_command(command, os.getpid(), _OWNED_LOCK_FDS)
+        env[LOCK_FDS_ENV] = ",".join(str(fd) for fd in descriptors)
         # Keep ownership until the supervisor has terminated its group, even
         # when the orchestrator dies before a death signal can be handled.
-        inherited["pass_fds"] = tuple(_OWNED_LOCK_FDS)
+        inherited["pass_fds"] = descriptors
     proc = subprocess.Popen(command, cwd=ROOT, env=env, text=True,
                             encoding="utf-8", errors="replace", stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, start_new_session=os.name != "nt",
