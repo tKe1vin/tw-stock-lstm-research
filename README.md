@@ -15,6 +15,7 @@
 - [每日狀態](reports/latest/summary.md) · [驗證紀錄](VALIDATION.md)
 - [11/19 全專案健康檢查、測試與恢復措施](docs/project_health_20261119.md)
 - [11/21 每日流程失敗原因與賣出成本驗證修正](docs/daily_cost_recovery_20261121.md)
+- [11/22 並行、程序中止、快取與 Git 保存壓測](docs/stress_test_20261122.md)
 
 ## Streamlit 完整專案展示
 

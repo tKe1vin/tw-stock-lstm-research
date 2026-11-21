@@ -1,5 +1,6 @@
 """Calendar and recovery scenarios exercise the real session/cache boundaries."""
 from datetime import datetime
+import hashlib
 import json
 from types import SimpleNamespace
 
@@ -9,6 +10,7 @@ import pytest
 from experiments.v2 import v211
 from scripts import daily_reports, run_all_daily as daily, run_model as runner
 from scripts.common import TICKERS, current_completed_session, sessions
+from scripts.unified_csv import COLUMNS, blank_row
 
 
 @pytest.mark.parametrize("clock,expected", [
@@ -42,10 +44,16 @@ def save_export(root, model, day):
     """Write a complete small daily export, with the actual cache file contract."""
     folder = root / "outputs" / model / day
     folder.mkdir(parents=True, exist_ok=True)
-    forecast = pd.DataFrame([{
-        "model_id": model, "signal_date": day, "stock_id": ticker,
-        "predicted_return_pct": 0.1, "target_weight": 0.2,
-    } for ticker in TICKERS])
+    rows = []
+    for rank, ticker in enumerate(TICKERS, 1):
+        row = blank_row()
+        row.update(model_id=model, signal_date=day, data_asof=day, stock_id=ticker,
+                   predicted_return_pct=0.1, target_weight=0.2, cash_weight=0.,
+                   prediction_horizon_days=5 if model == "555_v2" else 1)
+        if model == "555_v2":
+            row['rank'] = rank
+        rows.append(row)
+    forecast = pd.DataFrame(rows, columns=COLUMNS)
     unified = folder / "unified_signal.csv"
     forecast.to_csv(unified, index=False)
     status = {"model": model, "status": "success", "exit_code": 0,
@@ -54,19 +62,34 @@ def save_export(root, model, day):
         status["weight_sha256"] = runner.EXPECTED_WEIGHTS
     if model == "555":
         status["research_protocol"] = "paired-444-core-allocation-v1"
-    if model == "444":
+        core = root / "outputs/444" / day / "native/test_predictions.csv"
+        if not core.exists():
+            save_export(root, "444", day)
+        status["primary_research"] = {"source_prediction_sha256": hashlib.sha256(core.read_bytes()).hexdigest()}
+    if model in {"444", "555"}:
         native = folder / "native"
         native.mkdir(exist_ok=True)
-        (native / "evaluation_protocol.json").write_text(json.dumps({"as_of_date": day}))
-        pd.DataFrame([{"Ticker": ticker, "Signal_Date": day, "Target_Weight": 0.2}
+        previous = str(sessions(pd.Timestamp(day) - pd.Timedelta(days=10), day)[-2].date())
+        target = str(sessions(pd.Timestamp(day) + pd.Timedelta(days=1), pd.Timestamp(day) + pd.Timedelta(days=10))[0].date())
+        (native / "evaluation_protocol.json").write_text(json.dumps({"as_of_date": day,
+            "test_days": 1, "test_target_dates": [day]}))
+        pd.DataFrame([{"Ticker": ticker, "Signal_Date": day, "Target_Date": target,
+                       "Predicted_Return_Pct": .1, "Target_Weight": 0.2}
                       for ticker in TICKERS]).to_csv(native / "next_day_recommendation.csv", index=False)
-        pd.DataFrame([{"Ticker": ticker, "Actual_Price": 100., "Predicted_Price": 100.1}
+        pd.DataFrame([{"Ticker": ticker, "Signal_Date": previous, "Date": day,
+                       "Previous_Close": 100., "Actual_Close": 100.1, "Predicted_Close": 100.1,
+                       "Actual_Return_Pct": .1, "Predicted_Return_Pct": .1}
                       for ticker in TICKERS]).to_csv(native / "test_predictions.csv", index=False)
-        pd.DataFrame([{"Ticker": ticker, "Price_MAE": 0.1}
+        pd.DataFrame([{"Ticker": ticker, "Price_MAE": .1, "Price_RMSE": .1,
+                       "Return_MAE_pp": .1, "Return_RMSE_pp": .1, "Direction_Accuracy_Pct": 50.}
                       for ticker in TICKERS]).to_csv(native / "model_metrics.csv", index=False)
-        pd.DataFrame([{"As_Of_Date": day, "ROI_Pct": 0.1}]).to_csv(native / "strategy_metrics.csv", index=False)
-        pd.DataFrame([{"Date": day, "Portfolio_Net": 100100., "Market_Index": 100100.}]).to_csv(
+        pd.DataFrame([{"As_Of_Date": day, "ROI_Pct": .1, "Sharpe": .1, "MDD_Pct": -.1,
+                       "Direction_Accuracy_Pct": 50., "Test_Days": 1}]).to_csv(native / "strategy_metrics.csv", index=False)
+        pd.DataFrame([{"Date": previous, "Portfolio_Net" if model == "444" else "NAV": 100000., "Market_Index": 100000.},
+                      {"Date": day, "Portfolio_Net" if model == "444" else "NAV": 100100., "Market_Index": 100100.}]).to_csv(
             native / "backtest_nav.csv", index=False)
+        if model == "555":
+            pd.DataFrame([{"Sharpe": .1, "MDD_Pct": -.1}]).to_csv(native / "market_metrics.csv", index=False)
         status["daily_native_dir"] = native.relative_to(root).as_posix()
     (folder / "status.json").write_text(json.dumps(status))
     return status
@@ -140,7 +163,10 @@ def test_source_recovers_then_midnight_reuses_session_and_next_close_requires_ne
     assert summary(root, "2026-11-17")["status"] == "complete"
     assert (root / "outputs/444/2026-11-17/native/test_predictions.csv").is_file()
     assert (core.read_bytes(), core.stat().st_mtime_ns) == original_core
-    assert not daily.LOCK.exists() and not daily._RUN_CONTEXT
+    assert not daily._RUN_CONTEXT
+    fd = daily._acquire()
+    assert fd is not None
+    daily._release(fd)
 
 
 @pytest.mark.parametrize("failed_model", ["v211", "555_v2", "444", "555"])
@@ -210,7 +236,10 @@ def test_malformed_cached_record_is_retried_without_aborting_independent_models(
     result = summary(root, day)
     assert result["steps"]["444"]["status"] == "success"
     assert result["steps"]["555"]["reason"] == "already_completed_for_this_session"
-    assert not daily.LOCK.exists() and not daily._RUN_CONTEXT
+    assert not daily._RUN_CONTEXT
+    fd = daily._acquire()
+    assert fd is not None
+    daily._release(fd)
 
 
 @pytest.mark.parametrize("reference", ["absolute", "parent", "symlink", "symlink_loop"])

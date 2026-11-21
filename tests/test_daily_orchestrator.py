@@ -22,7 +22,10 @@ def test_market_once_before_v211_then_independent_models(monkeypatch, tmp_path):
     monkeypatch.setattr(daily, '_run_one', lambda model, mode: calls.append(model) or {'status': 'success', 'exit_code': 0})
     assert daily.main([], now=datetime(2026, 11, 6, 17, 37, tzinfo=TZ)) == 0
     assert calls == ['market', 'v211', '555_v2', '444', '555']
-    assert not daily.LOCK.exists()
+    assert daily.LOCK.is_file()
+    fd = daily._acquire()
+    assert fd is not None
+    daily._release(fd)
 
 
 def test_partial_failure_keeps_running_and_writes_truthful_summary(monkeypatch, tmp_path):

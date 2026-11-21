@@ -66,7 +66,7 @@ def sources(root, day=DAY, *, roi=1.0):
         signal = (output / "prediction.csv" if model == "555_v2" else
                   root / "experiments/results/v2/v211/daily" / f"{day}.csv")
         signal.parent.mkdir(parents=True, exist_ok=True)
-        pd.DataFrame([{"Ticker": ticker, "Signal_Date": day}
+        pd.DataFrame([{"Ticker": ticker, "Signal_Date": day, "Predicted_Return_Pct": roi}
                       for ticker in TICKERS]).to_csv(signal, index=False)
 
 

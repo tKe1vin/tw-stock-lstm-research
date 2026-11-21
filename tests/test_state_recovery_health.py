@@ -100,9 +100,9 @@ def test_cross_midnight_retries_keep_valid_partial_exports_and_both_attempts(rep
     prediction = root / f"outputs/555_v2/{DAY}/prediction.csv"
     prediction.parent.mkdir(parents=True)
     with prediction.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["Ticker", "Signal_Date"])
+        writer = csv.DictWriter(handle, fieldnames=["Ticker", "Signal_Date", "Predicted_Return_Pct"])
         writer.writeheader()
-        writer.writerows({"Ticker": ticker, "Signal_Date": DAY} for ticker in sorted(persist.TICKERS))
+        writer.writerows({"Ticker": ticker, "Signal_Date": DAY, "Predicted_Return_Pct": 1.0} for ticker in sorted(persist.TICKERS))
     write_json(prediction.with_name("status.json"), {"status": "success", "completed_session": DAY})
     saved_prediction = prediction.read_bytes()
 

@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
+import math
 import os
+import signal
 import subprocess
 import sys
 from datetime import datetime
@@ -19,13 +22,18 @@ from scripts.common import TZ, current_completed_session
 ORDER = ["v211", "555_v2", "444", "555"]
 LOCK = ROOT / "logs" / "orchestrator" / "run.lock"
 _RUN_CONTEXT = {}
+_OWNED_LOCK_FDS = set()
 
 
 def _alive(pid: int) -> bool:
+    if not isinstance(pid, int) or isinstance(pid, bool) or not 0 < pid <= 2**31 - 1:
+        return False
     if os.name != "nt":
         try:
             os.kill(pid, 0)
-        except OSError:
+        except PermissionError:
+            return True
+        except (OSError, OverflowError):
             return False
         return True
     import ctypes
@@ -37,52 +45,120 @@ def _alive(pid: int) -> bool:
 
 
 def _acquire():
+    """Keep one inode and let the OS release ownership after a crashed owner.
+
+    PID text is diagnostic only. Deleting a supposedly stale PID file races
+    with a new owner's create/write window and can admit two writers.
+    """
     LOCK.parent.mkdir(parents=True, exist_ok=True)
-    for attempt in range(2):
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(LOCK, flags, 0o600)
+    try:
+        if os.name == "nt":
+            import msvcrt
+            if not os.fstat(fd).st_size:
+                os.write(fd, b" ")
+            os.lseek(fd, 0, os.SEEK_SET)
+            try:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            except OSError as exc:
+                if exc.errno in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                    os.close(fd)
+                    return None
+                raise
+        else:
+            import fcntl
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                os.close(fd)
+                return None
+        # Ownership exists before the first PID byte, even for an empty file.
+        # Never replace or unlink this inode when acquiring or releasing it.
+        os.ftruncate(fd, 0)
+        os.write(fd, str(os.getpid()).encode("ascii"))
+        _OWNED_LOCK_FDS.add(fd)
+        return fd
+    except BaseException:
         try:
-            fd = os.open(LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.write(fd, str(os.getpid()).encode("ascii"))
-            return fd
-        except FileExistsError:
-            try:
-                holder = int(LOCK.read_text(encoding="utf-8").strip())
-            except (OSError, ValueError):
-                holder = None
-            if holder and _alive(holder):
-                return None
-            if attempt:
-                return None
-            try:
-                LOCK.unlink()
-            except OSError:
-                return None
-    return None
+            os.close(fd)
+        except OSError:
+            pass
+        raise
 
 
 def _release(fd):
     if fd is not None:
-        os.close(fd)
-        LOCK.unlink(missing_ok=True)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        finally:
+            try:
+                os.close(fd)
+            finally:
+                _OWNED_LOCK_FDS.discard(fd)
 
 
-def _run_process(command, name: str, extra_env=None) -> dict:
+def _stop_process_tree(proc):
+    """Stop this command's isolated process group, including surviving children."""
+    if os.name != "nt":
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    else:
+        # The scheduled production path is Linux. Windows taskkill provides the
+        # analogous process-tree cleanup when the optional local runner is used.
+        if proc.poll() is None:
+            try:
+                subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                               capture_output=True, timeout=10, check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            if proc.poll() is None:
+                proc.kill()
+
+
+def _run_process(command, name: str, extra_env=None, *, timeout_seconds=None) -> dict:
+    timeout = timeout_seconds if timeout_seconds is not None else 14400 if name == "market" else 9000
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("Process timeout must be a positive finite number")
     log_dir = ROOT / "logs" / "orchestrator"
     log_dir.mkdir(parents=True, exist_ok=True)
     started = datetime.now(TZ)
     print(f"[{started.isoformat()}] starting {name}", flush=True)
     env = {**os.environ, "PYTHONPATH": str(ROOT), **(extra_env or {})}
+    inherited = {}
+    if sys.platform.startswith("linux"):
+        supervisor = Path(__file__).with_name("process_supervisor.py")
+        command = [sys.executable, str(supervisor), "--parent-pid", str(os.getpid()), "--", *command]
+        # Keep ownership until the supervisor has terminated its group, even
+        # when the orchestrator dies before a death signal can be handled.
+        inherited["pass_fds"] = tuple(_OWNED_LOCK_FDS)
+    proc = subprocess.Popen(command, cwd=ROOT, env=env, text=True,
+                            encoding="utf-8", errors="replace", stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, start_new_session=os.name != "nt",
+                            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0,
+                            **inherited)
     try:
-        proc = subprocess.run(command, cwd=ROOT, env=env, text=True,
-                              encoding="utf-8", errors="replace", capture_output=True,
-                              timeout=14400 if name == "market" else 9000)
+        stdout, stderr = proc.communicate(timeout=timeout)
         code = proc.returncode
-        output = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
+        output = (stdout or "") + ("\n" + stderr if stderr else "")
     except subprocess.TimeoutExpired as exc:
+        _stop_process_tree(proc)
+        stdout, stderr = proc.communicate(timeout=5)
         code = 1
-        output = f"{name} timed out: {exc}\n"
-        for part in (exc.stdout, exc.stderr):
-            if part:
-                output += part.decode("utf-8", errors="replace") if isinstance(part, bytes) else part
+        output = f"{name} timed out: {exc}\n" + (stdout or "") + ("\n" + stderr if stderr else "")
+    except BaseException:
+        _stop_process_tree(proc)
+        proc.communicate(timeout=5)
+        raise
+    finally:
+        # A parent can exit after giving a grandchild detached stdio. It must
+        # not keep writing canonical files after this runner releases its lock.
+        _stop_process_tree(proc)
     path = log_dir / f"{started.strftime('%Y%m%dT%H%M%S%f')}_{name}.log"
     path.write_text(output, encoding="utf-8")
     print(f"[{name}] exit={code}; log={path.relative_to(ROOT)}", flush=True)
@@ -162,6 +238,9 @@ def _completed_model(model: str, session: str, run_date: str) -> dict | None:
             protocol = json.loads((native / "evaluation_protocol.json").read_text(encoding="utf-8"))
             if not isinstance(protocol, dict) or str(protocol.get("as_of_date", ""))[:10] != session:
                 return None
+        from scripts.cached_exports import validate_cached_export
+        if not validate_cached_export(ROOT, model, session, status, export_path):
+            return None
         return {"model": model, "status": "success", "exit_code": 0,
                 "reason": "already_completed_for_this_session", "outputs_retained": True}
     except (OSError, ValueError, TypeError, RuntimeError):

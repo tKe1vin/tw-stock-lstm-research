@@ -41,7 +41,7 @@ def setup_sources(root):
     predictions.to_csv(baseline / "test_predictions.csv", index=False)
     target = sessions(day + pd.Timedelta(days=1), day + pd.Timedelta(days=14))[0]
     rec = pd.DataFrame([{"Ticker": t, "Signal_Date": day, "Target_Date": target, "Previous_Close": 100.,
-                         "Predicted_Close": 101., "Created_At": datetime.combine(day.date(), datetime.min.time(), TZ).replace(hour=16).isoformat()}
+                         "Predicted_Close": 101., "Predicted_Return_Pct": 1., "Created_At": datetime.combine(day.date(), datetime.min.time(), TZ).replace(hour=16).isoformat()}
                         for t in TICKERS])
     rec.to_csv(baseline / "next_day_recommendation.csv", index=False)
     pd.DataFrame([{"Ticker": t, "Direction_Accuracy_Pct": 0., "Return_MAE_pp": 1., "Return_RMSE_pp": 1.,

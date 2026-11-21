@@ -69,6 +69,7 @@ def _native(model: str, payload: dict, day: str) -> Path:
         from scripts.common import TICKERS
         if len(rec) != len(TICKERS) or "Ticker" not in rec or set(rec.Ticker) != set(TICKERS):
             continue
+        _validate_forecast(folder / "next_day_recommendation.csv", day)
         return folder
     raise ValueError(f"{model} reported success without complete outputs for {day}")
 
@@ -89,14 +90,11 @@ def _last_success(previous: dict) -> str | None:
 
 
 def _validate_forecast(path: Path, day: str) -> None:
-    from scripts.common import TICKERS
-    rows = pd.read_csv(path)
-    stock = "stock_id" if "stock_id" in rows else "Ticker"
-    signal = "signal_date" if "signal_date" in rows else "Signal_Date"
-    if (stock not in rows or signal not in rows or len(rows) != len(TICKERS)
-            or set(rows[stock].astype(str)) != set(TICKERS)
-            or not rows[signal].astype(str).str[:10].eq(day).all()):
-        raise ValueError(f"Incomplete or stale five-stock forecast: {path}")
+    from scripts.cached_exports import validate_forecast_frame
+    try:
+        validate_forecast_frame(pd.read_csv(path, keep_default_na=False), day)
+    except (ValueError, TypeError, KeyError) as error:
+        raise ValueError(f"Incomplete, invalid or stale five-stock forecast: {path}") from error
 
 
 def _news_summary(day: str) -> dict:

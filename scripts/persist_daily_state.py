@@ -135,7 +135,7 @@ def signal_hashes(root: Path) -> dict[str, str]:
     }
 
 
-def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
+def validate_state(root: Path, immutable: dict[str, str] | None = None, *, baseline_ref="HEAD") -> None:
     """Check frozen artifacts, append-only committed signals and registry hashes."""
     expected = IMMUTABLE_SHA256 if immutable is None else immutable
     for name, wanted in expected.items():
@@ -144,10 +144,10 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
             raise ValueError(f"Immutable artifact changed or missing: {name}")
     # Display-only titles never alter scoring evidence; committed rows are append-only.
     from scripts.capture_news_display import METADATA, validate_metadata
-    prior_titles = git(root, "show", f"HEAD:{METADATA}", check=False)
+    prior_titles = git(root, "show", f"{baseline_ref}:{METADATA}", check=False)
     if (root / METADATA).exists() or prior_titles.returncode == 0:
         validate_metadata(root / METADATA, prior_titles.stdout if prior_titles.returncode == 0 else None)
-    attempts = git(root, "ls-tree", "-r", "--name-only", "-z", "HEAD", "--", "reports/attempts/")
+    attempts = git(root, "ls-tree", "-r", "--name-only", "-z", baseline_ref, "--", "reports/attempts/")
     for raw in attempts.stdout.split(b"\0"):
         if not raw:
             continue
@@ -155,7 +155,7 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
         if not name.endswith(".json"):
             continue
         path = root / name
-        prior = git(root, "show", f"HEAD:{name}").stdout
+        prior = git(root, "show", f"{baseline_ref}:{name}").stdout
         if path.is_symlink() or not path.is_file() or path.read_bytes() != prior:
             raise ValueError(f"Published daily attempt changed or missing: {name}")
     for book in BOOK_ROOTS:
@@ -165,7 +165,7 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
         registry_path = base / "signal_registry.json"
         daily = base / "daily"
         paths = sorted(daily.glob("*.csv"))
-        tracked = git(root, "ls-tree", "-r", "--name-only", "-z", "HEAD", "--", f"{book}/daily/")
+        tracked = git(root, "ls-tree", "-r", "--name-only", "-z", baseline_ref, "--", f"{book}/daily/")
         manifest_path = base / "market" / "manifest.json"
         if manifest_path.exists():
             manifest = _json(manifest_path)
@@ -173,13 +173,13 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
                 seed = base / "market" / filename
                 if seed.is_symlink() or not seed.is_file() or digest(seed) != manifest.get(key):
                     raise ValueError(f"Market seed hash mismatch: {seed}")
-                previous_seed = git(root, "show", f"HEAD:{book}/market/{filename}", check=False)
+                previous_seed = git(root, "show", f"{baseline_ref}:{book}/market/{filename}", check=False)
                 if previous_seed.returncode == 0 and seed.read_bytes() != previous_seed.stdout:
                     raise ValueError(f"Committed market seed changed: {seed}")
         if not registry_path.exists() and not paths and not tracked.stdout:
             continue
         registry = _json(registry_path)
-        previous = git(root, "show", f"HEAD:{book}/signal_registry.json", check=False)
+        previous = git(root, "show", f"{baseline_ref}:{book}/signal_registry.json", check=False)
         if previous.returncode == 0:
             for name, entry in json.loads(previous.stdout).items():
                 if registry.get(name) != entry:
@@ -188,7 +188,7 @@ def validate_state(root: Path, immutable: dict[str, str] | None = None) -> None:
             if not raw:
                 continue
             name = raw.decode("utf-8")
-            old = git(root, "show", f"HEAD:{name}").stdout
+            old = git(root, "show", f"{baseline_ref}:{name}").stdout
             path = root / name
             if not path.is_file() or path.is_symlink() or path.read_bytes() != old:
                 raise ValueError(f"Published signal changed or missing: {name}")
@@ -243,6 +243,9 @@ def push_state(root: Path, branch: str, preserved_signals: dict[str, str]) -> No
     git(root, "check-ref-format", "--branch", branch)
     if _rebase_in_progress(root):
         raise RuntimeError("A rebase is already in progress; refusing automatic state push")
+    validate_state(root)
+    if any(signal_hashes(root).get(name) != wanted for name, wanted in preserved_signals.items()):
+        raise RuntimeError("A published signal changed before push; refusing publication")
     target = f"HEAD:refs/heads/{branch}"
     if git(root, "push", "origin", target, check=False).returncode == 0:
         return
@@ -261,6 +264,10 @@ def push_state(root: Path, branch: str, preserved_signals: dict[str, str]) -> No
     current = signal_hashes(root)
     if any(current.get(name) != value for name, value in preserved_signals.items()):
         raise RuntimeError("A published signal changed during rebase; refusing push")
+    if (git(root, "diff", "--quiet", check=False).returncode
+            or git(root, "diff", "--cached", "--quiet", check=False).returncode):
+        raise RuntimeError("Working tree or index changed during rebase; refusing automatic push")
+    pending_state_commits(root, branch)
     git(root, "push", "origin", target)
 
 
@@ -281,7 +288,45 @@ def pending_state_commits(root: Path, branch: str) -> list[str]:
                 r"research: daily state \d{4}-\d{2}-\d{2} \[skip ci\]", subject)
                 or not names or not all(allowed_path(name) for name in names)):
             raise RuntimeError("Unpublished commits include unrelated changes; refusing automatic state push")
+    if commits:
+        # HEAD alone is not an immutable baseline for an unpublished checkpoint.
+        validate_state(root, baseline_ref=remote)
     return commits
+
+
+def commit_state(root: Path, selected: list[str]) -> None:
+    if not selected:
+        return
+    previous_head = git(root, "rev-parse", "HEAD").stdout.decode().strip()
+    validated = {name: digest(root / name) for name in selected}
+    committed = None
+    try:
+        git(root, "add", "--", *selected)
+        day = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d")
+        git(root, "commit", "-m", f"research: daily state {day} [skip ci]")
+        committed = git(root, "rev-parse", "HEAD").stdout.decode().strip()
+        if git(root, "show", "-s", "--format=%P", committed).stdout.decode().split() != [previous_head]:
+            committed = None  # Never roll back another writer's additional commits.
+            raise ValueError("Git HEAD changed beyond this invocation's checkpoint; refusing publication")
+        names = {raw.decode() for raw in git(root, "diff-tree", "--no-commit-id", "--name-only",
+                 "--no-renames", "-r", "-z", committed).stdout.split(b"\0") if raw}
+        if not names or not names.issubset(selected):
+            raise ValueError("Commit hook included unrelated or unselected paths in daily state")
+        for name, wanted in validated.items():
+            path = root / name
+            saved = git(root, "show", f"{committed}:{name}").stdout
+            if (path.is_symlink() or not path.is_file() or digest(path) != wanted
+                    or hashlib.sha256(saved).hexdigest() != wanted):
+                raise ValueError(f"Validated daily state bytes changed during commit: {name}")
+        if changed_state(root):
+            raise ValueError("Daily state changed during commit; refusing unvalidated publication")
+        validate_state(root, baseline_ref=previous_head)
+    except BaseException:
+        if committed is not None and git(root, "rev-parse", "HEAD").stdout.decode().strip() == committed:
+            git(root, "reset", "--soft", previous_head)
+        # Keep files and hook-added staging recoverable; unstage only our paths.
+        git(root, "reset", "HEAD", "--", *selected, check=False)
+        raise
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -293,28 +338,22 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--push requires --commit")
     if args.commit and _rebase_in_progress(ROOT):
         raise RuntimeError("A rebase is already in progress; refusing to change its HEAD or index")
+    if args.commit and git(ROOT, "diff", "--cached", "--name-only", "-z").stdout:
+        raise ValueError("The Git index already contains staged changes; refusing to include pre-existing staged content")
+    branch = None
+    if args.push:
+        branch = os.environ.get("GITHUB_REF_NAME") or git(ROOT, "branch", "--show-current").stdout.decode().strip()
+        pending_state_commits(ROOT, branch)
     validate_state(ROOT)
+    preserved_signals = signal_hashes(ROOT)
     selected = changed_state(ROOT)
     print(json.dumps({"read_only": not args.commit, "state_files": selected}, ensure_ascii=False), flush=True)
     if not args.commit:
         return 0
-    staged = git(ROOT, "diff", "--cached", "--name-only", "-z").stdout
-    if staged:
-        raise ValueError("The Git index already contains staged changes; refusing to include pre-existing staged content")
-    if selected:
-        try:
-            git(ROOT, "add", "--", *selected)
-            day = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d")
-            git(ROOT, "commit", "-m", f"research: daily state {day} [skip ci]")
-        except BaseException:
-            # The index was empty before this invocation. Keep recoverable files
-            # on disk, and avoid poisoning the next retry with our own staging.
-            git(ROOT, "reset", "HEAD", "--", *selected, check=False)
-            raise
+    commit_state(ROOT, selected)
     if args.push:
-        branch = os.environ.get("GITHUB_REF_NAME") or git(ROOT, "branch", "--show-current").stdout.decode().strip()
         if pending_state_commits(ROOT, branch):
-            push_state(ROOT, branch, signal_hashes(ROOT))
+            push_state(ROOT, branch, preserved_signals)
     return 0
 
 

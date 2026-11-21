@@ -129,13 +129,13 @@ def test_current_notebooks_compare_separately_from_frozen_research(root):
     assert not (baseline / "market_metrics.csv").exists()
     v2 = root / "outputs/555_v2" / DAY / "prediction.csv"
     v2.parent.mkdir(parents=True)
-    pd.DataFrame([{"Ticker": ticker, "Signal_Date": DAY} for ticker in TICKERS]).to_csv(v2, index=False)
+    pd.DataFrame([{"Ticker": ticker, "Signal_Date": DAY, "Predicted_Return_Pct": 1.0} for ticker in TICKERS]).to_csv(v2, index=False)
     save_json(v2.with_name("status.json"), {
         "model": "555_v2", "status": "success", "completed_session": DAY,
     })
     signal = root / "experiments/results/v2/v211/daily" / f"{DAY}.csv"
     signal.parent.mkdir(parents=True)
-    pd.DataFrame([{"Ticker": ticker, "Signal_Date": DAY} for ticker in TICKERS]).to_csv(signal, index=False)
+    pd.DataFrame([{"Ticker": ticker, "Signal_Date": DAY, "Predicted_Return_Pct": 1.0} for ticker in TICKERS]).to_csv(signal, index=False)
     save_json(root / "outputs/v211" / DAY / "status.json", {
         "status": "success", "completed_session": DAY, "ledger_mode": "imported_research",
     })

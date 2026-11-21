@@ -9,6 +9,19 @@ import pytest
 from scripts import run_all_daily as daily
 from scripts import run_model as runner
 from scripts.common import TZ
+from scripts.unified_csv import COLUMNS, blank_row
+
+
+def cached_unified(path, model, session, *, prediction=2.0):
+    rows = []
+    for rank, ticker in enumerate(runner.NAMES, 1):
+        row = blank_row()
+        row.update(model_id=model, signal_date=session, data_asof=session, stock_id=ticker,
+                   predicted_return_pct=prediction, prediction_horizon_days=5 if model == '555_v2' else 1)
+        if model == '555_v2':
+            row.update(target_weight=.2, cash_weight=0., rank=rank)
+        rows.append(row)
+    pd.DataFrame(rows, columns=COLUMNS).to_csv(path, index=False)
 
 
 def context(monkeypatch, started, session):
@@ -87,13 +100,13 @@ def test_delayed_v211_launches_only_recorded_maintenance(tmp_path, monkeypatch):
 
 def test_delayed_retry_reuses_same_session_even_on_later_calendar_day(tmp_path, monkeypatch):
     monkeypatch.setattr(daily, 'ROOT', tmp_path)
-    folder=tmp_path/'outputs/555/2026-11-16'
+    folder=tmp_path/'outputs/555_v2/2026-11-16'
     folder.mkdir(parents=True)
-    (folder/'unified_signal.csv').write_text('fixture')
+    cached_unified(folder/'unified_signal.csv', '555_v2', '2026-11-16')
     (folder/'status.json').write_text(json.dumps({'status':'success','completed_session':'2026-11-16',
-        'unified_csv':'outputs/555/2026-11-16/unified_signal.csv','research_protocol':'paired-444-core-allocation-v1'}))
-    assert daily._completed_model('555','2026-11-16','2026-11-17')['reason']=='already_completed_for_this_session'
-    assert daily._completed_model('555','2026-11-17','2026-11-17') is None
+        'unified_csv':'outputs/555_v2/2026-11-16/unified_signal.csv','weight_sha256':runner.EXPECTED_WEIGHTS}))
+    assert daily._completed_model('555_v2','2026-11-16','2026-11-17')['reason']=='already_completed_for_this_session'
+    assert daily._completed_model('555_v2','2026-11-17','2026-11-17') is None
 
 
 def test_maintenance_only_step_preserves_distinct_status_from_child_json(monkeypatch):
@@ -179,9 +192,20 @@ def test_legacy_calendar_keyed_444_is_only_reused_for_its_matching_asof(tmp_path
     monkeypatch.setenv('TW_LSTM_OUTPUT_DAY','2026-11-16')
     folder=tmp_path/'outputs/444/2026-11-17'
     native=folder/'native';native.mkdir(parents=True)
-    for name in ('test_predictions.csv','next_day_recommendation.csv','model_metrics.csv','strategy_metrics.csv','backtest_nav.csv','unified_signal.csv'):
-        (native/name).write_text('fixture')
-    (native/'evaluation_protocol.json').write_text(json.dumps({'as_of_date':'2026-11-16'}))
+    (native/'evaluation_protocol.json').write_text(json.dumps({'as_of_date':'2026-11-16',
+        'test_days':1, 'test_target_dates':['2026-11-16']}))
+    pd.DataFrame([{'Ticker':ticker,'Signal_Date':'2026-11-13','Date':'2026-11-16',
+                   'Previous_Close':100.,'Actual_Close':101.,'Predicted_Close':102.,
+                   'Actual_Return_Pct':1.,'Predicted_Return_Pct':2.} for ticker in runner.NAMES]).to_csv(native/'test_predictions.csv',index=False)
+    pd.DataFrame([{'Ticker':ticker,'Signal_Date':'2026-11-16','Target_Date':'2026-11-17',
+                   'Predicted_Return_Pct':2.} for ticker in runner.NAMES]).to_csv(native/'next_day_recommendation.csv',index=False)
+    pd.DataFrame([{'Ticker':ticker,'Price_MAE':1.,'Price_RMSE':1.,'Return_MAE_pp':1.,
+                   'Return_RMSE_pp':1.,'Direction_Accuracy_Pct':50.} for ticker in runner.NAMES]).to_csv(native/'model_metrics.csv',index=False)
+    pd.DataFrame([{'As_Of_Date':'2026-11-16','Test_Days':1,'ROI_Pct':1.,'Sharpe':1.,
+                   'MDD_Pct':-1.,'Direction_Accuracy_Pct':50.}]).to_csv(native/'strategy_metrics.csv',index=False)
+    pd.DataFrame({'Date':['2026-11-13','2026-11-16'],'Portfolio_Net':[100.,101.],
+                  'Market_Index':[100.,102.]}).to_csv(native/'backtest_nav.csv',index=False)
+    cached_unified(native/'unified_signal.csv', '444', '2026-11-16')
     status={'status':'success','completed_session':'2026-11-16',
             'daily_native_dir':'outputs/444/2026-11-17/native',
             'unified_csv':'outputs/444/2026-11-17/native/unified_signal.csv'}
