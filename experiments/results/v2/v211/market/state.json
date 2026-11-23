@@ -72,6 +72,15 @@
       "news_provenance_status": "observed_at_recorded_time",
       "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
       "news_available_at": "2026-11-20T16:38:51.500288+08:00"
+    },
+    "2026-11-23": {
+      "ready_at": "2026-11-23T17:11:38.356314+08:00",
+      "price_sha256": "115f197841259626e088d2e5c805448f550f7e2fb02579407ff59c6b6110c9e1",
+      "sentiment_sha256": "ce44a0ef1db5c2af8225428e9d17b5c87d539bfc5c6097f3e5f65697f0e2d7f6",
+      "fetched_at_kind": "observed_completion",
+      "news_provenance_status": "observed_at_recorded_time",
+      "news_provenance_path": "/home/runner/work/tw-stock-lstm-research/tw-stock-lstm-research/experiments/results/v2/v211/market/news_cache_provenance.jsonl",
+      "news_available_at": "2026-11-23T17:11:37.895843+08:00"
     }
   }
 }
