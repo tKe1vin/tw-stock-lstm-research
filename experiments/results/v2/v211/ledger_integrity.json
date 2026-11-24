@@ -2,12 +2,12 @@
   "schema_version": 1,
   "prefixes": {
     "market/prices.csv": {
-      "bytes": 607338,
-      "sha256": "115f197841259626e088d2e5c805448f550f7e2fb02579407ff59c6b6110c9e1"
+      "bytes": 607525,
+      "sha256": "f6113c5307db92c73f016abe5ece9e2b8e4ab320e1e847d527e167851271bd98"
     },
     "market/sentiment.csv": {
-      "bytes": 216633,
-      "sha256": "ce44a0ef1db5c2af8225428e9d17b5c87d539bfc5c6097f3e5f65697f0e2d7f6"
+      "bytes": 217038,
+      "sha256": "c6b25b5e9a254a85c181411174db6f7cb4e138adabd245ebd06f44d05577fa9f"
     },
     "matured_scores.csv": {
       "bytes": 1169,
@@ -18,12 +18,12 @@
       "sha256": "28991e3286d019fa0b95d269446bb91362bc24b1d4329ffe649c45c304965c97"
     },
     "live_nav.csv": {
-      "bytes": 1601,
-      "sha256": "0d27afd19579d486597f735e15631e19c578c635e05d5fceb963db9058e4221f"
+      "bytes": 1726,
+      "sha256": "59f4abadff2b8b5ff7fd1d8c1a3a64617ae1575cd1c363b79406035e49d7a1a6"
     },
     "equal_nav.csv": {
-      "bytes": 1571,
-      "sha256": "d96e1f7ba50fe47dac8952ba9d1ce3a178e596fa90d4cbcf0fab487bf665c281"
+      "bytes": 1696,
+      "sha256": "1f3ef93834d532b0ea22570b6be50884a42c9b28b2bd629815a2de9820a3a351"
     }
   },
   "historical_availability_certified": false,
