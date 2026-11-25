@@ -1,0 +1,22 @@
+{
+  "schema_version": "unified-signal-v2",
+  "generated_at": "2026-11-25T17:56:53.173885+08:00",
+  "predicted_return_pct_unit": "percent_points",
+  "percent_points_meaning": "0.677330 means +0.677330 percent, not 67.7330 percent.",
+  "target_weight_unit": "fraction_of_capital",
+  "cash_weight_unit": "fraction_of_capital",
+  "not_applicable_token": "不適用",
+  "comparison_allowed": false,
+  "model_id": "555",
+  "core_model": "444",
+  "research_sample": false,
+  "execution_assumption": "signal-day allocation; next-session close; common costs",
+  "prediction_target": "444 next-day model label; not a forecast of post-fill holding profit",
+  "sentiment_sha256": "1e50e67ee4617fd7c0c4095b28d3b62e32fc7f176e25115de98bc75c21ae93fe",
+  "core_source_sha256": {
+    "evaluation_protocol.json": "c343197c5d6476ffea0d15e4c1973167d1de91a949edf1e0c46fb77f7abf2737",
+    "test_predictions.csv": "eef62e0e4f2b4c70ba3a43e08eb893f959e2104dd6a92f3c815ac092ef7b552f",
+    "model_metrics.csv": "06ba300ea6eff3e860e2447466bfcdb8c04db588c4670f02463b4b3433156c8f"
+  },
+  "original_six_feature_555": "available through --legacy-555; a separate secondary study"
+}

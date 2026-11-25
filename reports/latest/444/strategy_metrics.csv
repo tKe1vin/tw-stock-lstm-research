@@ -1,2 +1,2 @@
 ﻿Strategy_ID,Strategy,Run_ID,As_Of_Date,Protocol_Version,ROI_Pct,Sharpe,MDD_Pct,Direction_Accuracy_Pct,Test_Days,Test_Start,Test_End
-444_univariate_fixed,444 univariate fixed shares net,20261124T190213513922,2026-11-24,lstm-evaluation-v1,11.899865000874366,0.8715137341474227,-15.555606280268108,50.66666666666667,150,2026-04-17,2026-11-24
+444_univariate_fixed,444 univariate fixed shares net,20261125T175635698686,2026-11-25,lstm-evaluation-v1,7.937637501802852,0.6164982797478046,-15.526952697578377,53.333333333333336,150,2026-04-20,2026-11-25
