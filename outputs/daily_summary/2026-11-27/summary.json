@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-27T03:17:17.452231+08:00",
+  "started": "2026-11-27T06:36:40.019614+08:00",
   "run_date": "2026-11-27",
   "completed_session": "2026-11-26",
   "output_day": "2026-11-26",
@@ -10,7 +10,7 @@
       "model": "v211",
       "status": "maintenance_only",
       "exit_code": 2,
-      "log": "logs/orchestrator/20261127T031720861409_v211.log",
+      "log": "logs/orchestrator/20261127T063643181384_v211.log",
       "reason": "delayed_session_maintenance_only",
       "maintenance_successful": true,
       "signal_published": false,
@@ -44,8 +44,8 @@
   "market": {
     "ready_to_predict": true,
     "completed_session": "2026-11-26",
-    "clock": "2026-11-27T03:17:19.735980+08:00",
-    "run_started_at": "2026-11-27T03:17:17.882690+08:00",
+    "clock": "2026-11-27T06:36:42.140490+08:00",
+    "run_started_at": "2026-11-27T06:36:40.431619+08:00",
     "prices_ready": true,
     "sentiment_ready": true,
     "price_source": "yfinance unadjusted Close",
@@ -73,7 +73,7 @@
     "news_available_at": "2026-11-26T17:36:54.068192+08:00",
     "official_price_changed_since_seed": true,
     "official_sentiment_changed_since_seed": true,
-    "completed_at": "2026-11-27T03:17:19.413545+08:00",
+    "completed_at": "2026-11-27T06:36:41.869505+08:00",
     "update_timed_out": false,
     "update_timeout_seconds": 1800.0,
     "worker_returncode": 0,
@@ -87,14 +87,14 @@
     "snapshot_sentiment_sha256": "3ba539e5f395239f066b299ff4e92a1a39f6d7c737da12239df80c3d537f59ba",
     "exit_code": 0,
     "status": "success",
-    "log": "logs/orchestrator/20261127T031717617543_market.log"
+    "log": "logs/orchestrator/20261127T063640180689_market.log"
   },
   "reports": {
     "report_schema": "four-systems-v1",
     "as_of_date": "2026-11-26",
     "run_date": "2026-11-27",
     "output_day": "2026-11-26",
-    "started": "2026-11-27T03:17:17.452231+08:00",
+    "started": "2026-11-27T06:36:40.019614+08:00",
     "finished": null,
     "delayed_run": true,
     "status": "partial",
@@ -156,8 +156,8 @@
     "market": {
       "ready_to_predict": true,
       "completed_session": "2026-11-26",
-      "clock": "2026-11-27T03:17:19.735980+08:00",
-      "run_started_at": "2026-11-27T03:17:17.882690+08:00",
+      "clock": "2026-11-27T06:36:42.140490+08:00",
+      "run_started_at": "2026-11-27T06:36:40.431619+08:00",
       "prices_ready": true,
       "sentiment_ready": true,
       "price_source": "yfinance unadjusted Close",
@@ -185,7 +185,7 @@
       "news_available_at": "2026-11-26T17:36:54.068192+08:00",
       "official_price_changed_since_seed": true,
       "official_sentiment_changed_since_seed": true,
-      "completed_at": "2026-11-27T03:17:19.413545+08:00",
+      "completed_at": "2026-11-27T06:36:41.869505+08:00",
       "update_timed_out": false,
       "update_timeout_seconds": 1800.0,
       "worker_returncode": 0,
@@ -199,7 +199,7 @@
       "snapshot_sentiment_sha256": "3ba539e5f395239f066b299ff4e92a1a39f6d7c737da12239df80c3d537f59ba",
       "exit_code": 0,
       "status": "success",
-      "log": "logs/orchestrator/20261127T031717617543_market.log"
+      "log": "logs/orchestrator/20261127T063640180689_market.log"
     },
     "news": {
       "provider": "cnyes",
@@ -213,10 +213,10 @@
       "article_text_included": false,
       "historical_availability_retroactively_certified": false
     },
-    "attempt_journal": "reports/attempts/2026-11-27/20261127T031717452231+0800_5568cce640895393.json",
+    "attempt_journal": "reports/attempts/2026-11-27/20261127T063640019614+0800_0ddec2634b441f4e.json",
     "performance_protocols_combined": false
   },
   "status": "research_complete_tracker_deferred",
   "exit_code": 0,
-  "finished": "2026-11-27T03:17:24.514649+08:00"
+  "finished": "2026-11-27T06:36:46.879643+08:00"
 }
