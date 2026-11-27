@@ -1,0 +1,2 @@
+﻿Strategy_ID,Strategy,Run_ID,As_Of_Date,Protocol_Version,ROI_Pct,Sharpe,MDD_Pct,Direction_Accuracy_Pct,Test_Days,Test_Start,Test_End,Core_Model,Total_Transaction_Cost,Direction_Definition,Result_Status
+555_shared_444_core_dynamic_news_risk,dynamic_news_risk555,20261127T174540084802,2026-11-27,paired-444-core-allocation-v1,0.50453890582466965,0.12953681518978222,-5.044029009954909,48.799999999999997,150,2026-04-22,2026-11-27,444,7953.943410042184,same saved 444 next-day model-label accuracy; not trade win rate,exploratory
