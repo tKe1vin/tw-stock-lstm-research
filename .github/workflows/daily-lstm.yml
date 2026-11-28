@@ -57,6 +57,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # A delayed writer must include fixes and state published while queued.
+          ref: main
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
